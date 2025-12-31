@@ -1,8 +1,19 @@
+import { useState } from "react";
 import { Settings, Code2, GitBranch, Database, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { ExportDialog } from "@/components/export/ExportDialog";
+import { Company, Sprint, Scenario } from "@/types/bdd";
 
-export function SettingsView() {
+interface SettingsViewProps {
+  companies: Company[];
+  sprints: Sprint[];
+  scenarios: Scenario[];
+}
+
+export function SettingsView({ companies, sprints, scenarios }: SettingsViewProps) {
+  const [exportDialogOpen, setExportDialogOpen] = useState(false);
+
   return (
     <div className="space-y-8">
       {/* Header */}
@@ -100,7 +111,7 @@ export function SettingsView() {
             Exporte seus cenários em formato .feature (Gherkin) para usar em qualquer framework
             de testes BDD.
           </p>
-          <Button variant="default" className="w-full">
+          <Button variant="default" className="w-full" onClick={() => setExportDialogOpen(true)}>
             Exportar como .feature
           </Button>
         </div>
@@ -122,6 +133,14 @@ export function SettingsView() {
           </div>
         </div>
       </div>
+
+      <ExportDialog
+        open={exportDialogOpen}
+        onOpenChange={setExportDialogOpen}
+        scenarios={scenarios}
+        companies={companies}
+        sprints={sprints}
+      />
     </div>
   );
 }
