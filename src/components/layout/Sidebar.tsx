@@ -29,13 +29,13 @@ export function Sidebar({ activeView, onViewChange }: SidebarProps) {
       <div className="flex h-full flex-col">
         {/* Logo */}
         <div className="flex h-16 items-center justify-between px-4 border-b border-sidebar-border">
-          {!collapsed && (
+        {!collapsed && (
             <div className="flex items-center gap-2">
               <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center">
-                <FlaskConical className="h-5 w-5 text-primary-foreground" />
+                <span className="font-bold text-sm text-primary-foreground">4</span>
               </div>
               <span className="font-display font-bold text-lg text-sidebar-foreground">
-                BDD<span className="text-primary">Hub</span>
+                4<span className="text-primary">QA</span>
               </span>
             </div>
           )}

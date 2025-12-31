@@ -19,7 +19,7 @@ export function SettingsView({ companies, sprints, scenarios }: SettingsViewProp
       {/* Header */}
       <div className="space-y-2">
         <h1 className="text-3xl font-bold text-foreground">Configurações</h1>
-        <p className="text-muted-foreground">Gerencie as configurações e integrações do BDD Hub</p>
+        <p className="text-muted-foreground">Gerencie as configurações e integrações do 4QA</p>
       </div>
 
       {/* Integration Cards */}
