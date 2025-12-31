@@ -1,12 +1,88 @@
-// Update this page (the content is just a fallback if you fail to update the page)
+import { useState } from "react";
+import { Sidebar } from "@/components/layout/Sidebar";
+import { DashboardView } from "@/views/DashboardView";
+import { CompaniesView } from "@/views/CompaniesView";
+import { ScenariosView } from "@/views/ScenariosView";
+import { SprintsView } from "@/views/SprintsView";
+import { SettingsView } from "@/views/SettingsView";
+import { useBddStore } from "@/hooks/useBddStore";
+import { cn } from "@/lib/utils";
 
 const Index = () => {
+  const [activeView, setActiveView] = useState("dashboard");
+  const {
+    companies,
+    sprints,
+    scenarios,
+    addCompany,
+    updateCompany,
+    deleteCompany,
+    addSprint,
+    addScenario,
+    updateScenario,
+    getSprintStats,
+  } = useBddStore();
+
+  const renderView = () => {
+    switch (activeView) {
+      case "dashboard":
+        return (
+          <DashboardView
+            companies={companies}
+            sprints={sprints}
+            scenarios={scenarios}
+          />
+        );
+      case "companies":
+        return (
+          <CompaniesView
+            companies={companies}
+            scenarios={scenarios}
+            sprints={sprints}
+            onAddCompany={addCompany}
+            onEditCompany={updateCompany}
+            onDeleteCompany={deleteCompany}
+          />
+        );
+      case "scenarios":
+        return (
+          <ScenariosView
+            companies={companies}
+            sprints={sprints}
+            scenarios={scenarios}
+            onAddScenario={addScenario}
+            onUpdateScenario={updateScenario}
+          />
+        );
+      case "sprints":
+        return (
+          <SprintsView
+            companies={companies}
+            sprints={sprints}
+            scenarios={scenarios}
+            onAddSprint={addSprint}
+            getSprintStats={getSprintStats}
+          />
+        );
+      case "settings":
+        return <SettingsView />;
+      default:
+        return (
+          <DashboardView
+            companies={companies}
+            sprints={sprints}
+            scenarios={scenarios}
+          />
+        );
+    }
+  };
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background">
-      <div className="text-center">
-        <h1 className="mb-4 text-4xl font-bold">Welcome to Your Blank App</h1>
-        <p className="text-xl text-muted-foreground">Start building your amazing project here!</p>
-      </div>
+    <div className="min-h-screen bg-background">
+      <Sidebar activeView={activeView} onViewChange={setActiveView} />
+      <main className={cn("transition-all duration-300 ml-64 p-8")}>
+        <div className="max-w-7xl mx-auto">{renderView()}</div>
+      </main>
     </div>
   );
 };
