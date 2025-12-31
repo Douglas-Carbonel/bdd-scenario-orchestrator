@@ -65,7 +65,13 @@ const Index = () => {
           />
         );
       case "settings":
-        return <SettingsView />;
+        return (
+          <SettingsView
+            companies={companies}
+            sprints={sprints}
+            scenarios={scenarios}
+          />
+        );
       default:
         return (
           <DashboardView
