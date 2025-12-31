@@ -18,9 +18,19 @@ export interface TestSuite {
   id: string;
   name: string;
   companyId: string;
-  parentId: string | null; // null = root level
+  parentId: string | null;
   order: number;
   createdAt: Date;
+}
+
+export type Priority = 'critical' | 'high' | 'medium' | 'low';
+
+export interface TeamMember {
+  id: string;
+  name: string;
+  email: string;
+  avatar?: string;
+  companyId: string;
 }
 
 export interface Scenario {
@@ -28,13 +38,15 @@ export interface Scenario {
   title: string;
   companyId: string;
   sprintId?: string;
-  suiteId?: string; // NEW: link to test suite
+  suiteId?: string;
   feature: string;
   given: string[];
   when: string[];
   then: string[];
   tags: string[];
-  estimatedDuration: number; // in minutes
+  priority: Priority;
+  assigneeId?: string;
+  estimatedDuration: number;
   actualDuration?: number;
   status: 'draft' | 'ready' | 'running' | 'passed' | 'failed';
   createdAt: Date;
@@ -44,14 +56,24 @@ export interface Scenario {
 export interface TestRun {
   id: string;
   scenarioId: string;
+  executedBy: string;
   startedAt: Date;
   completedAt?: Date;
+  duration?: number;
   status: 'running' | 'passed' | 'failed';
+  errorMessage?: string;
   logs?: string[];
 }
 
-// Helper type for tree structure
 export interface SuiteTreeNode extends TestSuite {
   children: SuiteTreeNode[];
   scenarios: Scenario[];
+}
+
+// Stats for reports
+export interface DailyStats {
+  date: string;
+  passed: number;
+  failed: number;
+  total: number;
 }

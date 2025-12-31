@@ -15,6 +15,8 @@ const Index = () => {
     sprints,
     scenarios,
     suites,
+    teamMembers,
+    testRuns,
     addCompany,
     updateCompany,
     deleteCompany,
@@ -28,6 +30,9 @@ const Index = () => {
     getSuiteTree,
     getUnsortedScenarios,
     getSprintStats,
+    getDailyStats,
+    getTeamMember,
+    getScenarioRuns,
   } = useBddStore();
 
   const renderView = () => {
@@ -38,6 +43,9 @@ const Index = () => {
             companies={companies}
             sprints={sprints}
             scenarios={scenarios}
+            teamMembers={teamMembers}
+            getDailyStats={getDailyStats}
+            getTeamMember={getTeamMember}
           />
         );
       case "companies":
@@ -58,6 +66,7 @@ const Index = () => {
             sprints={sprints}
             scenarios={scenarios}
             suites={suites}
+            teamMembers={teamMembers}
             onAddScenario={addScenario}
             onUpdateScenario={updateScenario}
             onAddSuite={addSuite}
@@ -92,6 +101,9 @@ const Index = () => {
             companies={companies}
             sprints={sprints}
             scenarios={scenarios}
+            teamMembers={teamMembers}
+            getDailyStats={getDailyStats}
+            getTeamMember={getTeamMember}
           />
         );
     }
