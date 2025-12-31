@@ -1,11 +1,12 @@
-import { Clock, Tag, Play, CheckCircle2, XCircle, FileEdit } from "lucide-react";
-import { Scenario } from "@/types/bdd";
+import { Clock, Tag, Play, CheckCircle2, XCircle, FileEdit, AlertTriangle, User } from "lucide-react";
+import { Scenario, Priority } from "@/types/bdd";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 
 interface ScenarioCardProps {
   scenario: Scenario;
+  assigneeName?: string;
   onEdit?: (scenario: Scenario) => void;
   onRun?: (scenario: Scenario) => void;
 }
@@ -18,19 +19,30 @@ const statusConfig = {
   failed: { label: "Falhou", icon: XCircle, className: "bg-destructive/20 text-destructive" },
 };
 
-export function ScenarioCard({ scenario, onEdit, onRun }: ScenarioCardProps) {
+const priorityConfig: Record<Priority, { label: string; className: string; icon: typeof AlertTriangle }> = {
+  critical: { label: "Crítico", className: "text-destructive", icon: AlertTriangle },
+  high: { label: "Alto", className: "text-warning", icon: AlertTriangle },
+  medium: { label: "Médio", className: "text-primary", icon: AlertTriangle },
+  low: { label: "Baixo", className: "text-muted-foreground", icon: AlertTriangle },
+};
+
+export function ScenarioCard({ scenario, assigneeName, onEdit, onRun }: ScenarioCardProps) {
   const status = statusConfig[scenario.status];
   const StatusIcon = status.icon;
+  const priority = priorityConfig[scenario.priority];
 
   return (
     <div className="glass-card rounded-xl overflow-hidden hover:border-primary/50 transition-all duration-200 group">
       <div className="p-5 space-y-4">
         {/* Header */}
         <div className="flex items-start justify-between gap-4">
-          <div className="space-y-1 min-w-0">
-            <h3 className="font-semibold text-foreground truncate group-hover:text-primary transition-colors">
-              {scenario.title}
-            </h3>
+          <div className="space-y-1 min-w-0 flex-1">
+            <div className="flex items-center gap-2">
+              <priority.icon className={cn("h-4 w-4 shrink-0", priority.className)} />
+              <h3 className="font-semibold text-foreground truncate group-hover:text-primary transition-colors">
+                {scenario.title}
+              </h3>
+            </div>
             <p className="text-sm text-muted-foreground font-mono">{scenario.feature}</p>
           </div>
           <Badge className={cn("shrink-0", status.className)}>
@@ -64,26 +76,42 @@ export function ScenarioCard({ scenario, onEdit, onRun }: ScenarioCardProps) {
           )}
         </div>
 
-        {/* Tags */}
-        {scenario.tags.length > 0 && (
-          <div className="flex items-center gap-2 flex-wrap">
-            <Tag className="h-3 w-3 text-muted-foreground" />
-            {scenario.tags.map((tag) => (
-              <span
-                key={tag}
-                className="text-xs px-2 py-0.5 rounded-full bg-secondary text-secondary-foreground"
-              >
-                @{tag}
-              </span>
-            ))}
-          </div>
-        )}
+        {/* Tags & Assignee */}
+        <div className="flex items-center justify-between gap-2 flex-wrap">
+          {scenario.tags.length > 0 && (
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <Tag className="h-3 w-3 text-muted-foreground" />
+              {scenario.tags.slice(0, 3).map((tag) => (
+                <span
+                  key={tag}
+                  className="text-xs px-2 py-0.5 rounded-full bg-secondary text-secondary-foreground"
+                >
+                  @{tag}
+                </span>
+              ))}
+              {scenario.tags.length > 3 && (
+                <span className="text-xs text-muted-foreground">+{scenario.tags.length - 3}</span>
+              )}
+            </div>
+          )}
+          {assigneeName && (
+            <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+              <User className="h-3 w-3" />
+              <span>{assigneeName}</span>
+            </div>
+          )}
+        </div>
 
         {/* Footer */}
         <div className="flex items-center justify-between pt-2 border-t border-border">
-          <div className="flex items-center gap-1 text-muted-foreground">
-            <Clock className="h-4 w-4" />
-            <span className="text-xs">{scenario.estimatedDuration} min</span>
+          <div className="flex items-center gap-3 text-muted-foreground">
+            <div className="flex items-center gap-1">
+              <Clock className="h-4 w-4" />
+              <span className="text-xs">{scenario.estimatedDuration} min</span>
+            </div>
+            <span className={cn("text-xs font-medium", priority.className)}>
+              {priority.label}
+            </span>
           </div>
           <div className="flex gap-2">
             <Button variant="ghost" size="sm" onClick={() => onEdit?.(scenario)}>

@@ -3,7 +3,7 @@ import { Plus, X, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Scenario, Company, Sprint, TestSuite } from "@/types/bdd";
+import { Scenario, Company, Sprint, TestSuite, TeamMember, Priority } from "@/types/bdd";
 import {
   Select,
   SelectContent,
@@ -16,16 +16,25 @@ interface ScenarioFormProps {
   companies: Company[];
   sprints: Sprint[];
   suites: TestSuite[];
+  teamMembers: TeamMember[];
   onSave: (scenario: Omit<Scenario, "id" | "createdAt" | "updatedAt">) => void;
   onCancel: () => void;
   initialData?: Scenario;
   defaultSuiteId?: string;
 }
 
+const priorityOptions: { value: Priority; label: string; color: string }[] = [
+  { value: "critical", label: "Crítico", color: "text-destructive" },
+  { value: "high", label: "Alto", color: "text-warning" },
+  { value: "medium", label: "Médio", color: "text-primary" },
+  { value: "low", label: "Baixo", color: "text-muted-foreground" },
+];
+
 export function ScenarioForm({ 
   companies, 
   sprints, 
   suites,
+  teamMembers,
   onSave, 
   onCancel, 
   initialData,
@@ -36,6 +45,8 @@ export function ScenarioForm({
   const [companyId, setCompanyId] = useState(initialData?.companyId || companies[0]?.id || "");
   const [sprintId, setSprintId] = useState(initialData?.sprintId || "");
   const [suiteId, setSuiteId] = useState(initialData?.suiteId || defaultSuiteId || "");
+  const [priority, setPriority] = useState<Priority>(initialData?.priority || "medium");
+  const [assigneeId, setAssigneeId] = useState(initialData?.assigneeId || "");
   const [given, setGiven] = useState<string[]>(initialData?.given || [""]);
   const [when, setWhen] = useState<string[]>(initialData?.when || [""]);
   const [then, setThen] = useState<string[]>(initialData?.then || [""]);
@@ -91,6 +102,8 @@ export function ScenarioForm({
       companyId,
       sprintId: sprintId || undefined,
       suiteId: suiteId || undefined,
+      priority,
+      assigneeId: assigneeId || undefined,
       given: given.filter((g) => g.trim()),
       when: when.filter((w) => w.trim()),
       then: then.filter((t) => t.trim()),
@@ -102,8 +115,8 @@ export function ScenarioForm({
 
   const filteredSprints = sprints.filter((s) => s.companyId === companyId);
   const filteredSuites = suites.filter((s) => s.companyId === companyId);
+  const filteredTeamMembers = teamMembers.filter((m) => m.companyId === companyId);
 
-  // Build suite path for display
   const getSuitePath = (suite: TestSuite): string => {
     const path: string[] = [suite.name];
     let current = suite;
@@ -112,9 +125,7 @@ export function ScenarioForm({
       if (parent) {
         path.unshift(parent.name);
         current = parent;
-      } else {
-        break;
-      }
+      } else break;
     }
     return path.join(" / ");
   };
@@ -144,7 +155,7 @@ export function ScenarioForm({
         </div>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 grid-cols-2 lg:grid-cols-3">
         <div className="space-y-2">
           <Label>Empresa</Label>
           <Select value={companyId} onValueChange={setCompanyId}>
@@ -180,7 +191,7 @@ export function ScenarioForm({
           <Label>Sprint</Label>
           <Select value={sprintId} onValueChange={setSprintId} disabled={!companyId}>
             <SelectTrigger>
-              <SelectValue placeholder="Selecione a sprint" />
+              <SelectValue placeholder="Nenhuma" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="">Nenhuma</SelectItem>
@@ -192,8 +203,43 @@ export function ScenarioForm({
             </SelectContent>
           </Select>
         </div>
+      </div>
+
+      {/* Priority and Assignee */}
+      <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
         <div className="space-y-2">
-          <Label htmlFor="duration">Duração (min)</Label>
+          <Label>Prioridade</Label>
+          <Select value={priority} onValueChange={(v) => setPriority(v as Priority)}>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {priorityOptions.map((opt) => (
+                <SelectItem key={opt.value} value={opt.value}>
+                  <span className={opt.color}>{opt.label}</span>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="space-y-2">
+          <Label>Responsável</Label>
+          <Select value={assigneeId} onValueChange={setAssigneeId}>
+            <SelectTrigger>
+              <SelectValue placeholder="Não atribuído" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="">Não atribuído</SelectItem>
+              {filteredTeamMembers.map((member) => (
+                <SelectItem key={member.id} value={member.id}>
+                  {member.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="space-y-2 col-span-2 lg:col-span-2">
+          <Label htmlFor="duration">Duração Estimada (min)</Label>
           <Input
             id="duration"
             type="number"

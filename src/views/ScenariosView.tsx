@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { ScenarioCard } from "@/components/scenarios/ScenarioCard";
 import { ScenarioForm } from "@/components/scenarios/ScenarioForm";
 import { SuiteTree } from "@/components/suites/SuiteTree";
-import { Company, Sprint, Scenario, TestSuite, SuiteTreeNode } from "@/types/bdd";
+import { Company, Sprint, Scenario, TestSuite, SuiteTreeNode, TeamMember } from "@/types/bdd";
 import { cn } from "@/lib/utils";
 import {
   Dialog,
@@ -26,6 +26,7 @@ interface ScenariosViewProps {
   sprints: Sprint[];
   scenarios: Scenario[];
   suites: TestSuite[];
+  teamMembers: TeamMember[];
   onAddScenario: (scenario: Omit<Scenario, "id" | "createdAt" | "updatedAt">) => void;
   onUpdateScenario: (id: string, updates: Partial<Scenario>) => void;
   onAddSuite: (suite: Omit<TestSuite, "id" | "createdAt" | "order">) => void;
@@ -41,6 +42,7 @@ export function ScenariosView({
   sprints,
   scenarios,
   suites,
+  teamMembers,
   onAddScenario,
   onUpdateScenario,
   onAddSuite,
@@ -267,6 +269,7 @@ export function ScenariosView({
             companies={companies}
             sprints={sprints}
             suites={suites.filter((s) => s.companyId === filterCompany)}
+            teamMembers={teamMembers.filter((m) => m.companyId === filterCompany)}
             onSave={handleSave}
             onCancel={() => setIsDialogOpen(false)}
             initialData={editingScenario || undefined}

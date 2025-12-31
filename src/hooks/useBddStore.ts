@@ -1,5 +1,5 @@
-import { useState, useCallback, useMemo } from "react";
-import { Company, Sprint, Scenario, TestSuite, SuiteTreeNode } from "@/types/bdd";
+import { useState, useCallback } from "react";
+import { Company, Sprint, Scenario, TestSuite, SuiteTreeNode, TeamMember, TestRun, DailyStats } from "@/types/bdd";
 
 // Initial mock data
 const initialCompanies: Company[] = [
@@ -45,54 +45,19 @@ const initialSprints: Sprint[] = [
 ];
 
 const initialSuites: TestSuite[] = [
-  {
-    id: "suite-1",
-    name: "Autenticação",
-    companyId: "1",
-    parentId: null,
-    order: 0,
-    createdAt: new Date("2024-12-01"),
-  },
-  {
-    id: "suite-2",
-    name: "Login Sucesso",
-    companyId: "1",
-    parentId: "suite-1",
-    order: 0,
-    createdAt: new Date("2024-12-01"),
-  },
-  {
-    id: "suite-3",
-    name: "Login Falha",
-    companyId: "1",
-    parentId: "suite-1",
-    order: 1,
-    createdAt: new Date("2024-12-01"),
-  },
-  {
-    id: "suite-4",
-    name: "E-commerce",
-    companyId: "1",
-    parentId: null,
-    order: 1,
-    createdAt: new Date("2024-12-01"),
-  },
-  {
-    id: "suite-5",
-    name: "Carrinho",
-    companyId: "1",
-    parentId: "suite-4",
-    order: 0,
-    createdAt: new Date("2024-12-01"),
-  },
-  {
-    id: "suite-6",
-    name: "Transações",
-    companyId: "2",
-    parentId: null,
-    order: 0,
-    createdAt: new Date("2024-12-01"),
-  },
+  { id: "suite-1", name: "Autenticação", companyId: "1", parentId: null, order: 0, createdAt: new Date("2024-12-01") },
+  { id: "suite-2", name: "Login Sucesso", companyId: "1", parentId: "suite-1", order: 0, createdAt: new Date("2024-12-01") },
+  { id: "suite-3", name: "Login Falha", companyId: "1", parentId: "suite-1", order: 1, createdAt: new Date("2024-12-01") },
+  { id: "suite-4", name: "E-commerce", companyId: "1", parentId: null, order: 1, createdAt: new Date("2024-12-01") },
+  { id: "suite-5", name: "Carrinho", companyId: "1", parentId: "suite-4", order: 0, createdAt: new Date("2024-12-01") },
+  { id: "suite-6", name: "Transações", companyId: "2", parentId: null, order: 0, createdAt: new Date("2024-12-01") },
+];
+
+const initialTeamMembers: TeamMember[] = [
+  { id: "user-1", name: "Ana Silva", email: "ana@techcorp.com", companyId: "1" },
+  { id: "user-2", name: "Carlos Santos", email: "carlos@techcorp.com", companyId: "1" },
+  { id: "user-3", name: "Maria Oliveira", email: "maria@techcorp.com", companyId: "1" },
+  { id: "user-4", name: "João Lima", email: "joao@financeapp.com", companyId: "2" },
 ];
 
 const initialScenarios: Scenario[] = [
@@ -107,6 +72,8 @@ const initialScenarios: Scenario[] = [
     when: ["ele preenche email e senha corretamente", "clica no botão entrar"],
     then: ["deve ser redirecionado para o dashboard", "deve ver uma mensagem de boas-vindas"],
     tags: ["smoke", "auth", "critical"],
+    priority: "critical",
+    assigneeId: "user-1",
     estimatedDuration: 5,
     status: "passed",
     createdAt: new Date("2024-12-01"),
@@ -123,6 +90,8 @@ const initialScenarios: Scenario[] = [
     when: ["ele clica no botão adicionar ao carrinho"],
     then: ["o produto deve aparecer no carrinho", "o contador do carrinho deve atualizar"],
     tags: ["e-commerce", "cart"],
+    priority: "high",
+    assigneeId: "user-2",
     estimatedDuration: 8,
     status: "ready",
     createdAt: new Date("2024-12-02"),
@@ -139,6 +108,8 @@ const initialScenarios: Scenario[] = [
     when: ["ele realiza uma transferência"],
     then: ["o saldo deve ser atualizado", "um comprovante deve ser gerado"],
     tags: ["finance", "transaction", "critical"],
+    priority: "critical",
+    assigneeId: "user-4",
     estimatedDuration: 10,
     status: "failed",
     createdAt: new Date("2024-11-20"),
@@ -155,6 +126,8 @@ const initialScenarios: Scenario[] = [
     when: ["ele preenche email correto e senha incorreta", "clica no botão entrar"],
     then: ["deve ver uma mensagem de erro", "deve permanecer na página de login"],
     tags: ["auth", "negative"],
+    priority: "medium",
+    assigneeId: "user-1",
     estimatedDuration: 3,
     status: "passed",
     createdAt: new Date("2024-12-05"),
@@ -162,11 +135,25 @@ const initialScenarios: Scenario[] = [
   },
 ];
 
+// Mock test runs for history
+const initialTestRuns: TestRun[] = [
+  { id: "run-1", scenarioId: "1", executedBy: "user-1", startedAt: new Date("2024-12-10T10:00:00"), completedAt: new Date("2024-12-10T10:05:00"), duration: 5, status: "passed" },
+  { id: "run-2", scenarioId: "1", executedBy: "user-1", startedAt: new Date("2024-12-09T14:00:00"), completedAt: new Date("2024-12-09T14:04:00"), duration: 4, status: "passed" },
+  { id: "run-3", scenarioId: "1", executedBy: "user-2", startedAt: new Date("2024-12-08T09:00:00"), completedAt: new Date("2024-12-08T09:06:00"), duration: 6, status: "failed", errorMessage: "Timeout ao aguardar dashboard" },
+  { id: "run-4", scenarioId: "2", executedBy: "user-2", startedAt: new Date("2024-12-10T11:00:00"), completedAt: new Date("2024-12-10T11:08:00"), duration: 8, status: "passed" },
+  { id: "run-5", scenarioId: "3", executedBy: "user-4", startedAt: new Date("2024-11-25T15:00:00"), completedAt: new Date("2024-11-25T15:12:00"), duration: 12, status: "failed", errorMessage: "Saldo insuficiente não tratado" },
+  { id: "run-6", scenarioId: "4", executedBy: "user-1", startedAt: new Date("2024-12-05T16:00:00"), completedAt: new Date("2024-12-05T16:03:00"), duration: 3, status: "passed" },
+  { id: "run-7", scenarioId: "1", executedBy: "user-1", startedAt: new Date("2024-12-07T10:00:00"), completedAt: new Date("2024-12-07T10:05:00"), duration: 5, status: "passed" },
+  { id: "run-8", scenarioId: "3", executedBy: "user-4", startedAt: new Date("2024-11-24T10:00:00"), completedAt: new Date("2024-11-24T10:11:00"), duration: 11, status: "passed" },
+];
+
 export function useBddStore() {
   const [companies, setCompanies] = useState<Company[]>(initialCompanies);
   const [sprints, setSprints] = useState<Sprint[]>(initialSprints);
   const [scenarios, setScenarios] = useState<Scenario[]>(initialScenarios);
   const [suites, setSuites] = useState<TestSuite[]>(initialSuites);
+  const [teamMembers, setTeamMembers] = useState<TeamMember[]>(initialTeamMembers);
+  const [testRuns, setTestRuns] = useState<TestRun[]>(initialTestRuns);
 
   // Company operations
   const addCompany = useCallback((company: Omit<Company, "id" | "createdAt">) => {
@@ -180,9 +167,7 @@ export function useBddStore() {
   }, []);
 
   const updateCompany = useCallback((id: string, updates: Partial<Company>) => {
-    setCompanies((prev) =>
-      prev.map((c) => (c.id === id ? { ...c, ...updates } : c))
-    );
+    setCompanies((prev) => prev.map((c) => (c.id === id ? { ...c, ...updates } : c)));
   }, []);
 
   const deleteCompany = useCallback((id: string) => {
@@ -194,18 +179,13 @@ export function useBddStore() {
 
   // Sprint operations
   const addSprint = useCallback((sprint: Omit<Sprint, "id">) => {
-    const newSprint: Sprint = {
-      ...sprint,
-      id: Date.now().toString(),
-    };
+    const newSprint: Sprint = { ...sprint, id: Date.now().toString() };
     setSprints((prev) => [...prev, newSprint]);
     return newSprint;
   }, []);
 
   const updateSprint = useCallback((id: string, updates: Partial<Sprint>) => {
-    setSprints((prev) =>
-      prev.map((s) => (s.id === id ? { ...s, ...updates } : s))
-    );
+    setSprints((prev) => prev.map((s) => (s.id === id ? { ...s, ...updates } : s)));
   }, []);
 
   const deleteSprint = useCallback((id: string) => {
@@ -214,132 +194,88 @@ export function useBddStore() {
 
   // Suite operations
   const addSuite = useCallback((suite: Omit<TestSuite, "id" | "createdAt" | "order">) => {
-    const siblingCount = suites.filter(
-      (s) => s.companyId === suite.companyId && s.parentId === suite.parentId
-    ).length;
-    
-    const newSuite: TestSuite = {
-      ...suite,
-      id: `suite-${Date.now()}`,
-      order: siblingCount,
-      createdAt: new Date(),
-    };
+    const siblingCount = suites.filter((s) => s.companyId === suite.companyId && s.parentId === suite.parentId).length;
+    const newSuite: TestSuite = { ...suite, id: `suite-${Date.now()}`, order: siblingCount, createdAt: new Date() };
     setSuites((prev) => [...prev, newSuite]);
     return newSuite;
   }, [suites]);
 
   const updateSuite = useCallback((id: string, updates: Partial<TestSuite>) => {
-    setSuites((prev) =>
-      prev.map((s) => (s.id === id ? { ...s, ...updates } : s))
-    );
+    setSuites((prev) => prev.map((s) => (s.id === id ? { ...s, ...updates } : s)));
   }, []);
 
   const deleteSuite = useCallback((id: string) => {
-    // Get all descendant suite IDs
     const getDescendantIds = (parentId: string): string[] => {
       const children = suites.filter((s) => s.parentId === parentId);
       return children.flatMap((c) => [c.id, ...getDescendantIds(c.id)]);
     };
-    
     const idsToDelete = [id, ...getDescendantIds(id)];
-    
     setSuites((prev) => prev.filter((s) => !idsToDelete.includes(s.id)));
-    // Move scenarios to no suite
-    setScenarios((prev) =>
-      prev.map((s) => (idsToDelete.includes(s.suiteId || "") ? { ...s, suiteId: undefined } : s))
-    );
+    setScenarios((prev) => prev.map((s) => (idsToDelete.includes(s.suiteId || "") ? { ...s, suiteId: undefined } : s)));
   }, [suites]);
 
   const moveSuite = useCallback((suiteId: string, newParentId: string | null, newOrder: number) => {
     setSuites((prev) => {
       const suite = prev.find((s) => s.id === suiteId);
       if (!suite) return prev;
-
-      // Update siblings order in old location
-      const oldSiblings = prev.filter(
-        (s) => s.parentId === suite.parentId && s.id !== suiteId
-      );
-      
-      // Update siblings order in new location
-      const newSiblings = prev.filter(
-        (s) => s.parentId === newParentId && s.id !== suiteId
-      );
-
+      const oldSiblings = prev.filter((s) => s.parentId === suite.parentId && s.id !== suiteId);
+      const newSiblings = prev.filter((s) => s.parentId === newParentId && s.id !== suiteId);
       return prev.map((s) => {
-        if (s.id === suiteId) {
-          return { ...s, parentId: newParentId, order: newOrder };
-        }
-        
-        // Reorder old siblings
+        if (s.id === suiteId) return { ...s, parentId: newParentId, order: newOrder };
         if (s.parentId === suite.parentId && s.id !== suiteId) {
           const idx = oldSiblings.findIndex((os) => os.id === s.id);
           return { ...s, order: idx };
         }
-        
-        // Reorder new siblings
         if (s.parentId === newParentId && s.id !== suiteId) {
           const idx = newSiblings.findIndex((ns) => ns.id === s.id);
-          if (idx >= newOrder) {
-            return { ...s, order: idx + 1 };
-          }
+          if (idx >= newOrder) return { ...s, order: idx + 1 };
         }
-        
         return s;
       });
     });
   }, []);
 
   const moveScenarioToSuite = useCallback((scenarioId: string, suiteId: string | undefined) => {
-    setScenarios((prev) =>
-      prev.map((s) => (s.id === scenarioId ? { ...s, suiteId, updatedAt: new Date() } : s))
-    );
+    setScenarios((prev) => prev.map((s) => (s.id === scenarioId ? { ...s, suiteId, updatedAt: new Date() } : s)));
   }, []);
 
-  // Build suite tree for a company
   const getSuiteTree = useCallback((companyId: string): SuiteTreeNode[] => {
-    const companySuites = suites
-      .filter((s) => s.companyId === companyId)
-      .sort((a, b) => a.order - b.order);
-    
+    const companySuites = suites.filter((s) => s.companyId === companyId).sort((a, b) => a.order - b.order);
     const companyScenarios = scenarios.filter((s) => s.companyId === companyId);
-
     const buildTree = (parentId: string | null): SuiteTreeNode[] => {
       return companySuites
         .filter((s) => s.parentId === parentId)
-        .map((suite) => ({
-          ...suite,
-          children: buildTree(suite.id),
-          scenarios: companyScenarios.filter((sc) => sc.suiteId === suite.id),
-        }));
+        .map((suite) => ({ ...suite, children: buildTree(suite.id), scenarios: companyScenarios.filter((sc) => sc.suiteId === suite.id) }));
     };
-
     return buildTree(null);
   }, [suites, scenarios]);
 
   // Scenario operations
   const addScenario = useCallback((scenario: Omit<Scenario, "id" | "createdAt" | "updatedAt">) => {
     const now = new Date();
-    const newScenario: Scenario = {
-      ...scenario,
-      id: Date.now().toString(),
-      createdAt: now,
-      updatedAt: now,
-    };
+    const newScenario: Scenario = { ...scenario, id: Date.now().toString(), createdAt: now, updatedAt: now };
     setScenarios((prev) => [...prev, newScenario]);
     return newScenario;
   }, []);
 
   const updateScenario = useCallback((id: string, updates: Partial<Scenario>) => {
-    setScenarios((prev) =>
-      prev.map((s) =>
-        s.id === id ? { ...s, ...updates, updatedAt: new Date() } : s
-      )
-    );
+    setScenarios((prev) => prev.map((s) => (s.id === id ? { ...s, ...updates, updatedAt: new Date() } : s)));
   }, []);
 
   const deleteScenario = useCallback((id: string) => {
     setScenarios((prev) => prev.filter((s) => s.id !== id));
   }, []);
+
+  // Test run operations
+  const addTestRun = useCallback((run: Omit<TestRun, "id">) => {
+    const newRun: TestRun = { ...run, id: `run-${Date.now()}` };
+    setTestRuns((prev) => [...prev, newRun]);
+    return newRun;
+  }, []);
+
+  const getScenarioRuns = useCallback((scenarioId: string) => {
+    return testRuns.filter((r) => r.scenarioId === scenarioId).sort((a, b) => b.startedAt.getTime() - a.startedAt.getTime());
+  }, [testRuns]);
 
   // Stats helpers
   const getCompanyStats = useCallback((companyId: string) => {
@@ -362,16 +298,50 @@ export function useBddStore() {
     };
   }, [scenarios]);
 
-  // Get scenarios without suite
   const getUnsortedScenarios = useCallback((companyId: string) => {
     return scenarios.filter((s) => s.companyId === companyId && !s.suiteId);
   }, [scenarios]);
+
+  // Daily stats for charts
+  const getDailyStats = useCallback((companyId: string, days: number = 7): DailyStats[] => {
+    const companyRuns = testRuns.filter((r) => {
+      const scenario = scenarios.find((s) => s.id === r.scenarioId);
+      return scenario?.companyId === companyId;
+    });
+
+    const stats: DailyStats[] = [];
+    for (let i = days - 1; i >= 0; i--) {
+      const date = new Date();
+      date.setDate(date.getDate() - i);
+      const dateStr = date.toISOString().split("T")[0];
+      
+      const dayRuns = companyRuns.filter((r) => r.startedAt.toISOString().split("T")[0] === dateStr);
+      stats.push({
+        date: dateStr,
+        passed: dayRuns.filter((r) => r.status === "passed").length,
+        failed: dayRuns.filter((r) => r.status === "failed").length,
+        total: dayRuns.length,
+      });
+    }
+    return stats;
+  }, [testRuns, scenarios]);
+
+  // Get team member by ID
+  const getTeamMember = useCallback((id: string) => {
+    return teamMembers.find((m) => m.id === id);
+  }, [teamMembers]);
+
+  const getCompanyTeamMembers = useCallback((companyId: string) => {
+    return teamMembers.filter((m) => m.companyId === companyId);
+  }, [teamMembers]);
 
   return {
     companies,
     sprints,
     scenarios,
     suites,
+    teamMembers,
+    testRuns,
     addCompany,
     updateCompany,
     deleteCompany,
@@ -388,7 +358,12 @@ export function useBddStore() {
     addScenario,
     updateScenario,
     deleteScenario,
+    addTestRun,
+    getScenarioRuns,
     getCompanyStats,
     getSprintStats,
+    getDailyStats,
+    getTeamMember,
+    getCompanyTeamMembers,
   };
 }
