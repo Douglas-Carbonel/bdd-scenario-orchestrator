@@ -3,7 +3,7 @@ import { Plus, X, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Scenario, Company, Sprint } from "@/types/bdd";
+import { Scenario, Company, Sprint, TestSuite } from "@/types/bdd";
 import {
   Select,
   SelectContent,
@@ -15,16 +15,27 @@ import {
 interface ScenarioFormProps {
   companies: Company[];
   sprints: Sprint[];
+  suites: TestSuite[];
   onSave: (scenario: Omit<Scenario, "id" | "createdAt" | "updatedAt">) => void;
   onCancel: () => void;
   initialData?: Scenario;
+  defaultSuiteId?: string;
 }
 
-export function ScenarioForm({ companies, sprints, onSave, onCancel, initialData }: ScenarioFormProps) {
+export function ScenarioForm({ 
+  companies, 
+  sprints, 
+  suites,
+  onSave, 
+  onCancel, 
+  initialData,
+  defaultSuiteId,
+}: ScenarioFormProps) {
   const [title, setTitle] = useState(initialData?.title || "");
   const [feature, setFeature] = useState(initialData?.feature || "");
-  const [companyId, setCompanyId] = useState(initialData?.companyId || "");
+  const [companyId, setCompanyId] = useState(initialData?.companyId || companies[0]?.id || "");
   const [sprintId, setSprintId] = useState(initialData?.sprintId || "");
+  const [suiteId, setSuiteId] = useState(initialData?.suiteId || defaultSuiteId || "");
   const [given, setGiven] = useState<string[]>(initialData?.given || [""]);
   const [when, setWhen] = useState<string[]>(initialData?.when || [""]);
   const [then, setThen] = useState<string[]>(initialData?.then || [""]);
@@ -79,16 +90,34 @@ export function ScenarioForm({ companies, sprints, onSave, onCancel, initialData
       feature,
       companyId,
       sprintId: sprintId || undefined,
+      suiteId: suiteId || undefined,
       given: given.filter((g) => g.trim()),
       when: when.filter((w) => w.trim()),
       then: then.filter((t) => t.trim()),
       tags,
       estimatedDuration,
-      status: "draft",
+      status: initialData?.status || "draft",
     });
   };
 
   const filteredSprints = sprints.filter((s) => s.companyId === companyId);
+  const filteredSuites = suites.filter((s) => s.companyId === companyId);
+
+  // Build suite path for display
+  const getSuitePath = (suite: TestSuite): string => {
+    const path: string[] = [suite.name];
+    let current = suite;
+    while (current.parentId) {
+      const parent = suites.find((s) => s.id === current.parentId);
+      if (parent) {
+        path.unshift(parent.name);
+        current = parent;
+      } else {
+        break;
+      }
+    }
+    return path.join(" / ");
+  };
 
   return (
     <div className="space-y-6">
@@ -115,7 +144,7 @@ export function ScenarioForm({ companies, sprints, onSave, onCancel, initialData
         </div>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <div className="space-y-2">
           <Label>Empresa</Label>
           <Select value={companyId} onValueChange={setCompanyId}>
@@ -132,12 +161,29 @@ export function ScenarioForm({ companies, sprints, onSave, onCancel, initialData
           </Select>
         </div>
         <div className="space-y-2">
+          <Label>Test Suite</Label>
+          <Select value={suiteId} onValueChange={setSuiteId}>
+            <SelectTrigger>
+              <SelectValue placeholder="Sem pasta" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="">Sem pasta</SelectItem>
+              {filteredSuites.map((suite) => (
+                <SelectItem key={suite.id} value={suite.id}>
+                  {getSuitePath(suite)}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="space-y-2">
           <Label>Sprint</Label>
           <Select value={sprintId} onValueChange={setSprintId} disabled={!companyId}>
             <SelectTrigger>
               <SelectValue placeholder="Selecione a sprint" />
             </SelectTrigger>
             <SelectContent>
+              <SelectItem value="">Nenhuma</SelectItem>
               {filteredSprints.map((sprint) => (
                 <SelectItem key={sprint.id} value={sprint.id}>
                   {sprint.name}
@@ -147,7 +193,7 @@ export function ScenarioForm({ companies, sprints, onSave, onCancel, initialData
           </Select>
         </div>
         <div className="space-y-2">
-          <Label htmlFor="duration">Duração Estimada (min)</Label>
+          <Label htmlFor="duration">Duração (min)</Label>
           <Input
             id="duration"
             type="number"

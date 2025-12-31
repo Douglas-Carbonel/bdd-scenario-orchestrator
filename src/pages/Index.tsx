@@ -14,12 +14,19 @@ const Index = () => {
     companies,
     sprints,
     scenarios,
+    suites,
     addCompany,
     updateCompany,
     deleteCompany,
     addSprint,
     addScenario,
     updateScenario,
+    addSuite,
+    updateSuite,
+    deleteSuite,
+    moveSuite,
+    getSuiteTree,
+    getUnsortedScenarios,
     getSprintStats,
   } = useBddStore();
 
@@ -50,8 +57,15 @@ const Index = () => {
             companies={companies}
             sprints={sprints}
             scenarios={scenarios}
+            suites={suites}
             onAddScenario={addScenario}
             onUpdateScenario={updateScenario}
+            onAddSuite={addSuite}
+            onUpdateSuite={updateSuite}
+            onDeleteSuite={deleteSuite}
+            onMoveSuite={moveSuite}
+            getSuiteTree={getSuiteTree}
+            getUnsortedScenarios={getUnsortedScenarios}
           />
         );
       case "sprints":
