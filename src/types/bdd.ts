@@ -14,11 +14,21 @@ export interface Sprint {
   status: 'planned' | 'active' | 'completed';
 }
 
+export interface TestSuite {
+  id: string;
+  name: string;
+  companyId: string;
+  parentId: string | null; // null = root level
+  order: number;
+  createdAt: Date;
+}
+
 export interface Scenario {
   id: string;
   title: string;
   companyId: string;
   sprintId?: string;
+  suiteId?: string; // NEW: link to test suite
   feature: string;
   given: string[];
   when: string[];
@@ -38,4 +48,10 @@ export interface TestRun {
   completedAt?: Date;
   status: 'running' | 'passed' | 'failed';
   logs?: string[];
+}
+
+// Helper type for tree structure
+export interface SuiteTreeNode extends TestSuite {
+  children: SuiteTreeNode[];
+  scenarios: Scenario[];
 }
