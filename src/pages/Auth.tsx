@@ -7,8 +7,15 @@ import { toast } from "sonner";
 import { Play, Terminal, CheckCircle2, XCircle, Loader2 } from "lucide-react";
 import { z } from "zod";
 
-const authSchema = z.object({
+const loginSchema = z.object({
   email: z.string().trim().email({ message: "Email inválido" }),
+  password: z.string().min(6, { message: "Senha deve ter no mínimo 6 caracteres" }),
+});
+
+const signupSchema = z.object({
+  name: z.string().trim().min(2, { message: "Nome deve ter no mínimo 2 caracteres" }),
+  email: z.string().trim().email({ message: "Email inválido" }),
+  company: z.string().trim().min(2, { message: "Empresa deve ter no mínimo 2 caracteres" }),
   password: z.string().min(6, { message: "Senha deve ter no mínimo 6 caracteres" }),
 });
 
@@ -20,7 +27,9 @@ type TestStep = {
 
 const Auth = () => {
   const [isLogin, setIsLogin] = useState(true);
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
+  const [company, setCompany] = useState("");
   const [password, setPassword] = useState("");
   const [isExecuting, setIsExecuting] = useState(false);
   const [testSteps, setTestSteps] = useState<TestStep[]>([]);
@@ -68,8 +77,10 @@ const Auth = () => {
 
   const getSignupSteps = (): TestStep[] => [
     { type: "given", text: `I am on the signup page`, status: "pending" },
-    { type: "given", text: `I want to create account for "${email}"`, status: "pending" },
+    { type: "given", text: `I want to create account for "${name}"`, status: "pending" },
+    { type: "when", text: `I enter my name "${name}"`, status: "pending" },
     { type: "when", text: `I enter my email "${email}"`, status: "pending" },
+    { type: "when", text: `I enter my company "${company}"`, status: "pending" },
     { type: "when", text: `I enter my password "••••••••"`, status: "pending" },
     { type: "when", text: `I click the "Execute Test Suite" button`, status: "pending" },
     { type: "then", text: `My account should be created`, status: "pending" },
@@ -83,7 +94,12 @@ const Auth = () => {
   };
 
   const runTestSuite = async () => {
-    const result = authSchema.safeParse({ email, password });
+    const schema = isLogin ? loginSchema : signupSchema;
+    const data = isLogin 
+      ? { email, password } 
+      : { name, email, company, password };
+    
+    const result = schema.safeParse(data);
     if (!result.success) {
       const errorMsg = result.error.errors[0]?.message || "Dados inválidos";
       toast.error(errorMsg);
@@ -126,7 +142,13 @@ const Auth = () => {
         const { error } = await supabase.auth.signUp({
           email: email.trim(),
           password,
-          options: { emailRedirectTo: `${window.location.origin}/` }
+          options: { 
+            emailRedirectTo: `${window.location.origin}/`,
+            data: {
+              name: name.trim(),
+              company: company.trim(),
+            }
+          }
         });
         
         if (error) throw error;
@@ -295,9 +317,26 @@ const Auth = () => {
           {!showSteps && (
             <div className="space-y-4 mb-6 animate-fade-in">
               <div className="font-mono text-sm text-slate-400 mb-2">
-                <span className="text-green-400">&gt;_</span> Enter test credentials
+                <span className="text-green-400">&gt;_</span> {isLogin ? "Enter test credentials" : "Enter registration data"}
               </div>
               
+              {/* Name field - only for signup */}
+              {!isLogin && (
+                <div>
+                  <label className="font-mono text-sm text-slate-400 flex items-center gap-2 mb-2">
+                    <span className="text-yellow-400">$</span> name
+                  </label>
+                  <Input
+                    type="text"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    placeholder="John Doe"
+                    className="bg-[#243342] border-[#34495e] font-mono text-white placeholder:text-slate-500 focus:border-blue-400 focus:ring-blue-400/20"
+                    disabled={isExecuting}
+                  />
+                </div>
+              )}
+
               <div>
                 <label className="font-mono text-sm text-slate-400 flex items-center gap-2 mb-2">
                   <span className="text-yellow-400">$</span> email
@@ -311,6 +350,23 @@ const Auth = () => {
                   disabled={isExecuting}
                 />
               </div>
+
+              {/* Company field - only for signup */}
+              {!isLogin && (
+                <div>
+                  <label className="font-mono text-sm text-slate-400 flex items-center gap-2 mb-2">
+                    <span className="text-yellow-400">$</span> company
+                  </label>
+                  <Input
+                    type="text"
+                    value={company}
+                    onChange={(e) => setCompany(e.target.value)}
+                    placeholder="Acme Corp"
+                    className="bg-[#243342] border-[#34495e] font-mono text-white placeholder:text-slate-500 focus:border-blue-400 focus:ring-blue-400/20"
+                    disabled={isExecuting}
+                  />
+                </div>
+              )}
 
               <div>
                 <label className="font-mono text-sm text-slate-400 flex items-center gap-2 mb-2">
