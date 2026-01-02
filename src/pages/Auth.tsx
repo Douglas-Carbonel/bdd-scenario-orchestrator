@@ -6,7 +6,6 @@ import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { Play, Terminal, CheckCircle2, XCircle, Loader2 } from "lucide-react";
 import { z } from "zod";
-import logo from "@/assets/logo-4qa-dark.png";
 
 const authSchema = z.object({
   email: z.string().trim().email({ message: "Email inválido" }),
@@ -203,7 +202,9 @@ const Auth = () => {
       <div className="relative z-10 w-full max-w-lg animate-scale-in">
         {/* Logo Header - integrated into card */}
         <div className="bg-[#1a252f] rounded-t-xl border border-[#34495e] border-b-0 px-6 py-8 flex flex-col items-center">
-          <img src={logo} alt="4QA" className="h-20 w-auto mb-3" />
+          <h1 className="text-4xl font-bold text-white tracking-tight mb-2">
+            <span className="text-blue-400">4</span>QA
+          </h1>
           <p className="text-slate-400 font-mono text-sm">
             Behavior-Driven Authentication
           </p>
