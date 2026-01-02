@@ -26,7 +26,7 @@ type TestStep = {
 };
 
 const Auth = () => {
-  const [isLogin, setIsLogin] = useState(true);
+  const [mode, setMode] = useState<"login" | "signup" | "forgot">("login");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [company, setCompany] = useState("");
@@ -37,10 +37,17 @@ const Auth = () => {
   const [isTransitioning, setIsTransitioning] = useState(false);
   const navigate = useNavigate();
 
-  const handleModeSwitch = () => {
+  const isLogin = mode === "login";
+  const isSignup = mode === "signup";
+  const isForgot = mode === "forgot";
+
+  const handleModeSwitch = (newMode: "login" | "signup" | "forgot") => {
+    if (mode === newMode) return;
     setIsTransitioning(true);
     setTimeout(() => {
-      setIsLogin(!isLogin);
+      setMode(newMode);
+      setShowSteps(false);
+      setTestSteps([]);
       setTimeout(() => {
         setIsTransitioning(false);
       }, 50);
@@ -87,6 +94,15 @@ const Auth = () => {
     { type: "then", text: `I should receive a confirmation`, status: "pending" },
   ];
 
+  const getForgotSteps = (): TestStep[] => [
+    { type: "given", text: `I am on the password recovery page`, status: "pending" },
+    { type: "given", text: `I have an account with email "${email}"`, status: "pending" },
+    { type: "when", text: `I enter my email "${email}"`, status: "pending" },
+    { type: "when", text: `I click the "Execute Test Suite" button`, status: "pending" },
+    { type: "then", text: `A recovery email should be sent`, status: "pending" },
+    { type: "then", text: `I should receive instructions`, status: "pending" },
+  ];
+
   const animateStep = (index: number, status: "running" | "passed" | "failed") => {
     setTestSteps(prev => prev.map((step, i) => 
       i === index ? { ...step, status } : step
@@ -94,21 +110,30 @@ const Auth = () => {
   };
 
   const runTestSuite = async () => {
-    const schema = isLogin ? loginSchema : signupSchema;
-    const data = isLogin 
-      ? { email, password } 
-      : { name, email, company, password };
-    
-    const result = schema.safeParse(data);
-    if (!result.success) {
-      const errorMsg = result.error.errors[0]?.message || "Dados inválidos";
-      toast.error(errorMsg);
-      return;
+    // Validate based on mode
+    if (isForgot) {
+      const emailResult = z.string().trim().email({ message: "Email inválido" }).safeParse(email);
+      if (!emailResult.success) {
+        toast.error(emailResult.error.errors[0]?.message || "Email inválido");
+        return;
+      }
+    } else {
+      const schema = isLogin ? loginSchema : signupSchema;
+      const data = isLogin 
+        ? { email, password } 
+        : { name, email, company, password };
+      
+      const result = schema.safeParse(data);
+      if (!result.success) {
+        const errorMsg = result.error.errors[0]?.message || "Dados inválidos";
+        toast.error(errorMsg);
+        return;
+      }
     }
 
     setIsExecuting(true);
     setShowSteps(true);
-    const steps = isLogin ? getLoginSteps() : getSignupSteps();
+    const steps = isForgot ? getForgotSteps() : (isLogin ? getLoginSteps() : getSignupSteps());
     setTestSteps(steps);
 
     // Animate through steps
@@ -121,7 +146,26 @@ const Auth = () => {
 
     // Execute actual auth
     try {
-      if (isLogin) {
+      if (isForgot) {
+        animateStep(steps.length - 2, "running");
+        const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
+          redirectTo: `${window.location.origin}/auth?mode=reset`,
+        });
+        
+        if (error) throw error;
+        
+        animateStep(steps.length - 2, "passed");
+        await new Promise(resolve => setTimeout(resolve, 300));
+        animateStep(steps.length - 1, "running");
+        await new Promise(resolve => setTimeout(resolve, 300));
+        animateStep(steps.length - 1, "passed");
+        
+        toast.success("✓ All tests passed! Verifique seu email para redefinir a senha.");
+        setTimeout(() => {
+          setShowSteps(false);
+          setTestSteps([]);
+        }, 2000);
+      } else if (isLogin) {
         animateStep(steps.length - 2, "running");
         const { error } = await supabase.auth.signInWithPassword({ 
           email: email.trim(), 
@@ -247,7 +291,7 @@ const Auth = () => {
         <div className="bg-secondary border-x border-border px-2 py-1 flex items-center gap-1">
           {/* Login tab */}
           <button
-            onClick={() => !isLogin && handleModeSwitch()}
+            onClick={() => handleModeSwitch("login")}
             disabled={isExecuting}
             className={`px-3 py-1.5 font-mono text-xs flex items-center gap-2 rounded-t transition-all duration-200 ${
               isLogin 
@@ -260,16 +304,29 @@ const Auth = () => {
           </button>
           {/* Signup tab */}
           <button
-            onClick={() => isLogin && handleModeSwitch()}
+            onClick={() => handleModeSwitch("signup")}
             disabled={isExecuting}
             className={`px-3 py-1.5 font-mono text-xs flex items-center gap-2 rounded-t transition-all duration-200 ${
-              !isLogin 
+              isSignup 
                 ? "bg-card text-card-foreground border-t border-x border-border" 
                 : "text-muted-foreground hover:text-foreground hover:bg-card/50"
             }`}
           >
             <Terminal className="h-3 w-3" />
             signup.feature
+          </button>
+          {/* Forgot tab */}
+          <button
+            onClick={() => handleModeSwitch("forgot")}
+            disabled={isExecuting}
+            className={`px-3 py-1.5 font-mono text-xs flex items-center gap-2 rounded-t transition-all duration-200 ${
+              isForgot 
+                ? "bg-card text-card-foreground border-t border-x border-border" 
+                : "text-muted-foreground hover:text-foreground hover:bg-card/50"
+            }`}
+          >
+            <Terminal className="h-3 w-3" />
+            recover.feature
           </button>
         </div>
 
@@ -281,12 +338,14 @@ const Auth = () => {
           <div className="font-mono text-sm mb-6">
             <span className="text-given">Feature:</span>
             <span className="text-muted-foreground ml-2">
-              {isLogin ? "User Authentication" : "User Registration"}
+              {isLogin ? "User Authentication" : isSignup ? "User Registration" : "Password Recovery"}
             </span>
             <div className="text-muted-foreground/70 text-xs mt-1 ml-2">
               {isLogin 
                 ? "As a registered user, I want to login to access my dashboard"
-                : "As a new user, I want to create an account to start testing"
+                : isSignup 
+                ? "As a new user, I want to create an account to start testing"
+                : "As a user, I want to recover my password to regain access"
               }
             </div>
           </div>
@@ -317,11 +376,15 @@ const Auth = () => {
           {!showSteps && (
             <div className="space-y-4 mb-6 animate-fade-in">
               <div className="font-mono text-sm text-muted-foreground mb-2">
-                <span className="text-then">&gt;_</span> {isLogin ? "Enter test credentials" : "Enter registration data"}
+                <span className="text-then">&gt;_</span> {
+                  isLogin ? "Enter test credentials" 
+                  : isSignup ? "Enter registration data" 
+                  : "Enter your email to recover password"
+                }
               </div>
               
               {/* Name field - only for signup */}
-              {!isLogin && (
+              {isSignup && (
                 <div>
                   <label className="font-mono text-sm text-muted-foreground flex items-center gap-2 mb-2">
                     <span className="text-warning">$</span> name
@@ -352,7 +415,7 @@ const Auth = () => {
               </div>
 
               {/* Company field - only for signup */}
-              {!isLogin && (
+              {isSignup && (
                 <div>
                   <label className="font-mono text-sm text-muted-foreground flex items-center gap-2 mb-2">
                     <span className="text-warning">$</span> company
@@ -368,19 +431,22 @@ const Auth = () => {
                 </div>
               )}
 
-              <div>
-                <label className="font-mono text-sm text-muted-foreground flex items-center gap-2 mb-2">
-                  <span className="text-warning">$</span> password
-                </label>
-                <Input
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••••••"
-                  className="bg-secondary border-border font-mono text-foreground placeholder:text-muted-foreground/50 focus:border-primary focus:ring-primary/20"
-                  disabled={isExecuting}
-                />
-              </div>
+              {/* Password field - only for login and signup */}
+              {!isForgot && (
+                <div>
+                  <label className="font-mono text-sm text-muted-foreground flex items-center gap-2 mb-2">
+                    <span className="text-warning">$</span> password
+                  </label>
+                  <Input
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="••••••••"
+                    className="bg-secondary border-border font-mono text-foreground placeholder:text-muted-foreground/50 focus:border-primary focus:ring-primary/20"
+                    disabled={isExecuting}
+                  />
+                </div>
+              )}
             </div>
           )}
 
