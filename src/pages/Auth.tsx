@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { Shield, Loader2, Mail, Lock, UserPlus, LogIn } from "lucide-react";
+import { Shield, Loader2, Mail, Lock, UserPlus } from "lucide-react";
 import { z } from "zod";
 import logo4QA from "@/assets/logo-4qa.png";
 
@@ -129,9 +129,9 @@ const Auth = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100 relative overflow-hidden">
+    <div className="min-h-screen flex items-center justify-center bg-slate-50 relative overflow-hidden">
       {/* Background Pattern */}
-      <div className="absolute inset-0 opacity-[0.03]">
+      <div className="absolute inset-0 opacity-[0.02]">
         <svg className="w-full h-full" xmlns="http://www.w3.org/2000/svg">
           <defs>
             <pattern id="circuit" x="0" y="0" width="100" height="100" patternUnits="userSpaceOnUse">
@@ -150,116 +150,140 @@ const Auth = () => {
         </svg>
       </div>
 
-      <div className="relative z-10 w-full max-w-md px-6">
-        {/* Logo */}
-        <div className="flex justify-center mb-8">
-          <img 
-            src={logo4QA} 
-            alt="4QA Logo" 
-            className="w-32 h-32 object-contain drop-shadow-lg animate-fade-in"
-          />
-        </div>
-
-        {/* Card */}
-        <div className="bg-white/80 backdrop-blur-sm rounded-3xl shadow-xl p-8 border border-slate-200/50">
-          <h1 className="text-2xl font-display font-bold text-center text-slate-800 mb-2">
-            {isLogin ? "Bem-vindo de volta" : "Criar conta"}
-          </h1>
-          <p className="text-sm text-muted-foreground text-center mb-6">
-            {isLogin ? "Entre para continuar" : "Cadastre-se para começar"}
-          </p>
-
-          <form onSubmit={handleAuth} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="email" className="text-slate-700">Email</Label>
-              <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="seu@email.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="pl-10 h-12 rounded-xl border-slate-300 bg-white/50 focus:bg-white transition-colors"
-                  disabled={loading}
+      <div className="relative z-10 w-full max-w-sm mx-4">
+        {/* Card com Logo Integrado */}
+        <div className="bg-white rounded-3xl shadow-2xl shadow-slate-200/50 overflow-hidden border border-slate-100">
+          {/* Header com Logo */}
+          <div className="bg-gradient-to-br from-slate-800 via-slate-700 to-slate-800 px-8 py-10 relative overflow-hidden">
+            {/* Decoração de circuitos no header */}
+            <div className="absolute inset-0 opacity-10">
+              <svg className="w-full h-full" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                  <pattern id="circuit-header" x="0" y="0" width="60" height="60" patternUnits="userSpaceOnUse">
+                    <path d="M5 5 L5 20 L20 20" fill="none" stroke="white" strokeWidth="0.5"/>
+                    <circle cx="5" cy="5" r="2" fill="white"/>
+                    <circle cx="20" cy="20" r="1.5" fill="white"/>
+                    <path d="M40 10 L55 10 L55 25" fill="none" stroke="white" strokeWidth="0.5"/>
+                    <circle cx="40" cy="10" r="1.5" fill="white"/>
+                    <path d="M30 35 L30 50 L45 50" fill="none" stroke="white" strokeWidth="0.5"/>
+                    <circle cx="45" cy="50" r="2" fill="white"/>
+                  </pattern>
+                </defs>
+                <rect width="100%" height="100%" fill="url(#circuit-header)"/>
+              </svg>
+            </div>
+            
+            <div className="relative flex flex-col items-center">
+              <div className="w-24 h-24 bg-white rounded-2xl p-3 shadow-lg mb-4">
+                <img 
+                  src={logo4QA} 
+                  alt="4QA Logo" 
+                  className="w-full h-full object-contain"
                 />
               </div>
-              {errors.email && (
-                <p className="text-sm text-destructive">{errors.email}</p>
-              )}
+              <h1 className="text-xl font-display font-bold text-white">
+                {isLogin ? "Bem-vindo de volta" : "Criar conta"}
+              </h1>
+              <p className="text-slate-300 text-sm mt-1">
+                Plataforma de Gestão de QA
+              </p>
             </div>
+          </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="password" className="text-slate-700">Senha</Label>
-              <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  id="password"
-                  type="password"
-                  placeholder="••••••••"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="pl-10 h-12 rounded-xl border-slate-300 bg-white/50 focus:bg-white transition-colors"
-                  disabled={loading}
-                />
+          {/* Form */}
+          <div className="p-8">
+            <form onSubmit={handleAuth} className="space-y-5">
+              <div className="space-y-2">
+                <Label htmlFor="email" className="text-slate-600 text-sm font-medium">
+                  Email
+                </Label>
+                <div className="relative">
+                  <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                  <Input
+                    id="email"
+                    type="email"
+                    placeholder="seu@email.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="pl-11 h-12 rounded-xl border-slate-200 bg-slate-50/50 focus:bg-white focus:border-slate-400 transition-all"
+                    disabled={loading}
+                  />
+                </div>
+                {errors.email && (
+                  <p className="text-sm text-destructive">{errors.email}</p>
+                )}
               </div>
-              {errors.password && (
-                <p className="text-sm text-destructive">{errors.password}</p>
-              )}
+
+              <div className="space-y-2">
+                <Label htmlFor="password" className="text-slate-600 text-sm font-medium">
+                  Senha
+                </Label>
+                <div className="relative">
+                  <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                  <Input
+                    id="password"
+                    type="password"
+                    placeholder="••••••••"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="pl-11 h-12 rounded-xl border-slate-200 bg-slate-50/50 focus:bg-white focus:border-slate-400 transition-all"
+                    disabled={loading}
+                  />
+                </div>
+                {errors.password && (
+                  <p className="text-sm text-destructive">{errors.password}</p>
+                )}
+              </div>
+
+              <Button
+                type="submit"
+                className="w-full h-12 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-medium text-base gap-2.5 transition-all shadow-lg shadow-slate-300/30 hover:shadow-slate-400/30"
+                disabled={loading}
+              >
+                {loading ? (
+                  <Loader2 className="h-5 w-5 animate-spin" />
+                ) : (
+                  <>
+                    {isLogin ? (
+                      <Shield className="h-5 w-5" />
+                    ) : (
+                      <UserPlus className="h-5 w-5" />
+                    )}
+                    {isLogin ? "Entrar" : "Cadastrar"}
+                  </>
+                )}
+              </Button>
+            </form>
+
+            <div className="mt-6 text-center">
+              <button
+                type="button"
+                onClick={() => {
+                  setIsLogin(!isLogin);
+                  setErrors({});
+                }}
+                className="text-sm text-slate-500 hover:text-slate-700 transition-colors"
+                disabled={loading}
+              >
+                {isLogin ? (
+                  <>
+                    Não tem conta?{" "}
+                    <span className="font-semibold text-slate-700 hover:underline">
+                      Cadastre-se
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    Já tem conta?{" "}
+                    <span className="font-semibold text-slate-700 hover:underline">
+                      Faça login
+                    </span>
+                  </>
+                )}
+              </button>
             </div>
-
-            <Button
-              type="submit"
-              className="w-full h-12 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-medium text-base gap-2 transition-all"
-              disabled={loading}
-            >
-              {loading ? (
-                <Loader2 className="h-5 w-5 animate-spin" />
-              ) : (
-                <>
-                  {isLogin ? (
-                    <Shield className="h-5 w-5" />
-                  ) : (
-                    <UserPlus className="h-5 w-5" />
-                  )}
-                  {isLogin ? "Entrar" : "Cadastrar"}
-                </>
-              )}
-            </Button>
-          </form>
-
-          <div className="mt-6 text-center">
-            <button
-              type="button"
-              onClick={() => {
-                setIsLogin(!isLogin);
-                setErrors({});
-              }}
-              className="text-sm text-slate-600 hover:text-slate-800 transition-colors"
-              disabled={loading}
-            >
-              {isLogin ? (
-                <>
-                  Não tem conta?{" "}
-                  <span className="font-medium text-slate-800 hover:underline">
-                    Cadastre-se
-                  </span>
-                </>
-              ) : (
-                <>
-                  Já tem conta?{" "}
-                  <span className="font-medium text-slate-800 hover:underline">
-                    Faça login
-                  </span>
-                </>
-              )}
-            </button>
           </div>
         </div>
-
-        <p className="text-center text-xs text-slate-500 mt-6">
-          Plataforma de Gestão de QA
-        </p>
       </div>
     </div>
   );
