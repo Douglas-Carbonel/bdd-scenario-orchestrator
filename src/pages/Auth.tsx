@@ -199,28 +199,28 @@ const Auth = () => {
   const getStepColor = (type: TestStep["type"]) => {
     switch (type) {
       case "given":
-        return "text-blue-400";
+        return "text-given";
       case "when":
-        return "text-purple-400";
+        return "text-when";
       case "then":
-        return "text-green-400";
+        return "text-then";
     }
   };
 
   return (
-    <div className="min-h-screen bg-[#2c3e50] flex flex-col items-center justify-center p-4 relative overflow-hidden">
+    <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4 relative overflow-hidden">
       {/* Radial gradient overlay */}
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_rgba(52,73,94,0.8)_0%,_rgba(44,62,80,1)_70%)]" />
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_hsl(var(--secondary))_0%,_hsl(var(--background))_70%)]" />
       
       {/* Animated background grid */}
-      <div className="absolute inset-0 bg-[linear-gradient(rgba(52,152,219,0.05)_1px,transparent_1px),linear-gradient(90deg,rgba(52,152,219,0.05)_1px,transparent_1px)] bg-[size:50px_50px]" />
+      <div className="absolute inset-0 bg-[linear-gradient(hsl(var(--primary)/0.05)_1px,transparent_1px),linear-gradient(90deg,hsl(var(--primary)/0.05)_1px,transparent_1px)] bg-[size:50px_50px]" />
       
       {/* Floating particles */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         {[...Array(20)].map((_, i) => (
           <div
             key={i}
-            className="absolute h-1 w-1 rounded-full bg-blue-400/20 animate-pulse"
+            className="absolute h-1 w-1 rounded-full bg-primary/20 animate-pulse"
             style={{
               left: `${Math.random() * 100}%`,
               top: `${Math.random() * 100}%`,
@@ -234,25 +234,25 @@ const Auth = () => {
       {/* Terminal Card */}
       <div className="relative z-10 w-full max-w-lg animate-scale-in">
         {/* Logo Header - integrated into card */}
-        <div className="bg-[#1a252f] rounded-t-xl border border-[#34495e] border-b-0 px-6 py-8 flex flex-col items-center">
-          <h1 className="text-4xl font-bold text-white tracking-tight mb-2">
-            <span className="text-blue-400">4</span>QA
+        <div className="bg-card rounded-t-xl border border-border border-b-0 px-6 py-8 flex flex-col items-center">
+          <h1 className="text-4xl font-bold text-foreground tracking-tight mb-2">
+            <span className="text-primary">4</span>QA
           </h1>
-          <p className="text-slate-400 font-mono text-sm">
+          <p className="text-muted-foreground font-mono text-sm">
             Behavior-Driven Authentication
           </p>
         </div>
 
         {/* Terminal header - tabs style */}
-        <div className="bg-[#243342] border-x border-[#34495e] px-2 py-1 flex items-center gap-1">
+        <div className="bg-secondary border-x border-border px-2 py-1 flex items-center gap-1">
           {/* Login tab */}
           <button
             onClick={() => !isLogin && handleModeSwitch()}
             disabled={isExecuting}
             className={`px-3 py-1.5 font-mono text-xs flex items-center gap-2 rounded-t transition-all duration-200 ${
               isLogin 
-                ? "bg-[#1a252f] text-slate-300 border-t border-x border-[#34495e]" 
-                : "text-slate-500 hover:text-slate-400 hover:bg-[#1a252f]/50"
+                ? "bg-card text-card-foreground border-t border-x border-border" 
+                : "text-muted-foreground hover:text-foreground hover:bg-card/50"
             }`}
           >
             <Terminal className="h-3 w-3" />
@@ -264,8 +264,8 @@ const Auth = () => {
             disabled={isExecuting}
             className={`px-3 py-1.5 font-mono text-xs flex items-center gap-2 rounded-t transition-all duration-200 ${
               !isLogin 
-                ? "bg-[#1a252f] text-slate-300 border-t border-x border-[#34495e]" 
-                : "text-slate-500 hover:text-slate-400 hover:bg-[#1a252f]/50"
+                ? "bg-card text-card-foreground border-t border-x border-border" 
+                : "text-muted-foreground hover:text-foreground hover:bg-card/50"
             }`}
           >
             <Terminal className="h-3 w-3" />
@@ -274,16 +274,16 @@ const Auth = () => {
         </div>
 
         {/* Terminal body */}
-        <div className={`bg-[#1a252f] border border-[#34495e] border-t-0 rounded-b-xl p-6 transition-all duration-200 ${
+        <div className={`bg-card border border-border border-t-0 rounded-b-xl p-6 transition-all duration-200 ${
           isTransitioning ? "opacity-0 translate-y-2" : "opacity-100 translate-y-0"
         }`}>
           {/* Feature description */}
           <div className="font-mono text-sm mb-6">
-            <span className="text-purple-400">Feature:</span>
-            <span className="text-slate-400 ml-2">
+            <span className="text-given">Feature:</span>
+            <span className="text-muted-foreground ml-2">
               {isLogin ? "User Authentication" : "User Registration"}
             </span>
-            <div className="text-slate-500 text-xs mt-1 ml-2">
+            <div className="text-muted-foreground/70 text-xs mt-1 ml-2">
               {isLogin 
                 ? "As a registered user, I want to login to access my dashboard"
                 : "As a new user, I want to create an account to start testing"
@@ -293,7 +293,7 @@ const Auth = () => {
 
           {/* BDD Steps display */}
           {showSteps && (
-            <div className="mb-6 space-y-2 font-mono text-sm border-l-2 border-[#34495e] pl-4 animate-fade-in">
+            <div className="mb-6 space-y-2 font-mono text-sm border-l-2 border-border pl-4 animate-fade-in">
               {testSteps.map((step, index) => (
                 <div
                   key={index}
@@ -306,7 +306,7 @@ const Auth = () => {
                     <span className={`${getStepColor(step.type)} font-semibold`}>
                       {step.type.charAt(0).toUpperCase() + step.type.slice(1)}
                     </span>
-                    <span className="text-slate-400 break-all">{step.text}</span>
+                    <span className="text-muted-foreground break-all">{step.text}</span>
                   </div>
                 </div>
               ))}
@@ -316,37 +316,37 @@ const Auth = () => {
           {/* Input fields */}
           {!showSteps && (
             <div className="space-y-4 mb-6 animate-fade-in">
-              <div className="font-mono text-sm text-slate-400 mb-2">
-                <span className="text-green-400">&gt;_</span> {isLogin ? "Enter test credentials" : "Enter registration data"}
+              <div className="font-mono text-sm text-muted-foreground mb-2">
+                <span className="text-then">&gt;_</span> {isLogin ? "Enter test credentials" : "Enter registration data"}
               </div>
               
               {/* Name field - only for signup */}
               {!isLogin && (
                 <div>
-                  <label className="font-mono text-sm text-slate-400 flex items-center gap-2 mb-2">
-                    <span className="text-yellow-400">$</span> name
+                  <label className="font-mono text-sm text-muted-foreground flex items-center gap-2 mb-2">
+                    <span className="text-warning">$</span> name
                   </label>
                   <Input
                     type="text"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     placeholder="John Doe"
-                    className="bg-[#243342] border-[#34495e] font-mono text-white placeholder:text-slate-500 focus:border-blue-400 focus:ring-blue-400/20"
+                    className="bg-secondary border-border font-mono text-foreground placeholder:text-muted-foreground/50 focus:border-primary focus:ring-primary/20"
                     disabled={isExecuting}
                   />
                 </div>
               )}
 
               <div>
-                <label className="font-mono text-sm text-slate-400 flex items-center gap-2 mb-2">
-                  <span className="text-yellow-400">$</span> email
+                <label className="font-mono text-sm text-muted-foreground flex items-center gap-2 mb-2">
+                  <span className="text-warning">$</span> email
                 </label>
                 <Input
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="tester@qa.dev"
-                  className="bg-[#243342] border-[#34495e] font-mono text-white placeholder:text-slate-500 focus:border-blue-400 focus:ring-blue-400/20"
+                  className="bg-secondary border-border font-mono text-foreground placeholder:text-muted-foreground/50 focus:border-primary focus:ring-primary/20"
                   disabled={isExecuting}
                 />
               </div>
@@ -354,30 +354,30 @@ const Auth = () => {
               {/* Company field - only for signup */}
               {!isLogin && (
                 <div>
-                  <label className="font-mono text-sm text-slate-400 flex items-center gap-2 mb-2">
-                    <span className="text-yellow-400">$</span> company
+                  <label className="font-mono text-sm text-muted-foreground flex items-center gap-2 mb-2">
+                    <span className="text-warning">$</span> company
                   </label>
                   <Input
                     type="text"
                     value={company}
                     onChange={(e) => setCompany(e.target.value)}
                     placeholder="Acme Corp"
-                    className="bg-[#243342] border-[#34495e] font-mono text-white placeholder:text-slate-500 focus:border-blue-400 focus:ring-blue-400/20"
+                    className="bg-secondary border-border font-mono text-foreground placeholder:text-muted-foreground/50 focus:border-primary focus:ring-primary/20"
                     disabled={isExecuting}
                   />
                 </div>
               )}
 
               <div>
-                <label className="font-mono text-sm text-slate-400 flex items-center gap-2 mb-2">
-                  <span className="text-yellow-400">$</span> password
+                <label className="font-mono text-sm text-muted-foreground flex items-center gap-2 mb-2">
+                  <span className="text-warning">$</span> password
                 </label>
                 <Input
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
-                  className="bg-[#243342] border-[#34495e] font-mono text-white placeholder:text-slate-500 focus:border-blue-400 focus:ring-blue-400/20"
+                  className="bg-secondary border-border font-mono text-foreground placeholder:text-muted-foreground/50 focus:border-primary focus:ring-primary/20"
                   disabled={isExecuting}
                 />
               </div>
@@ -388,7 +388,7 @@ const Auth = () => {
           <Button
             onClick={runTestSuite}
             disabled={isExecuting}
-            className="w-full bg-[#238636] hover:bg-[#2ea043] text-white font-mono transition-all duration-300 group"
+            className="w-full bg-accent hover:bg-accent/90 text-accent-foreground font-mono transition-all duration-300 group"
           >
             {isExecuting ? (
               <>
@@ -408,8 +408,8 @@ const Auth = () => {
 
       {/* Footer */}
       <div className="relative z-10 mt-8 text-center animate-fade-in">
-        <p className="text-slate-400 font-mono text-xs flex items-center gap-2">
-          <span className="text-green-400">⚙</span>
+        <p className="text-muted-foreground font-mono text-xs flex items-center gap-2">
+          <span className="text-then">⚙</span>
           v1.0.0 • No bugs in production™
         </p>
       </div>
