@@ -1,7 +1,8 @@
-import { Building2, LayoutDashboard, FlaskConical, Calendar, Settings, ChevronLeft, ChevronRight } from "lucide-react";
+import { Building2, LayoutDashboard, FlaskConical, Calendar, Settings, ChevronLeft, ChevronRight, ShieldCheck } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { useUserRole } from "@/hooks/useUserRole";
 
 interface SidebarProps {
   activeView: string;
@@ -16,8 +17,15 @@ const menuItems = [
   { id: "settings", label: "Configurações", icon: Settings },
 ];
 
+const adminItems = [
+  { id: "admin", label: "Administração", icon: ShieldCheck },
+];
+
 export function Sidebar({ activeView, onViewChange }: SidebarProps) {
   const [collapsed, setCollapsed] = useState(false);
+  const { isAdmin } = useUserRole();
+
+  const allItems = isAdmin ? [...menuItems, ...adminItems] : menuItems;
 
   return (
     <aside
@@ -51,7 +59,7 @@ export function Sidebar({ activeView, onViewChange }: SidebarProps) {
 
         {/* Navigation */}
         <nav className="flex-1 space-y-1 p-3">
-          {menuItems.map((item) => {
+          {allItems.map((item) => {
             const Icon = item.icon;
             const isActive = activeView === item.id;
             

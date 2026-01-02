@@ -5,6 +5,7 @@ import { CompaniesView } from "@/views/CompaniesView";
 import { ScenariosView } from "@/views/ScenariosView";
 import { SprintsView } from "@/views/SprintsView";
 import { SettingsView } from "@/views/SettingsView";
+import { AdminView } from "@/views/AdminView";
 import { useBddStore } from "@/hooks/useBddStore";
 import { cn } from "@/lib/utils";
 
@@ -95,6 +96,8 @@ const Index = () => {
             scenarios={scenarios}
           />
         );
+      case "admin":
+        return <AdminView />;
       default:
         return (
           <DashboardView
