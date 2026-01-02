@@ -199,31 +199,31 @@ const Auth = () => {
         ))}
       </div>
 
-      {/* Header with logo */}
-      <div className="relative z-10 flex flex-col items-center mb-8 animate-fade-in">
-        <img src={logo} alt="4QA" className="h-24 w-auto mb-2" />
-        <p className="text-slate-300 font-mono text-sm">
-          Behavior-Driven Authentication
-        </p>
-      </div>
-
       {/* Terminal Card */}
       <div className="relative z-10 w-full max-w-lg animate-scale-in">
+        {/* Logo Header - integrated into card */}
+        <div className="bg-[#1a252f] rounded-t-xl border border-[#34495e] border-b-0 px-6 py-8 flex flex-col items-center">
+          <img src={logo} alt="4QA" className="h-20 w-auto mb-3" />
+          <p className="text-slate-400 font-mono text-sm">
+            Behavior-Driven Authentication
+          </p>
+        </div>
+
         {/* Terminal header */}
-        <div className="bg-[#1a252f] rounded-t-lg border border-[#34495e] border-b-0 px-4 py-3 flex items-center gap-2">
+        <div className="bg-[#243342] border-x border-[#34495e] px-4 py-2 flex items-center gap-2">
           <div className="flex gap-2">
-            <div className="h-3 w-3 rounded-full bg-[#ff5f56]" />
-            <div className="h-3 w-3 rounded-full bg-[#ffbd2e]" />
-            <div className="h-3 w-3 rounded-full bg-[#27ca40]" />
+            <div className="h-2.5 w-2.5 rounded-full bg-[#ff5f56]" />
+            <div className="h-2.5 w-2.5 rounded-full bg-[#ffbd2e]" />
+            <div className="h-2.5 w-2.5 rounded-full bg-[#27ca40]" />
           </div>
-          <span className="text-slate-400 font-mono text-sm ml-4 flex items-center gap-2">
-            <Terminal className="h-4 w-4" />
+          <span className="text-slate-500 font-mono text-xs ml-3 flex items-center gap-2">
+            <Terminal className="h-3 w-3" />
             auth.feature
           </span>
         </div>
 
         {/* Terminal body */}
-        <div className="bg-[#1a252f] border border-[#34495e] rounded-b-lg p-6">
+        <div className="bg-[#1a252f] border border-[#34495e] border-t-0 rounded-b-xl p-6">
           {/* Feature description */}
           <div className="font-mono text-sm mb-6">
             <span className="text-purple-400">Feature:</span>
