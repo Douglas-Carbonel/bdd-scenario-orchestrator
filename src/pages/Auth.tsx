@@ -3,25 +3,30 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { useToast } from "@/hooks/use-toast";
-import { Shield, Loader2, Mail, Lock, UserPlus } from "lucide-react";
+import { toast } from "sonner";
+import { Play, Terminal, CheckCircle2, XCircle, Loader2 } from "lucide-react";
 import { z } from "zod";
-import logo4QA from "@/assets/logo-4qa.png";
+import logo from "@/assets/logo-4qa.png";
 
 const authSchema = z.object({
   email: z.string().trim().email({ message: "Email inválido" }),
   password: z.string().min(6, { message: "Senha deve ter no mínimo 6 caracteres" }),
 });
 
+type TestStep = {
+  type: "given" | "when" | "then";
+  text: string;
+  status: "pending" | "running" | "passed" | "failed";
+};
+
 const Auth = () => {
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
+  const [isExecuting, setIsExecuting] = useState(false);
+  const [testSteps, setTestSteps] = useState<TestStep[]>([]);
+  const [showSteps, setShowSteps] = useState(false);
   const navigate = useNavigate();
-  const { toast } = useToast();
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
@@ -41,249 +46,293 @@ const Auth = () => {
     return () => subscription.unsubscribe();
   }, [navigate]);
 
-  const validateForm = () => {
-    const result = authSchema.safeParse({ email, password });
-    if (!result.success) {
-      const fieldErrors: { email?: string; password?: string } = {};
-      result.error.errors.forEach((err) => {
-        if (err.path[0] === "email") fieldErrors.email = err.message;
-        if (err.path[0] === "password") fieldErrors.password = err.message;
-      });
-      setErrors(fieldErrors);
-      return false;
-    }
-    setErrors({});
-    return true;
+  const getLoginSteps = (): TestStep[] => [
+    { type: "given", text: `I am on the login page`, status: "pending" },
+    { type: "given", text: `I have valid credentials for "${email}"`, status: "pending" },
+    { type: "when", text: `I enter my email "${email}"`, status: "pending" },
+    { type: "when", text: `I enter my password "••••••••"`, status: "pending" },
+    { type: "when", text: `I click the "Execute Test Suite" button`, status: "pending" },
+    { type: "then", text: `I should be authenticated successfully`, status: "pending" },
+    { type: "then", text: `I should be redirected to the dashboard`, status: "pending" },
+  ];
+
+  const getSignupSteps = (): TestStep[] => [
+    { type: "given", text: `I am on the signup page`, status: "pending" },
+    { type: "given", text: `I want to create account for "${email}"`, status: "pending" },
+    { type: "when", text: `I enter my email "${email}"`, status: "pending" },
+    { type: "when", text: `I enter my password "••••••••"`, status: "pending" },
+    { type: "when", text: `I click the "Execute Test Suite" button`, status: "pending" },
+    { type: "then", text: `My account should be created`, status: "pending" },
+    { type: "then", text: `I should receive a confirmation`, status: "pending" },
+  ];
+
+  const animateStep = (index: number, status: "running" | "passed" | "failed") => {
+    setTestSteps(prev => prev.map((step, i) => 
+      i === index ? { ...step, status } : step
+    ));
   };
 
-  const handleAuth = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!validateForm()) return;
+  const runTestSuite = async () => {
+    const result = authSchema.safeParse({ email, password });
+    if (!result.success) {
+      const errorMsg = result.error.errors[0]?.message || "Dados inválidos";
+      toast.error(errorMsg);
+      return;
+    }
 
-    setLoading(true);
+    setIsExecuting(true);
+    setShowSteps(true);
+    const steps = isLogin ? getLoginSteps() : getSignupSteps();
+    setTestSteps(steps);
 
+    // Animate through steps
+    for (let i = 0; i < steps.length - 2; i++) {
+      await new Promise(resolve => setTimeout(resolve, 400));
+      animateStep(i, "running");
+      await new Promise(resolve => setTimeout(resolve, 300));
+      animateStep(i, "passed");
+    }
+
+    // Execute actual auth
     try {
       if (isLogin) {
-        const { error } = await supabase.auth.signInWithPassword({
-          email: email.trim(),
-          password,
+        animateStep(steps.length - 2, "running");
+        const { error } = await supabase.auth.signInWithPassword({ 
+          email: email.trim(), 
+          password 
         });
-
-        if (error) {
-          if (error.message.includes("Invalid login credentials")) {
-            toast({
-              title: "Erro ao entrar",
-              description: "Email ou senha incorretos",
-              variant: "destructive",
-            });
-          } else {
-            toast({
-              title: "Erro ao entrar",
-              description: error.message,
-              variant: "destructive",
-            });
-          }
-        }
-      } else {
-        const redirectUrl = `${window.location.origin}/`;
         
+        if (error) throw error;
+        
+        animateStep(steps.length - 2, "passed");
+        await new Promise(resolve => setTimeout(resolve, 300));
+        animateStep(steps.length - 1, "running");
+        await new Promise(resolve => setTimeout(resolve, 300));
+        animateStep(steps.length - 1, "passed");
+        
+        toast.success("✓ All tests passed! Redirecting...");
+      } else {
+        animateStep(steps.length - 2, "running");
         const { error } = await supabase.auth.signUp({
           email: email.trim(),
           password,
-          options: {
-            emailRedirectTo: redirectUrl,
-          },
+          options: { emailRedirectTo: `${window.location.origin}/` }
         });
-
-        if (error) {
-          if (error.message.includes("User already registered")) {
-            toast({
-              title: "Erro ao cadastrar",
-              description: "Este email já está cadastrado. Tente fazer login.",
-              variant: "destructive",
-            });
-          } else {
-            toast({
-              title: "Erro ao cadastrar",
-              description: error.message,
-              variant: "destructive",
-            });
-          }
-        } else {
-          toast({
-            title: "Cadastro realizado!",
-            description: "Verifique seu email para confirmar a conta.",
-          });
-        }
+        
+        if (error) throw error;
+        
+        animateStep(steps.length - 2, "passed");
+        await new Promise(resolve => setTimeout(resolve, 300));
+        animateStep(steps.length - 1, "running");
+        await new Promise(resolve => setTimeout(resolve, 300));
+        animateStep(steps.length - 1, "passed");
+        
+        toast.success("✓ All tests passed! Verifique seu email.");
+        setTimeout(() => {
+          setShowSteps(false);
+          setTestSteps([]);
+        }, 2000);
       }
-    } catch (error) {
-      toast({
-        title: "Erro",
-        description: "Ocorreu um erro inesperado. Tente novamente.",
-        variant: "destructive",
-      });
+    } catch (error: any) {
+      animateStep(steps.length - 2, "failed");
+      let errorMsg = error.message;
+      if (error.message.includes("Invalid login credentials")) {
+        errorMsg = "Email ou senha incorretos";
+      } else if (error.message.includes("User already registered")) {
+        errorMsg = "Este email já está cadastrado";
+      }
+      toast.error(`✗ Test failed: ${errorMsg}`);
+      setTimeout(() => {
+        setShowSteps(false);
+        setTestSteps([]);
+      }, 2000);
     } finally {
-      setLoading(false);
+      setIsExecuting(false);
+    }
+  };
+
+  const getStepIcon = (status: TestStep["status"]) => {
+    switch (status) {
+      case "running":
+        return <Loader2 className="h-4 w-4 animate-spin text-yellow-400" />;
+      case "passed":
+        return <CheckCircle2 className="h-4 w-4 text-green-400" />;
+      case "failed":
+        return <XCircle className="h-4 w-4 text-red-400" />;
+      default:
+        return <span className="h-4 w-4 rounded-full border border-muted-foreground/30 block" />;
+    }
+  };
+
+  const getStepColor = (type: TestStep["type"]) => {
+    switch (type) {
+      case "given":
+        return "text-blue-400";
+      case "when":
+        return "text-purple-400";
+      case "then":
+        return "text-green-400";
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-50 relative overflow-hidden">
-      {/* Background Pattern */}
-      <div className="absolute inset-0 opacity-[0.02]">
-        <svg className="w-full h-full" xmlns="http://www.w3.org/2000/svg">
-          <defs>
-            <pattern id="circuit" x="0" y="0" width="100" height="100" patternUnits="userSpaceOnUse">
-              <path d="M10 10 L10 30 L30 30" fill="none" stroke="currentColor" strokeWidth="1"/>
-              <circle cx="10" cy="10" r="3" fill="currentColor"/>
-              <circle cx="30" cy="30" r="2" fill="currentColor"/>
-              <path d="M70 10 L90 10 L90 30" fill="none" stroke="currentColor" strokeWidth="1"/>
-              <circle cx="70" cy="10" r="2" fill="currentColor"/>
-              <circle cx="90" cy="30" r="3" fill="currentColor"/>
-              <path d="M50 50 L50 70 L70 70 L70 90" fill="none" stroke="currentColor" strokeWidth="1"/>
-              <circle cx="50" cy="50" r="2" fill="currentColor"/>
-              <circle cx="70" cy="90" r="3" fill="currentColor"/>
-            </pattern>
-          </defs>
-          <rect width="100%" height="100%" fill="url(#circuit)" className="text-slate-800"/>
-        </svg>
+    <div className="min-h-screen bg-[#0d1117] flex flex-col items-center justify-center p-4 relative overflow-hidden">
+      {/* Animated background grid */}
+      <div className="absolute inset-0 bg-[linear-gradient(rgba(56,139,253,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(56,139,253,0.03)_1px,transparent_1px)] bg-[size:50px_50px]" />
+      
+      {/* Floating particles */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        {[...Array(20)].map((_, i) => (
+          <div
+            key={i}
+            className="absolute h-1 w-1 rounded-full bg-blue-500/20 animate-pulse"
+            style={{
+              left: `${Math.random() * 100}%`,
+              top: `${Math.random() * 100}%`,
+              animationDelay: `${Math.random() * 2}s`,
+              animationDuration: `${2 + Math.random() * 3}s`,
+            }}
+          />
+        ))}
       </div>
 
-      <div className="relative z-10 w-full max-w-sm mx-4">
-        {/* Card com Logo Integrado */}
-        <div className="bg-white rounded-3xl shadow-2xl shadow-slate-200/50 overflow-hidden border border-slate-100">
-          {/* Header com Logo */}
-          <div className="bg-gradient-to-br from-slate-800 via-slate-700 to-slate-800 px-8 py-10 relative overflow-hidden">
-            {/* Decoração de circuitos no header */}
-            <div className="absolute inset-0 opacity-10">
-              <svg className="w-full h-full" xmlns="http://www.w3.org/2000/svg">
-                <defs>
-                  <pattern id="circuit-header" x="0" y="0" width="60" height="60" patternUnits="userSpaceOnUse">
-                    <path d="M5 5 L5 20 L20 20" fill="none" stroke="white" strokeWidth="0.5"/>
-                    <circle cx="5" cy="5" r="2" fill="white"/>
-                    <circle cx="20" cy="20" r="1.5" fill="white"/>
-                    <path d="M40 10 L55 10 L55 25" fill="none" stroke="white" strokeWidth="0.5"/>
-                    <circle cx="40" cy="10" r="1.5" fill="white"/>
-                    <path d="M30 35 L30 50 L45 50" fill="none" stroke="white" strokeWidth="0.5"/>
-                    <circle cx="45" cy="50" r="2" fill="white"/>
-                  </pattern>
-                </defs>
-                <rect width="100%" height="100%" fill="url(#circuit-header)"/>
-              </svg>
+      {/* Header with logo */}
+      <div className="relative z-10 flex flex-col items-center mb-8 animate-fade-in">
+        <div className="flex items-center gap-3 mb-2">
+          <img src={logo} alt="4QA" className="h-12 w-auto" />
+          <span className="text-2xl font-mono font-bold text-white">Portal</span>
+        </div>
+        <p className="text-muted-foreground font-mono text-sm">
+          Behavior-Driven Authentication
+        </p>
+      </div>
+
+      {/* Terminal Card */}
+      <div className="relative z-10 w-full max-w-lg animate-scale-in">
+        {/* Terminal header */}
+        <div className="bg-[#161b22] rounded-t-lg border border-[#30363d] border-b-0 px-4 py-3 flex items-center gap-2">
+          <div className="flex gap-2">
+            <div className="h-3 w-3 rounded-full bg-[#ff5f56]" />
+            <div className="h-3 w-3 rounded-full bg-[#ffbd2e]" />
+            <div className="h-3 w-3 rounded-full bg-[#27ca40]" />
+          </div>
+          <span className="text-muted-foreground font-mono text-sm ml-4 flex items-center gap-2">
+            <Terminal className="h-4 w-4" />
+            auth.feature
+          </span>
+        </div>
+
+        {/* Terminal body */}
+        <div className="bg-[#0d1117] border border-[#30363d] rounded-b-lg p-6">
+          {/* Feature description */}
+          <div className="font-mono text-sm mb-6">
+            <span className="text-purple-400">Feature:</span>
+            <span className="text-muted-foreground ml-2">
+              {isLogin ? "User Authentication" : "User Registration"}
+            </span>
+          </div>
+
+          {/* BDD Steps display */}
+          {showSteps && (
+            <div className="mb-6 space-y-2 font-mono text-sm border-l-2 border-[#30363d] pl-4 animate-fade-in">
+              {testSteps.map((step, index) => (
+                <div
+                  key={index}
+                  className={`flex items-start gap-3 transition-all duration-300 ${
+                    step.status === "pending" ? "opacity-40" : "opacity-100"
+                  }`}
+                >
+                  <div className="mt-0.5 flex-shrink-0">{getStepIcon(step.status)}</div>
+                  <div className="flex flex-wrap gap-1">
+                    <span className={`${getStepColor(step.type)} font-semibold`}>
+                      {step.type.charAt(0).toUpperCase() + step.type.slice(1)}
+                    </span>
+                    <span className="text-muted-foreground break-all">{step.text}</span>
+                  </div>
+                </div>
+              ))}
             </div>
-            
-            <div className="relative flex flex-col items-center">
-              <div className="w-24 h-24 bg-white rounded-2xl p-3 shadow-lg mb-4">
-                <img 
-                  src={logo4QA} 
-                  alt="4QA Logo" 
-                  className="w-full h-full object-contain"
+          )}
+
+          {/* Input fields */}
+          {!showSteps && (
+            <div className="space-y-4 mb-6 animate-fade-in">
+              <div className="font-mono text-sm text-muted-foreground mb-2">
+                <span className="text-green-400">&gt;_</span> Enter test credentials
+              </div>
+              
+              <div>
+                <label className="font-mono text-sm text-muted-foreground flex items-center gap-2 mb-2">
+                  <span className="text-yellow-400">$</span> email
+                </label>
+                <Input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="tester@qa.dev"
+                  className="bg-[#161b22] border-[#30363d] font-mono text-white placeholder:text-muted-foreground/50 focus:border-blue-500 focus:ring-blue-500/20"
+                  disabled={isExecuting}
                 />
               </div>
-              <h1 className="text-xl font-display font-bold text-white">
-                {isLogin ? "Bem-vindo de volta" : "Criar conta"}
-              </h1>
-              <p className="text-slate-300 text-sm mt-1">
-                Plataforma de Gestão de QA
-              </p>
+
+              <div>
+                <label className="font-mono text-sm text-muted-foreground flex items-center gap-2 mb-2">
+                  <span className="text-yellow-400">$</span> password
+                </label>
+                <Input
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="••••••••"
+                  className="bg-[#161b22] border-[#30363d] font-mono text-white placeholder:text-muted-foreground/50 focus:border-blue-500 focus:ring-blue-500/20"
+                  disabled={isExecuting}
+                />
+              </div>
             </div>
-          </div>
+          )}
 
-          {/* Form */}
-          <div className="p-8">
-            <form onSubmit={handleAuth} className="space-y-5">
-              <div className="space-y-2">
-                <Label htmlFor="email" className="text-slate-600 text-sm font-medium">
-                  Email
-                </Label>
-                <div className="relative">
-                  <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                  <Input
-                    id="email"
-                    type="email"
-                    placeholder="seu@email.com"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="pl-11 h-12 rounded-xl border-slate-200 bg-slate-50/50 focus:bg-white focus:border-slate-400 transition-all"
-                    disabled={loading}
-                  />
-                </div>
-                {errors.email && (
-                  <p className="text-sm text-destructive">{errors.email}</p>
-                )}
-              </div>
+          {/* Execute button */}
+          <Button
+            onClick={runTestSuite}
+            disabled={isExecuting}
+            className="w-full bg-[#238636] hover:bg-[#2ea043] text-white font-mono transition-all duration-300 group"
+          >
+            {isExecuting ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Running Test Suite...
+              </>
+            ) : (
+              <>
+                <Play className="mr-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
+                Execute Test Suite
+              </>
+            )}
+          </Button>
 
-              <div className="space-y-2">
-                <Label htmlFor="password" className="text-slate-600 text-sm font-medium">
-                  Senha
-                </Label>
-                <div className="relative">
-                  <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                  <Input
-                    id="password"
-                    type="password"
-                    placeholder="••••••••"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="pl-11 h-12 rounded-xl border-slate-200 bg-slate-50/50 focus:bg-white focus:border-slate-400 transition-all"
-                    disabled={loading}
-                  />
-                </div>
-                {errors.password && (
-                  <p className="text-sm text-destructive">{errors.password}</p>
-                )}
-              </div>
-
-              <Button
-                type="submit"
-                className="w-full h-12 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-medium text-base gap-2.5 transition-all shadow-lg shadow-slate-300/30 hover:shadow-slate-400/30"
-                disabled={loading}
-              >
-                {loading ? (
-                  <Loader2 className="h-5 w-5 animate-spin" />
-                ) : (
-                  <>
-                    {isLogin ? (
-                      <Shield className="h-5 w-5" />
-                    ) : (
-                      <UserPlus className="h-5 w-5" />
-                    )}
-                    {isLogin ? "Entrar" : "Cadastrar"}
-                  </>
-                )}
-              </Button>
-            </form>
-
-            <div className="mt-6 text-center">
+          {/* Toggle login/signup */}
+          {!showSteps && (
+            <div className="mt-4 text-center">
               <button
-                type="button"
-                onClick={() => {
-                  setIsLogin(!isLogin);
-                  setErrors({});
-                }}
-                className="text-sm text-slate-500 hover:text-slate-700 transition-colors"
-                disabled={loading}
+                onClick={() => setIsLogin(!isLogin)}
+                className="font-mono text-sm text-muted-foreground hover:text-blue-400 transition-colors"
+                disabled={isExecuting}
               >
-                {isLogin ? (
-                  <>
-                    Não tem conta?{" "}
-                    <span className="font-semibold text-slate-700 hover:underline">
-                      Cadastre-se
-                    </span>
-                  </>
-                ) : (
-                  <>
-                    Já tem conta?{" "}
-                    <span className="font-semibold text-slate-700 hover:underline">
-                      Faça login
-                    </span>
-                  </>
-                )}
+                {isLogin
+                  ? "// Need an account? Sign up"
+                  : "// Already have account? Login"}
               </button>
             </div>
-          </div>
+          )}
         </div>
+      </div>
+
+      {/* Footer */}
+      <div className="relative z-10 mt-8 text-center animate-fade-in">
+        <p className="text-muted-foreground font-mono text-xs flex items-center gap-2">
+          <span className="text-green-400">⚙</span>
+          v1.0.0 • No bugs in production™
+        </p>
       </div>
     </div>
   );
