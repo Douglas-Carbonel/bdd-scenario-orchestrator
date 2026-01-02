@@ -1,5 +1,6 @@
-import { useState, useCallback } from "react";
+import { useCallback } from "react";
 import { Company, Sprint, Scenario, TestSuite, SuiteTreeNode, TeamMember, TestRun, DailyStats } from "@/types/bdd";
+import { useLocalStorage } from "./useLocalStorage";
 
 // Initial mock data
 const initialCompanies: Company[] = [
@@ -148,12 +149,12 @@ const initialTestRuns: TestRun[] = [
 ];
 
 export function useBddStore() {
-  const [companies, setCompanies] = useState<Company[]>(initialCompanies);
-  const [sprints, setSprints] = useState<Sprint[]>(initialSprints);
-  const [scenarios, setScenarios] = useState<Scenario[]>(initialScenarios);
-  const [suites, setSuites] = useState<TestSuite[]>(initialSuites);
-  const [teamMembers, setTeamMembers] = useState<TeamMember[]>(initialTeamMembers);
-  const [testRuns, setTestRuns] = useState<TestRun[]>(initialTestRuns);
+  const [companies, setCompanies] = useLocalStorage<Company[]>("bdd-companies", initialCompanies);
+  const [sprints, setSprints] = useLocalStorage<Sprint[]>("bdd-sprints", initialSprints);
+  const [scenarios, setScenarios] = useLocalStorage<Scenario[]>("bdd-scenarios", initialScenarios);
+  const [suites, setSuites] = useLocalStorage<TestSuite[]>("bdd-suites", initialSuites);
+  const [teamMembers, setTeamMembers] = useLocalStorage<TeamMember[]>("bdd-team-members", initialTeamMembers);
+  const [testRuns, setTestRuns] = useLocalStorage<TestRun[]>("bdd-test-runs", initialTestRuns);
 
   // Company operations
   const addCompany = useCallback((company: Omit<Company, "id" | "createdAt">) => {
