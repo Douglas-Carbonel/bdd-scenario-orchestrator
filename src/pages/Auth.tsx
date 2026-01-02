@@ -219,7 +219,7 @@ const Auth = () => {
           </div>
           <span className="text-slate-500 font-mono text-xs ml-3 flex items-center gap-2">
             <Terminal className="h-3 w-3" />
-            auth.feature
+            {isLogin ? "login.feature" : "signup.feature"}
           </span>
         </div>
 
