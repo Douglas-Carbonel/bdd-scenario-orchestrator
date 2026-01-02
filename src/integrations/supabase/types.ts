@@ -14,7 +14,278 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      companies: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+        }
+        Relationships: []
+      }
+      scenarios: {
+        Row: {
+          actual_duration: number | null
+          assignee_id: string | null
+          company_id: string
+          created_at: string
+          estimated_duration: number
+          feature: string
+          given_steps: Json
+          id: string
+          priority: Database["public"]["Enums"]["priority"]
+          sprint_id: string | null
+          status: Database["public"]["Enums"]["scenario_status"]
+          suite_id: string | null
+          tags: Json
+          then_steps: Json
+          title: string
+          updated_at: string
+          when_steps: Json
+        }
+        Insert: {
+          actual_duration?: number | null
+          assignee_id?: string | null
+          company_id: string
+          created_at?: string
+          estimated_duration?: number
+          feature: string
+          given_steps?: Json
+          id?: string
+          priority?: Database["public"]["Enums"]["priority"]
+          sprint_id?: string | null
+          status?: Database["public"]["Enums"]["scenario_status"]
+          suite_id?: string | null
+          tags?: Json
+          then_steps?: Json
+          title: string
+          updated_at?: string
+          when_steps?: Json
+        }
+        Update: {
+          actual_duration?: number | null
+          assignee_id?: string | null
+          company_id?: string
+          created_at?: string
+          estimated_duration?: number
+          feature?: string
+          given_steps?: Json
+          id?: string
+          priority?: Database["public"]["Enums"]["priority"]
+          sprint_id?: string | null
+          status?: Database["public"]["Enums"]["scenario_status"]
+          suite_id?: string | null
+          tags?: Json
+          then_steps?: Json
+          title?: string
+          updated_at?: string
+          when_steps?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "scenarios_assignee_id_fkey"
+            columns: ["assignee_id"]
+            isOneToOne: false
+            referencedRelation: "team_members"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "scenarios_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "scenarios_sprint_id_fkey"
+            columns: ["sprint_id"]
+            isOneToOne: false
+            referencedRelation: "sprints"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "scenarios_suite_id_fkey"
+            columns: ["suite_id"]
+            isOneToOne: false
+            referencedRelation: "test_suites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sprints: {
+        Row: {
+          company_id: string
+          created_at: string
+          end_date: string
+          id: string
+          name: string
+          start_date: string
+          status: Database["public"]["Enums"]["sprint_status"]
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          end_date: string
+          id?: string
+          name: string
+          start_date: string
+          status?: Database["public"]["Enums"]["sprint_status"]
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          end_date?: string
+          id?: string
+          name?: string
+          start_date?: string
+          status?: Database["public"]["Enums"]["sprint_status"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sprints_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      team_members: {
+        Row: {
+          avatar: string | null
+          company_id: string
+          created_at: string
+          email: string
+          id: string
+          name: string
+        }
+        Insert: {
+          avatar?: string | null
+          company_id: string
+          created_at?: string
+          email: string
+          id?: string
+          name: string
+        }
+        Update: {
+          avatar?: string | null
+          company_id?: string
+          created_at?: string
+          email?: string
+          id?: string
+          name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "team_members_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      test_runs: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          duration: number | null
+          error_message: string | null
+          executed_by: string
+          id: string
+          logs: Json | null
+          scenario_id: string
+          started_at: string
+          status: Database["public"]["Enums"]["test_run_status"]
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          duration?: number | null
+          error_message?: string | null
+          executed_by: string
+          id?: string
+          logs?: Json | null
+          scenario_id: string
+          started_at?: string
+          status?: Database["public"]["Enums"]["test_run_status"]
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          duration?: number | null
+          error_message?: string | null
+          executed_by?: string
+          id?: string
+          logs?: Json | null
+          scenario_id?: string
+          started_at?: string
+          status?: Database["public"]["Enums"]["test_run_status"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "test_runs_scenario_id_fkey"
+            columns: ["scenario_id"]
+            isOneToOne: false
+            referencedRelation: "scenarios"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      test_suites: {
+        Row: {
+          company_id: string
+          created_at: string
+          id: string
+          name: string
+          order: number
+          parent_id: string | null
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          id?: string
+          name: string
+          order?: number
+          parent_id?: string | null
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          id?: string
+          name?: string
+          order?: number
+          parent_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "test_suites_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "test_suites_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "test_suites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -23,7 +294,10 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      priority: "critical" | "high" | "medium" | "low"
+      scenario_status: "draft" | "ready" | "running" | "passed" | "failed"
+      sprint_status: "planned" | "active" | "completed"
+      test_run_status: "running" | "passed" | "failed"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +424,11 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      priority: ["critical", "high", "medium", "low"],
+      scenario_status: ["draft", "ready", "running", "passed", "failed"],
+      sprint_status: ["planned", "active", "completed"],
+      test_run_status: ["running", "passed", "failed"],
+    },
   },
 } as const
