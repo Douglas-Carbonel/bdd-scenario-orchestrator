@@ -25,7 +25,18 @@ const Auth = () => {
   const [isExecuting, setIsExecuting] = useState(false);
   const [testSteps, setTestSteps] = useState<TestStep[]>([]);
   const [showSteps, setShowSteps] = useState(false);
+  const [isTransitioning, setIsTransitioning] = useState(false);
   const navigate = useNavigate();
+
+  const handleModeSwitch = () => {
+    setIsTransitioning(true);
+    setTimeout(() => {
+      setIsLogin(!isLogin);
+      setTimeout(() => {
+        setIsTransitioning(false);
+      }, 50);
+    }, 200);
+  };
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
@@ -210,27 +221,52 @@ const Auth = () => {
           </p>
         </div>
 
-        {/* Terminal header */}
-        <div className="bg-[#243342] border-x border-[#34495e] px-4 py-2 flex items-center gap-2">
-          <div className="flex gap-2">
-            <div className="h-2.5 w-2.5 rounded-full bg-[#ff5f56]" />
-            <div className="h-2.5 w-2.5 rounded-full bg-[#ffbd2e]" />
-            <div className="h-2.5 w-2.5 rounded-full bg-[#27ca40]" />
-          </div>
-          <span className="text-slate-500 font-mono text-xs ml-3 flex items-center gap-2">
+        {/* Terminal header - tabs style */}
+        <div className="bg-[#243342] border-x border-[#34495e] px-2 py-1 flex items-center gap-1">
+          {/* Login tab */}
+          <button
+            onClick={() => !isLogin && handleModeSwitch()}
+            disabled={isExecuting}
+            className={`px-3 py-1.5 font-mono text-xs flex items-center gap-2 rounded-t transition-all duration-200 ${
+              isLogin 
+                ? "bg-[#1a252f] text-slate-300 border-t border-x border-[#34495e]" 
+                : "text-slate-500 hover:text-slate-400 hover:bg-[#1a252f]/50"
+            }`}
+          >
             <Terminal className="h-3 w-3" />
-            {isLogin ? "login.feature" : "signup.feature"}
-          </span>
+            login.feature
+          </button>
+          {/* Signup tab */}
+          <button
+            onClick={() => isLogin && handleModeSwitch()}
+            disabled={isExecuting}
+            className={`px-3 py-1.5 font-mono text-xs flex items-center gap-2 rounded-t transition-all duration-200 ${
+              !isLogin 
+                ? "bg-[#1a252f] text-slate-300 border-t border-x border-[#34495e]" 
+                : "text-slate-500 hover:text-slate-400 hover:bg-[#1a252f]/50"
+            }`}
+          >
+            <Terminal className="h-3 w-3" />
+            signup.feature
+          </button>
         </div>
 
         {/* Terminal body */}
-        <div className="bg-[#1a252f] border border-[#34495e] border-t-0 rounded-b-xl p-6">
+        <div className={`bg-[#1a252f] border border-[#34495e] border-t-0 rounded-b-xl p-6 transition-all duration-200 ${
+          isTransitioning ? "opacity-0 translate-y-2" : "opacity-100 translate-y-0"
+        }`}>
           {/* Feature description */}
           <div className="font-mono text-sm mb-6">
             <span className="text-purple-400">Feature:</span>
             <span className="text-slate-400 ml-2">
               {isLogin ? "User Authentication" : "User Registration"}
             </span>
+            <div className="text-slate-500 text-xs mt-1 ml-2">
+              {isLogin 
+                ? "As a registered user, I want to login to access my dashboard"
+                : "As a new user, I want to create an account to start testing"
+              }
+            </div>
           </div>
 
           {/* BDD Steps display */}
@@ -311,20 +347,6 @@ const Auth = () => {
             )}
           </Button>
 
-          {/* Toggle login/signup */}
-          {!showSteps && (
-            <div className="mt-4 text-center">
-              <button
-                onClick={() => setIsLogin(!isLogin)}
-                className="font-mono text-sm text-slate-400 hover:text-blue-400 transition-colors"
-                disabled={isExecuting}
-              >
-                {isLogin
-                  ? "// Need an account? Sign up"
-                  : "// Already have account? Login"}
-              </button>
-            </div>
-          )}
         </div>
       </div>
 
