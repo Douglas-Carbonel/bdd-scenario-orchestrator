@@ -1,8 +1,11 @@
-import { Building2, LayoutDashboard, FlaskConical, Calendar, Settings, ChevronLeft, ChevronRight, ShieldCheck } from "lucide-react";
+import { Building2, LayoutDashboard, FlaskConical, Calendar, Settings, ChevronLeft, ChevronRight, ShieldCheck, LogOut } from "lucide-react";
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { useUserRole } from "@/hooks/useUserRole";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 interface SidebarProps {
   activeView: string;
@@ -24,8 +27,19 @@ const adminItems = [
 export function Sidebar({ activeView, onViewChange }: SidebarProps) {
   const [collapsed, setCollapsed] = useState(false);
   const { isAdmin } = useUserRole();
+  const navigate = useNavigate();
 
   const allItems = isAdmin ? [...menuItems, ...adminItems] : menuItems;
+
+  const handleLogout = async () => {
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+      toast.error("Erro ao sair: " + error.message);
+    } else {
+      toast.success("Sessão encerrada com sucesso");
+      navigate("/auth");
+    }
+  };
 
   return (
     <aside
@@ -82,19 +96,18 @@ export function Sidebar({ activeView, onViewChange }: SidebarProps) {
         </nav>
 
         {/* Footer */}
-        {!collapsed && (
-          <div className="p-4 border-t border-sidebar-border">
-            <div className="flex items-center gap-3 px-2">
-              <div className="h-8 w-8 rounded-full bg-sidebar-accent flex items-center justify-center">
-                <span className="text-xs font-medium text-sidebar-foreground">QA</span>
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-sidebar-foreground truncate">QA Team</p>
-                <p className="text-xs text-muted-foreground truncate">Cypress Ready</p>
-              </div>
-            </div>
-          </div>
-        )}
+        <div className="p-3 border-t border-sidebar-border">
+          <button
+            onClick={handleLogout}
+            className={cn(
+              "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200",
+              "text-sidebar-foreground hover:bg-red-500/10 hover:text-red-500"
+            )}
+          >
+            <LogOut className="h-5 w-5 shrink-0" />
+            {!collapsed && <span>Sair</span>}
+          </button>
+        </div>
       </div>
     </aside>
   );
