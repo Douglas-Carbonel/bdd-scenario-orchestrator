@@ -1,5 +1,5 @@
 import { Building2, LayoutDashboard, FlaskConical, Calendar, Settings, ChevronLeft, ChevronRight, ShieldCheck, LogOut } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -10,6 +10,11 @@ import { toast } from "sonner";
 interface SidebarProps {
   activeView: string;
   onViewChange: (view: string) => void;
+}
+
+interface UserProfile {
+  name: string;
+  email: string;
 }
 
 const menuItems = [
@@ -26,10 +31,36 @@ const adminItems = [
 
 export function Sidebar({ activeView, onViewChange }: SidebarProps) {
   const [collapsed, setCollapsed] = useState(false);
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const { isAdmin } = useUserRole();
   const navigate = useNavigate();
 
   const allItems = isAdmin ? [...menuItems, ...adminItems] : menuItems;
+
+  useEffect(() => {
+    const fetchUserProfile = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("name, email")
+          .eq("id", user.id)
+          .single();
+        
+        if (profile) {
+          setUserProfile(profile);
+        }
+      }
+    };
+
+    fetchUserProfile();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(() => {
+      fetchUserProfile();
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
 
   const handleLogout = async () => {
     const { error } = await supabase.auth.signOut();
@@ -96,7 +127,32 @@ export function Sidebar({ activeView, onViewChange }: SidebarProps) {
         </nav>
 
         {/* Footer */}
-        <div className="p-3 border-t border-sidebar-border">
+        <div className="p-3 border-t border-sidebar-border space-y-3">
+          {/* User Info */}
+          {userProfile && (
+            <div className={cn(
+              "flex items-center gap-3 px-2",
+              collapsed && "justify-center"
+            )}>
+              <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                <span className="text-xs font-semibold text-primary">
+                  {userProfile.name.charAt(0).toUpperCase()}
+                </span>
+              </div>
+              {!collapsed && (
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-sidebar-foreground truncate">
+                    {userProfile.name}
+                  </p>
+                  <p className="text-xs text-muted-foreground truncate">
+                    {userProfile.email}
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
+          
+          {/* Logout Button */}
           <button
             onClick={handleLogout}
             className={cn(
