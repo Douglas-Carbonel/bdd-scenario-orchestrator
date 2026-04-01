@@ -1,8 +1,10 @@
-import { Clock, Tag, Play, CheckCircle2, XCircle, FileEdit, AlertTriangle, User } from "lucide-react";
+import { useState } from "react";
+import { Clock, Tag, Play, CheckCircle2, XCircle, FileEdit, AlertTriangle, User, Copy, Check } from "lucide-react";
 import { Scenario, Priority } from "@/types/bdd";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { toast } from "sonner";
 
 interface ScenarioCardProps {
   scenario: Scenario;
@@ -27,9 +29,17 @@ const priorityConfig: Record<Priority, { label: string; className: string; icon:
 };
 
 export function ScenarioCard({ scenario, assigneeName, onEdit, onRun }: ScenarioCardProps) {
+  const [copied, setCopied] = useState(false);
   const status = statusConfig[scenario.status];
   const StatusIcon = status.icon;
   const priority = priorityConfig[scenario.priority];
+
+  const handleCopyId = () => {
+    navigator.clipboard.writeText(scenario.id);
+    setCopied(true);
+    toast.success("Scenario ID copiado!");
+    setTimeout(() => setCopied(false), 2000);
+  };
 
   return (
     <div className="glass-card rounded-xl overflow-hidden hover:border-primary/50 transition-all duration-200 group">
@@ -100,6 +110,26 @@ export function ScenarioCard({ scenario, assigneeName, onEdit, onRun }: Scenario
               <span>{assigneeName}</span>
             </div>
           )}
+        </div>
+
+        {/* Scenario ID */}
+        <div className="flex items-center gap-2 px-2 py-1.5 rounded-md bg-secondary/40 border border-border">
+          <code className="text-xs text-muted-foreground font-mono truncate flex-1">
+            ID: {scenario.id}
+          </code>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-5 w-5 shrink-0"
+            onClick={handleCopyId}
+            title="Copiar Scenario ID"
+          >
+            {copied ? (
+              <Check className="h-3 w-3 text-primary" />
+            ) : (
+              <Copy className="h-3 w-3" />
+            )}
+          </Button>
         </div>
 
         {/* Footer */}
