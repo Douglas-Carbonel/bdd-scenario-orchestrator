@@ -76,6 +76,7 @@ const Index = () => {
             onMoveSuite={moveSuite}
             getSuiteTree={getSuiteTree}
             getUnsortedScenarios={getUnsortedScenarios}
+            getScenarioRuns={getScenarioRuns}
           />
         );
       case "sprints":

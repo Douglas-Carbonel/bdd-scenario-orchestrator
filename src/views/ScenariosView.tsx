@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { ScenarioCard } from "@/components/scenarios/ScenarioCard";
 import { ScenarioForm } from "@/components/scenarios/ScenarioForm";
 import { SuiteTree } from "@/components/suites/SuiteTree";
-import { Company, Sprint, Scenario, TestSuite, SuiteTreeNode, TeamMember } from "@/types/bdd";
+import { Company, Sprint, Scenario, TestSuite, SuiteTreeNode, TeamMember, TestRun } from "@/types/bdd";
 import { cn } from "@/lib/utils";
 import {
   Dialog,
@@ -35,6 +35,7 @@ interface ScenariosViewProps {
   onMoveSuite: (suiteId: string, newParentId: string | null, newOrder: number) => void;
   getSuiteTree: (companyId: string) => SuiteTreeNode[];
   getUnsortedScenarios: (companyId: string) => Scenario[];
+  getScenarioRuns: (scenarioId: string) => TestRun[];
 }
 
 export function ScenariosView({
@@ -51,6 +52,7 @@ export function ScenariosView({
   onMoveSuite,
   getSuiteTree,
   getUnsortedScenarios,
+  getScenarioRuns,
 }: ScenariosViewProps) {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingScenario, setEditingScenario] = useState<Scenario | null>(null);
@@ -249,7 +251,11 @@ export function ScenariosView({
                   className="animate-slide-up"
                   style={{ animationDelay: `${index * 50}ms` }}
                 >
-                  <ScenarioCard scenario={scenario} onEdit={openEditDialog} />
+                  <ScenarioCard
+                    scenario={scenario}
+                    runs={getScenarioRuns(scenario.id)}
+                    onEdit={openEditDialog}
+                  />
                 </div>
               ))}
             </div>
