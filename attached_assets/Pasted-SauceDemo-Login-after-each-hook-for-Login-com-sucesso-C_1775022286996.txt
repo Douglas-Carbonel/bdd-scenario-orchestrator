@@ -1,0 +1,43 @@
+SauceDemo Login
+       "after each" hook for "Login com sucesso":
+     CypressError: `Cypress.env()` does not work when `allowCypressEnv` is set to `false`. Please migrate to `cy.env()` or leverage other stateful methods to manage variables. The variable being accessed was: `QA4_RESULTS_URL`
+
+https://on.cypress.io/cypress-env-migration
+
+Because this error occurred during a `after each` hook we are skipping the remaining tests in the current suite: `SauceDemo Login`
+      at cypressErr (https://www.saucedemo.com/__cypress/runner/cypress_runner.js:78379:18)
+      at Object.errByPath (https://www.saucedemo.com/__cypress/runner/cypress_runner.js:78437:10)
+      at $Cypress.failCypressEnvWithWarning [as env] (https://www.saucedemo.com/__cypress/runner/cypress_runner.js:41589:81)
+      at reportToQA4 (webpack://qa-e2e-cypress/./cypress/e2e/saucedemo/login.cy.js:12:24)
+      at Context.eval (webpack://qa-e2e-cypress/./cypress/e2e/saucedemo/login.cy.js:33:8)
+      at runnable.fn (https://www.saucedemo.com/__cypress/runner/cypress_runner.js:146560:19)
+      at callFn (https://www.saucedemo.com/__cypress/runner/cypress_runner.js:165724:21)
+      at Runnable.run (https://www.saucedemo.com/__cypress/runner/cypress_runner.js:165711:7)
+      at <unknown> (https://www.saucedemo.com/__cypress/runner/cypress_runner.js:171809:30)
+      at PassThroughHandlerContext.finallyHandler (https://www.saucedemo.com/__cypress/runner/cypress_runner.js:4042:23)
+      at PassThroughHandlerContext.tryCatcher (https://www.saucedemo.com/__cypress/runner/cypress_runner.js:1777:23)   
+      at Promise._settlePromiseFromHandler (https://www.saucedemo.com/__cypress/runner/cypress_runner.js:1489:31)      
+      at Promise._settlePromise (https://www.saucedemo.com/__cypress/runner/cypress_runner.js:1546:18)
+      at Promise._settlePromise0 (https://www.saucedemo.com/__cypress/runner/cypress_runner.js:1591:10)
+      at Promise._settlePromises (https://www.saucedemo.com/__cypress/runner/cypress_runner.js:1671:18)
+      at _drainQueueStep (https://www.saucedemo.com/__cypress/runner/cypress_runner.js:2377:12)
+      at _drainQueue (https://www.saucedemo.com/__cypress/runner/cypress_runner.js:2370:9)
+      at Async._drainQueues (https://www.saucedemo.com/__cypress/runner/cypress_runner.js:2386:5)
+      at Async.drainQueues (https://www.saucedemo.com/__cypress/runner/cypress_runner.js:2256:14)
+
+
+
+
+  (Results)
+
+  ┌────────────────────────────────────────────────────────────────────────────────────────────────┐
+  │ Tests:        2                                                                                │
+  │ Passing:      0                                                                                │
+  │ Failing:      1                                                                                │
+  │ Pending:      0                                                                                │
+  │ Skipped:      1                                                                                │
+  │ Screenshots:  1                                                                                │
+  │ Video:        false                                                                            │
+  │ Duration:     3 seconds                                                                        │
+  │ Spec Ran:     login.cy.js                                                                      │
+  └────────────────────────────────────────────────────────
