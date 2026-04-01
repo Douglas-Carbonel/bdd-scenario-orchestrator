@@ -173,12 +173,12 @@ export function ScenarioForm({
         </div>
         <div className="space-y-2">
           <Label>Test Suite</Label>
-          <Select value={suiteId} onValueChange={setSuiteId}>
+          <Select value={suiteId || "none"} onValueChange={(v) => setSuiteId(v === "none" ? "" : v)}>
             <SelectTrigger>
               <SelectValue placeholder="Sem pasta" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">Sem pasta</SelectItem>
+              <SelectItem value="none">Sem pasta</SelectItem>
               {filteredSuites.map((suite) => (
                 <SelectItem key={suite.id} value={suite.id}>
                   {getSuitePath(suite)}
@@ -189,12 +189,12 @@ export function ScenarioForm({
         </div>
         <div className="space-y-2">
           <Label>Sprint</Label>
-          <Select value={sprintId} onValueChange={setSprintId} disabled={!companyId}>
+          <Select value={sprintId || "none"} onValueChange={(v) => setSprintId(v === "none" ? "" : v)} disabled={!companyId}>
             <SelectTrigger>
               <SelectValue placeholder="Nenhuma" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">Nenhuma</SelectItem>
+              <SelectItem value="none">Nenhuma</SelectItem>
               {filteredSprints.map((sprint) => (
                 <SelectItem key={sprint.id} value={sprint.id}>
                   {sprint.name}
@@ -224,12 +224,12 @@ export function ScenarioForm({
         </div>
         <div className="space-y-2">
           <Label>Responsável</Label>
-          <Select value={assigneeId} onValueChange={setAssigneeId}>
+          <Select value={assigneeId || "none"} onValueChange={(v) => setAssigneeId(v === "none" ? "" : v)}>
             <SelectTrigger>
               <SelectValue placeholder="Não atribuído" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">Não atribuído</SelectItem>
+              <SelectItem value="none">Não atribuído</SelectItem>
               {filteredTeamMembers.map((member) => (
                 <SelectItem key={member.id} value={member.id}>
                   {member.name}
