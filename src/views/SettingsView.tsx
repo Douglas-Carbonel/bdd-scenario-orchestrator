@@ -101,7 +101,7 @@ afterEach(function () {
               <div className="flex items-center justify-between mb-1">
                 <span className="text-xs font-medium text-muted-foreground">POST — Enviar resultados</span>
                 <Button variant="ghost" size="sm" onClick={() => copyToClipboard(resultsEndpoint, "results")}>
-                  {copiedKey === "results" ? <Check className="h-3 w-3 text-green-500" /> : <Copy className="h-3 w-3" />}
+                  {copiedKey === "results" ? <Check className="h-3 w-3 text-primary" /> : <Copy className="h-3 w-3" />}
                 </Button>
               </div>
               <code className="text-xs text-foreground break-all">{resultsEndpoint}?api_key=YOUR_API_KEY</code>
