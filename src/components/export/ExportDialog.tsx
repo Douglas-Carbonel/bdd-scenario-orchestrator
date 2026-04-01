@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Download, FileCode, Settings2, Copy, Check, FileText } from "lucide-react";
+import { Download, FileCode, Settings2, Copy, Check, FileText, Archive } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
@@ -17,6 +17,7 @@ import {
   generateStepDefinitions,
   generateCypressConfig,
   downloadFile,
+  generateCypressZip,
 } from "@/utils/cypressExport";
 import { toast } from "sonner";
 
@@ -31,6 +32,7 @@ interface ExportDialogProps {
 export function ExportDialog({ open, onOpenChange, scenarios, companies, sprints }: ExportDialogProps) {
   const [selectedScenarios, setSelectedScenarios] = useState<string[]>(scenarios.map(s => s.id));
   const [copiedTab, setCopiedTab] = useState<string | null>(null);
+  const [isGeneratingZip, setIsGeneratingZip] = useState(false);
 
   const getCompanyName = (id: string) => companies.find(c => c.id === id)?.name;
   const getSprintName = (id: string) => sprints.find(s => s.id === id)?.name;
@@ -80,6 +82,27 @@ export function ExportDialog({ open, onOpenChange, scenarios, companies, sprints
       downloadFile(content, filename);
     });
     toast.success(`${selectedScenariosList.length} arquivo(s) .feature exportado(s)!`);
+  };
+
+  const handleExportZip = async () => {
+    if (selectedScenariosList.length === 0) return;
+    setIsGeneratingZip(true);
+    try {
+      const blob = await generateCypressZip(selectedScenariosList, companies, sprints);
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = "cypress-bdd-tests.zip";
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      toast.success("ZIP exportado com estrutura completa do Cypress!");
+    } catch (error) {
+      toast.error("Erro ao gerar o ZIP");
+    } finally {
+      setIsGeneratingZip(false);
+    }
   };
 
   const handleExportSteps = () => {
@@ -133,10 +156,20 @@ export function ExportDialog({ open, onOpenChange, scenarios, companies, sprints
                   Selecionar todos ({selectedScenarios.length}/{scenarios.length})
                 </Label>
               </div>
-              <Button onClick={handleExportFeatures} disabled={selectedScenarios.length === 0}>
-                <Download className="h-4 w-4 mr-2" />
-                Baixar .feature
-              </Button>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  onClick={handleExportZip}
+                  disabled={selectedScenarios.length === 0 || isGeneratingZip}
+                >
+                  <Archive className="h-4 w-4 mr-2" />
+                  {isGeneratingZip ? "Gerando..." : "Baixar ZIP"}
+                </Button>
+                <Button onClick={handleExportFeatures} disabled={selectedScenarios.length === 0}>
+                  <Download className="h-4 w-4 mr-2" />
+                  Baixar .feature
+                </Button>
+              </div>
             </div>
 
             <div className="grid grid-cols-2 gap-4 flex-1 overflow-hidden">
