@@ -1,4 +1,4 @@
-import { useCallback } from "react";
+import { useCallback, useEffect } from "react";
 import { Company, Sprint, Scenario, TestSuite, SuiteTreeNode, TeamMember, TestRun, DailyStats } from "@/types/bdd";
 import { useLocalStorage } from "./useLocalStorage";
 
@@ -8,12 +8,14 @@ const initialCompanies: Company[] = [
     id: "1",
     name: "TechCorp Brasil",
     description: "Plataforma de e-commerce B2B",
+    apiKey: "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
     createdAt: new Date("2024-01-15"),
   },
   {
     id: "2",
     name: "FinanceApp",
     description: "Aplicativo de gestão financeira pessoal",
+    apiKey: "f9e8d7c6-b5a4-3210-fedc-ba9876543210",
     createdAt: new Date("2024-02-01"),
   },
 ];
@@ -150,17 +152,27 @@ const initialTestRuns: TestRun[] = [
 
 export function useBddStore() {
   const [companies, setCompanies] = useLocalStorage<Company[]>("bdd-companies", initialCompanies);
+
   const [sprints, setSprints] = useLocalStorage<Sprint[]>("bdd-sprints", initialSprints);
   const [scenarios, setScenarios] = useLocalStorage<Scenario[]>("bdd-scenarios", initialScenarios);
   const [suites, setSuites] = useLocalStorage<TestSuite[]>("bdd-suites", initialSuites);
   const [teamMembers, setTeamMembers] = useLocalStorage<TeamMember[]>("bdd-team-members", initialTeamMembers);
   const [testRuns, setTestRuns] = useLocalStorage<TestRun[]>("bdd-test-runs", initialTestRuns);
 
+  // Backfill apiKey for companies created before this field was added
+  useEffect(() => {
+    const needsBackfill = companies.some((c) => !c.apiKey);
+    if (needsBackfill) {
+      setCompanies((prev) => prev.map((c) => c.apiKey ? c : { ...c, apiKey: crypto.randomUUID() }));
+    }
+  }, []);
+
   // Company operations
-  const addCompany = useCallback((company: Omit<Company, "id" | "createdAt">) => {
+  const addCompany = useCallback((company: Omit<Company, "id" | "createdAt" | "apiKey">) => {
     const newCompany: Company = {
       ...company,
       id: Date.now().toString(),
+      apiKey: crypto.randomUUID(),
       createdAt: new Date(),
     };
     setCompanies((prev) => [...prev, newCompany]);

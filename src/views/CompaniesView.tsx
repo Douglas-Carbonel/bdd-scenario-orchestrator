@@ -17,7 +17,7 @@ interface CompaniesViewProps {
   companies: Company[];
   scenarios: Scenario[];
   sprints: Sprint[];
-  onAddCompany: (company: Omit<Company, "id" | "createdAt">) => void;
+  onAddCompany: (company: Omit<Company, "id" | "createdAt" | "apiKey">) => void;
   onEditCompany: (id: string, updates: Partial<Company>) => void;
   onDeleteCompany: (id: string) => void;
 }
