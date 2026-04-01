@@ -122,7 +122,7 @@ afterEach(function () {
               Exemplo CI/CD (GitHub Actions)
             </h4>
             <Button variant="ghost" size="sm" onClick={() => copyToClipboard(ciCdSnippet, "cicd")}>
-              {copiedKey === "cicd" ? <Check className="h-3 w-3 text-green-500" /> : <Copy className="h-3 w-3" />}
+              {copiedKey === "cicd" ? <Check className="h-3 w-3 text-primary" /> : <Copy className="h-3 w-3" />}
             </Button>
           </div>
           <pre className="p-3 rounded-lg bg-background/80 border border-border text-xs font-mono text-muted-foreground overflow-x-auto">
