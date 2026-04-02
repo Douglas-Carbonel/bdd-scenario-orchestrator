@@ -1,0 +1,200 @@
+Prompt para o Replit
+
+Quero refatorar a arquitetura de integração entre minha plataforma de QA e o Cypress para reduzir burocracia e remover a necessidade de enviar muitas informações manualmente para o cypress.config.
+
+Contexto
+
+Hoje minha aplicação possui:
+
+suítes de teste
+cenários BDD
+histórico de execuções
+integração parcial com Cypress
+
+Exemplo:
+
+suíte: Login
+cenário: Autenticação do usuário
+existe um teste Cypress em cypress/e2e/login.cy.js
+Problema atual
+
+Hoje está ficando burocrático porque preciso enviar manualmente para o Cypress várias informações como:
+
+scenarioId
+suiteId
+companyId
+apiUrl
+apiKey
+executionId
+outros metadados
+
+Quero mudar isso.
+
+Objetivo da refatoração
+
+O Cypress não deve descobrir sozinho qual cenário da plataforma corresponde ao arquivo login.cy.js.
+
+Quem deve saber isso é a minha plataforma.
+
+O Cypress deve apenas executar o que a plataforma mandar.
+
+Nova arquitetura desejada
+Regra principal
+
+Em vez de passar várias informações para o Cypress, quero passar apenas um executionToken.
+
+Exemplo:
+
+Q4QA_EXECUTION_TOKEN=tok_abc123 npx cypress run
+
+ou via script:
+
+node bootstrap.js tok_abc123
+Fluxo esperado
+1. Criar uma execução
+
+Quando o usuário clicar em “Executar” na plataforma, o sistema deve criar uma execução com:
+
+executionId
+executionToken
+scenarioId
+status
+
+Exemplo:
+
+{
+  "executionId": "exec_001",
+  "executionToken": "tok_abc123",
+  "scenarioId": "scn_123",
+  "status": "queued"
+}
+2. Criar um mapeamento entre cenário e teste Cypress
+
+Preciso de uma estrutura que relacione um cenário da plataforma a um teste Cypress.
+
+Exemplo:
+
+{
+  "scenarioId": "scn_123",
+  "scenarioName": "Autenticação do usuário",
+  "specPath": "cypress/e2e/login.cy.js",
+  "testTitle": "Login"
+}
+3. Criar endpoint de runtime da execução
+
+Preciso de um endpoint que receba o executionToken e devolva tudo que o runner precisa para executar o teste.
+
+Exemplo de endpoint:
+
+GET /api/executions/runtime
+Authorization: Bearer tok_abc123
+
+Resposta esperada:
+
+{
+  "executionId": "exec_001",
+  "scenarioId": "scn_123",
+  "scenarioName": "Autenticação do usuário",
+  "specPath": "cypress/e2e/login.cy.js",
+  "testTitle": "Login",
+  "baseUrl": "https://app.teste.com",
+  "reportingUrl": "https://api.minhaplataforma.com/executions/exec_001/results",
+  "reportingToken": "tmp_xyz"
+}
+4. Criar um bootstrap script
+
+Preciso de um bootstrap.js ou bootstrap.ts que:
+
+leia o executionToken
+chame o endpoint /api/executions/runtime
+receba o specPath, testTitle, baseUrl e informações de reporte
+execute o Cypress no spec correto
+
+Exemplo de execução final:
+
+npx cypress run --spec cypress/e2e/login.cy.js
+
+No começo, pode rodar o arquivo inteiro.
+Depois podemos evoluir para filtrar por testTitle.
+
+5. Resultado da execução
+
+Quero preparar a arquitetura para que, após rodar o teste, o resultado possa ser enviado de volta para a plataforma usando:
+
+executionId
+scenarioId
+status
+duration
+errorMessage se existir
+
+Exemplo de payload:
+
+{
+  "executionId": "exec_001",
+  "scenarioId": "scn_123",
+  "status": "passed",
+  "durationMs": 743
+}
+Estrutura de banco sugerida
+
+Crie uma sugestão de modelagem com pelo menos estas tabelas:
+
+scenarios
+
+Campos sugeridos:
+
+id
+suite_id
+name
+description
+created_at
+scenario_mappings
+
+Campos sugeridos:
+
+id
+scenario_id
+spec_path
+test_title
+describe_title (opcional)
+created_at
+executions
+
+Campos sugeridos:
+
+id
+scenario_id
+execution_token
+status
+started_at
+finished_at
+created_at
+Requisitos técnicos
+
+Quero que você:
+
+proponha a arquitetura
+gere os modelos/tabelas
+gere o endpoint /api/executions/runtime
+gere o bootstrap.js ou bootstrap.ts
+mostre como chamar o Cypress usando o specPath
+sugira como estruturar o retorno de resultado da execução
+mantenha tudo simples e escalável
+explique claramente onde fica a responsabilidade da plataforma e onde fica a responsabilidade do Cypress
+Regra de negócio importante
+
+O executionToken não serve para o Cypress descobrir sozinho qual arquivo rodar.
+
+O executionToken serve para a plataforma responder:
+
+qual cenário está sendo executado
+qual arquivo Cypress corresponde ao cenário
+qual teste precisa rodar
+para onde o resultado deve ser enviado
+Resultado esperado
+
+Quero uma solução simples, clara e escalável, onde:
+
+a plataforma controla a execução
+o Cypress apenas executa o alvo correto
+não preciso ficar enviando várias informações manualmente para o cypress.config
