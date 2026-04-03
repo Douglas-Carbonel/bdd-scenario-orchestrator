@@ -1,0 +1,95 @@
+Run actions/setup-node@v4
+Found in cache @ /opt/hostedtoolcache/node/20.20.1/x64
+Environment details
+/opt/hostedtoolcache/node/20.20.1/x64/bin/npm config get cache
+/home/runner/.npm
+Cache hit for: node-cache-Linux-x64-npm-ca09eb6ee4d4b2dfef18aafa56bd66974cd3590d09ce0ef6ca4b03e4822a3ee2
+Received 5094547 of 5094547 (100.0%), 44.6 MBs/sec
+Cache Size: ~5 MB (5094547 B)
+/usr/bin/tar -xf /home/runner/work/_temp/d22832b4-63d5-45a4-afca-5350ca4c2505/cache.tzst -P -C /home/runner/work/qa-e2e-cypress/qa-e2e-cypress --use-compress-program unzstd
+Cache restored successfully
+Cache restored from key: node-cache-Linux-x64-npm-ca09eb6ee4d4b2dfef18aafa56bd66974cd3590d09ce0ef6ca4b03e4822a3ee2
+12s
+added 176 packages, and audited 177 packages in 13s
+43 packages are looking for funding
+  run `npm fund` for details
+found 0 vulnerabilities
+2s
+Run node scripts/qa4-sync.js
+4QA: sincronizando produto "produto-principal"...
+4QA: "produto-principal" — 0 cenários
+4QA: sincronizando produto "carhub"...
+4QA: "carhub" — 0 cenários
+4QA: sincronizando produto "devcontrol"...
+4QA: "devcontrol" — 0 cenários
+4QA: qa4-scenarios.json gerado com 0 entradas
+24s
+Run npx cypress run
+  
+It looks like this is your first time using Cypress: 15.13.0
+[05:27:55]  Verifying Cypress can run /home/runner/.cache/Cypress/15.13.0/Cypress [started]
+[05:27:58]  Verifying Cypress can run /home/runner/.cache/Cypress/15.13.0/Cypress [COMPLETED]
+Opening Cypress...
+Warning: The allowCypressEnv configuration option is enabled. This allows any browser code to read values from Cypress.env(). This is insecure and will be removed in a future major version.
+
+1. Replace Cypress.env() calls with cy.env() (for sensitive values) or Cypress.expose() (for public configuration)
+2. Set allowCypressEnv: false in your Cypress configuration to disable Cypress.env()
+
+Learn more: https://on.cypress.io/cypress-env-migration
+
+====================================================================================================
+  (Run Starting)
+  ┌────────────────────────────────────────────────────────────────────────────────────────────
+  │ Cypress:        15.13.0                                                                        │
+  │ Browser:        Electron 138 (headless)                                                        │
+  │ Node Version:   v20.20.1 (/opt/hostedtoolcache/node/20.20.1/x64/bin/node)                      │
+  │ Specs:          2 found (login-error.cy.js, login.cy.js)                                       │
+  │ Searched:       cypress/e2e/**/**/*.***cy.js,spec.js,cy.ts,spec.ts***                              │
+  └────────────────────────────────────────────────────────────────────────────────────────────
+─────────────────────────────────────────────────────────────────────────────────────────────
+                                                                                                    
+  Running:  login-error.cy.js                                                               (1 of 2)
+
+  SauceDemo Login invalido
+    ✓ Login inválido deve exibir erro (1546ms)
+  1 passing (3s)
+  (Results)
+  ┌────────────────────────────────────────────────────────────────────────────────────────────
+  │ Tests:        1                                                                                │
+  │ Passing:      1                                                                                │
+  │ Failing:      0                                                                                │
+  │ Pending:      0                                                                                │
+  │ Skipped:      0                                                                                │
+  │ Screenshots:  0                                                                                │
+  │ Video:        false                                                                            │
+  │ Duration:     3 seconds                                                                        │
+  │ Spec Ran:     login-error.cy.js                                                                │
+  └────────────────────────────────────────────────────────────────────────────────────────────
+─────────────────────────────────────────────────────────────────────────────────────────────
+                                                                                                    
+  Running:  login.cy.js                                                                     (2 of 2)
+
+  SauceDemo Login
+    ✓ Login com sucesso (1059ms)
+  1 passing (3s)
+  (Results)
+  ┌────────────────────────────────────────────────────────────────────────────────────────────
+  │ Tests:        1                                                                                │
+  │ Passing:      1                                                                                │
+  │ Failing:      0                                                                                │
+  │ Pending:      0                                                                                │
+  │ Skipped:      0                                                                                │
+  │ Screenshots:  0                                                                                │
+  │ Video:        false                                                                            │
+  │ Duration:     2 seconds                                                                        │
+  │ Spec Ran:     login.cy.js                                                                      │
+  └────────────────────────────────────────────────────────────────────────────────────────────
+====================================================================================================
+  (Run Finished)
+       Spec                                              Tests  Passing  Failing  Pending  Skipped  
+  ┌────────────────────────────────────────────────────────────────────────────────────────────
+  │ ✔  login-error.cy.js                        00:03        1        1        -        -        - │
+  ├────────────────────────────────────────────────────────────────────────────────────────────
+  │ ✔  login.cy.js                              00:02        1        1        -        -        - │
+  └────────────────────────────────────────────────────────────────────────────────────────────
+    ✔  All specs passed!                        00:05        2        2        -        -        -  

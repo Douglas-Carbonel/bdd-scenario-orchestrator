@@ -70,12 +70,12 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Validate scenario IDs belong to this product
+    // Validate scenario IDs belong to this product (also accept legacy scenarios with no product_id)
     const scenarioIds = results.map(r => r.scenario_id);
     const { data: validScenarios } = await supabase
       .from("scenarios")
       .select("id")
-      .eq("product_id", product.id)
+      .or(`product_id.eq.${product.id},and(product_id.is.null,company_id.eq.${product.company_id})`)
       .in("id", scenarioIds);
 
     const validIds = new Set((validScenarios || []).map((s: any) => s.id));

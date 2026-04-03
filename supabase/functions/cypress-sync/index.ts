@@ -76,11 +76,11 @@ Deno.serve(async (req) => {
 
     const companyName = company?.name ?? "Unknown";
 
-    // Get scenarios for this product
+    // Get scenarios for this product (also include legacy scenarios with no product_id linked to the same company)
     const { data: scenarios, error: scenariosError } = await supabase
       .from("scenarios")
       .select("*")
-      .eq("product_id", product.id);
+      .or(`product_id.eq.${product.id},and(product_id.is.null,company_id.eq.${product.company_id})`);
 
     if (scenariosError) {
       return new Response(
