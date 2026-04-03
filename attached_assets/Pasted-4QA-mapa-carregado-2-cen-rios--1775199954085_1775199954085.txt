@@ -1,0 +1,70 @@
+4QA] mapa carregado: 2 cenários
+
+====================================================================================================
+
+  (Run Starting)
+
+  ┌────────────────────────────────────────────────────────────────────────────────────────────────┐
+  │ Cypress:        15.13.0                                                                        │
+  │ Browser:        Electron 138 (headless)                                                        │
+  │ Node Version:   v20.12.1 (C:\Program Files\nodejs\node.exe)                                    │
+  │ Specs:          1 found (login-error.cy.js)                                                    │
+  │ Searched:       C:\QA-Projects\qa-e2e-cypress\cypress\e2e\saucedemo\login-error.cy.js          │
+  └────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+
+────────────────────────────────────────────────────────────────────────────────────────────────────
+
+  Running:  login-error.cy.js                                                               (1 of 1)
+
+
+  SauceDemo Login invalido
+    1) Login inválido deve exibir erro
+
+
+  0 passing (7s)
+  1 failing
+
+  1) SauceDemo Login invalido
+       Login inválido deve exibir erro:
+     AssertionError: Timed out retrying after 4000ms: Expected to find element: `[data-test="errorzx"]`, but never found it.
+      at Context.eval (webpack://qa-e2e-cypress/./cypress/e2e/saucedemo/login-error.cy.js:22:40)
+
+
+
+[4QA] cypress\e2e\saucedemo\login-error.cy.js → pasta: "saucedemo", testes: 1, screenshots: 1
+[4QA] sem mapeamento: "saucedemo:Login inválido deve exibir erro"
+
+  (Results)
+
+  ┌────────────────────────────────────────────────────────────────────────────────────────────────┐
+  │ Tests:        1                                                                                │
+  │ Passing:      0                                                                                │
+  │ Failing:      1                                                                                │
+  │ Pending:      0                                                                                │
+  │ Skipped:      0                                                                                │
+  │ Screenshots:  1                                                                                │
+  │ Video:        false                                                                            │
+  │ Duration:     7 seconds                                                                        │
+  │ Spec Ran:     login-error.cy.js                                                                │
+  └────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+
+  (Screenshots)
+
+  -  C:\QA-Projects\qa-e2e-cypress\cypress\screenshots\login-error.cy.js\SauceDemo Lo     (1280x720)
+     gin invalido -- Login inválido deve exibir erro (failed).png
+
+
+====================================================================================================
+
+  (Run Finished)
+
+
+       Spec                                              Tests  Passing  Failing  Pending  Skipped
+  ┌────────────────────────────────────────────────────────────────────────────────────────────────┐
+  │ ×  login-error.cy.js                        00:07        1        -        1        -        - │
+  └────────────────────────────────────────────────────────────────────────────────────────────────┘
+    ×  1 of 1 failed (100%)                     00:07        1        -        1        -        -
+
+PS C:\QA-Projects\qa-e2e-cypress> 
