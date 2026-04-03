@@ -27,14 +27,21 @@ args = "Start application"
 name = "Start application"
 author = "agent"
 
+[workflows.workflow.metadata]
+outputType = "webview"
+
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "npm run dev"
 waitForPort = 5000
 
-[workflows.workflow.metadata]
-outputType = "webview"
-
 [[ports]]
 localPort = 5000
 externalPort = 80
+
+[userenv]
+
+[userenv.shared]
+VITE_SUPABASE_URL = "https://ivmdgybacqbkpyamtjrd.supabase.co"
+VITE_SUPABASE_PROJECT_ID = "ivmdgybacqbkpyamtjrd"
+VITE_SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Iml2bWRneWJhY3Fia3B5YW10anJkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjczMTI5MDgsImV4cCI6MjA4Mjg4ODkwOH0.hNozgnWzPQpY-L6xRDGGCWOTDVeHpJQt5A-pjYAQEbg"
