@@ -226,7 +226,7 @@ jobs:
         <p className="text-muted-foreground">Gerencie as configurações e integrações do 4QA</p>
       </div>
 
-      {/* API Keys das Empresas */}
+      {/* API Keys dos Produtos */}
       <div className="glass-card rounded-xl p-6 space-y-4">
         <div className="flex items-center gap-3">
           <div className="h-10 w-10 rounded-lg bg-yellow-400/10 flex items-center justify-center shrink-0">
@@ -235,7 +235,7 @@ jobs:
           <div>
             <h3 className="font-semibold text-foreground">Secret do GitHub — <code className="text-xs font-mono bg-secondary/50 px-1 rounded">QA4_COMPANIES</code></h3>
             <p className="text-sm text-muted-foreground">
-              Um único secret com todas as empresas. O reporter detecta automaticamente a empresa pelo caminho do arquivo de teste.
+              Um único secret com todos os produtos. O reporter detecta automaticamente o produto pelo caminho da pasta do arquivo de teste.
             </p>
           </div>
         </div>
@@ -270,17 +270,21 @@ jobs:
           </pre>
         </div>
 
-        {companies.length > 0 && (
+        {products.length > 0 && (
           <div className="space-y-1.5">
-            <p className="text-xs font-medium text-muted-foreground">Mapeamento pasta → empresa:</p>
-            {companies.map((company) => {
-              const folder = company.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')
+            <p className="text-xs font-medium text-muted-foreground">Mapeamento pasta → produto:</p>
+            {products.map((product) => {
+              const folder = product.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')
+              const company = companies.find((c) => c.id === product.companyId)
               return (
-                <div key={company.id} className="flex items-center gap-2 text-xs text-muted-foreground">
+                <div key={product.id} className="flex items-center gap-2 text-xs text-muted-foreground">
                   <Building2 className="h-3 w-3 shrink-0" />
                   <code className="bg-secondary/50 px-1 rounded">cypress/e2e/{folder}/</code>
                   <span>→</span>
-                  <span className="text-foreground font-medium">{company.name}</span>
+                  <span className="text-foreground font-medium">{product.name}</span>
+                  {company && (
+                    <span className="text-muted-foreground/60">({company.name})</span>
+                  )}
                 </div>
               )
             })}
@@ -338,7 +342,7 @@ jobs:
             </div>
             <div>
               <h3 className="text-lg font-semibold text-foreground">Endpoints da API</h3>
-              <p className="text-sm text-muted-foreground">Use a API Key da sua empresa (seção Empresas)</p>
+              <p className="text-sm text-muted-foreground">Use a API Key do produto (seção Empresas → Produtos)</p>
             </div>
           </div>
           <Badge className="bg-primary/20 text-primary">Ativo</Badge>
