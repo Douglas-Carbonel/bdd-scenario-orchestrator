@@ -1,0 +1,83 @@
+PS C:\QA-Projects\qa-e2e-cypress> $env:QA4_COMPANIES = '{"saucedemo": "508f191c-1498-4676-bd25-82d4e42c4756"}'
+>> $env:SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Iml2bWRneWJhY3Fia3B5YW10anJkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjczMTI5MDgsImV4cCI6MjA4Mjg4ODkwOH0.hNozgnWzPQpY-L6xRDGGCWOTDVeHpJQt5A-pjYAQEbg"
+>> npx cypress run --spec "cypress/e2e/saucedemo/login-error.cy.js"
+
+Warning: The allowCypressEnv configuration option is enabled. This allows any browser code to read values from Cypress.env(). This is insecure and will be removed in a future major version.
+
+1. Replace Cypress.env() calls with cy.env() (for sensitive values) or Cypress.expose() (for public configuration)
+2. Set allowCypressEnv: false in your Cypress configuration to disable Cypress.env()
+
+Learn more: https://on.cypress.io/cypress-env-migration
+
+[4QA] pastas configuradas: saucedemo
+
+====================================================================================================
+
+  (Run Starting)
+
+  ┌────────────────────────────────────────────────────────────────────────────────────────────────┐
+  │ Cypress:        15.13.0                                                                        │
+  │ Browser:        Electron 138 (headless)                                                        │
+  │ Node Version:   v20.12.1 (C:\Program Files\nodejs\node.exe)                                    │
+  │ Specs:          1 found (login-error.cy.js)                                                    │
+  │ Searched:       C:\QA-Projects\qa-e2e-cypress\cypress\e2e\saucedemo\login-error.cy.js          │
+  └────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+
+────────────────────────────────────────────────────────────────────────────────────────────────────
+
+  Running:  login-error.cy.js                                                               (1 of 1)
+
+
+  SauceDemo Login invalido
+    1) Login inválido deve exibir erro
+
+
+  0 passing (7s)
+  1 failing
+
+  1) SauceDemo Login invalido
+       Login inválido deve exibir erro:
+     AssertionError: Timed out retrying after 4000ms: Expected to find element: `[data-test="errorzx"]`, but never found it.
+      at Context.eval (webpack://qa-e2e-cypress/./cypress/e2e/saucedemo/login-error.cy.js:22:40)
+
+
+
+[4QA] cypress\e2e\saucedemo\login-error.cy.js → pasta: "saucedemo", screenshots: 1
+[4QA] 2 cenários para "saucedemo"
+[4QA] "Login inválido deve exibir erro": failed, 0 screenshot(s)
+[4QA] resultados enviados: 200 OK
+
+  (Results)
+
+  ┌────────────────────────────────────────────────────────────────────────────────────────────────┐
+  │ Tests:        1                                                                                │
+  │ Passing:      0                                                                                │
+  │ Failing:      1                                                                                │
+  │ Pending:      0                                                                                │
+  │ Skipped:      0                                                                                │
+  │ Screenshots:  1                                                                                │
+  │ Video:        false                                                                            │
+  │ Duration:     7 seconds                                                                        │
+  │ Spec Ran:     login-error.cy.js                                                                │
+  └────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+
+  (Screenshots)
+
+  -  C:\QA-Projects\qa-e2e-cypress\cypress\screenshots\login-error.cy.js\SauceDemo Lo     (1280x720)
+     gin invalido -- Login inválido deve exibir erro (failed).png
+
+
+====================================================================================================
+
+  (Run Finished)
+
+
+       Spec                                              Tests  Passing  Failing  Pending  Skipped
+  ┌────────────────────────────────────────────────────────────────────────────────────────────────┐
+  │ ×  login-error.cy.js                        00:07        1        -        1        -        - │
+  └────────────────────────────────────────────────────────────────────────────────────────────────┘
+    ×  1 of 1 failed (100%)                     00:07        1        -        1        -        -
+
+PS C:\QA-Projects\qa-e2e-cypress> 

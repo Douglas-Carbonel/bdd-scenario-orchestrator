@@ -162,6 +162,11 @@ function httpRequest(method, url, headers, body) {
   })
 }
 
+// Normaliza texto: remove acentos, lowercase, espaços extras
+function normalize(str) {
+  return str.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]/g, ' ').replace(/\s+/g, ' ').trim()
+}
+
 // Cache: folder → titleMap { titulo → scenarioId }
 const cache = {}
 
@@ -224,9 +229,7 @@ module.exports = defineConfig({
 
           const shots = allShots.filter(s =>
             (test.testId && s.testId === test.testId) ||
-            path.basename(s.path).toLowerCase().includes(
-              title.toLowerCase().substring(0, 30).replace(/[^a-z0-9]/g, ' ').trim()
-            )
+            normalize(path.basename(s.path)).includes(normalize(title).substring(0, 30))
           )
           console.log(\`[4QA] "\${title}": \${status}, \${shots.length} screenshot(s)\`)
 
