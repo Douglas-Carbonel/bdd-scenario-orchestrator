@@ -237,8 +237,13 @@ module.exports = defineConfig({
           if (supabaseKey) {
             for (const ss of shots) {
               try {
-                const file     = fs.readFileSync(ss.path)
-                const fileName = \`\${scenarioId}/\${Date.now()}-\${path.basename(ss.path)}\`
+                const file        = fs.readFileSync(ss.path)
+                const ext         = path.extname(ss.path) || '.png'
+                const safeName    = path.basename(ss.path, ext)
+                  .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+                  .replace(/[^a-zA-Z0-9]/g, '-').replace(/-+/g, '-')
+                  .replace(/^-|-$/g, '').substring(0, 60)
+                const fileName    = \`\${scenarioId}/\${Date.now()}-\${safeName}\${ext}\`
                 const up = await httpRequest(
                   'POST',
                   \`\${SUPABASE_URL}/storage/v1/object/evidence/\${fileName}\`,
