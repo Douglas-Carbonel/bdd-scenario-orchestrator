@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Settings, Code2, GitBranch, Database, Zap, Copy, Check, Terminal, Puzzle, FileJson, FlaskConical } from "lucide-react";
+import { Settings, Code2, GitBranch, Database, Zap, Copy, Check, Terminal, Puzzle, FileJson, FlaskConical, Key, Building2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ExportDialog } from "@/components/export/ExportDialog";
@@ -250,6 +250,68 @@ jobs:
       <div className="space-y-2">
         <h1 className="text-3xl font-bold text-foreground">Configurações</h1>
         <p className="text-muted-foreground">Gerencie as configurações e integrações do 4QA</p>
+      </div>
+
+      {/* API Keys das Empresas */}
+      <div className="glass-card rounded-xl p-6 space-y-4">
+        <div className="flex items-center gap-3">
+          <div className="h-10 w-10 rounded-lg bg-yellow-400/10 flex items-center justify-center shrink-0">
+            <Key className="h-5 w-5 text-yellow-400" />
+          </div>
+          <div>
+            <h3 className="font-semibold text-foreground">API Keys das Empresas</h3>
+            <p className="text-sm text-muted-foreground">
+              Copie a key da empresa e cole como <code className="bg-secondary/50 px-1 rounded text-xs">QA4_API_KEY</code> nos secrets do repositório GitHub correspondente.
+            </p>
+          </div>
+        </div>
+
+        {companies.length === 0 ? (
+          <div className="rounded-lg bg-secondary/30 border border-border p-6 text-center">
+            <p className="text-sm text-muted-foreground">Nenhuma empresa cadastrada ainda.</p>
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {companies.map((company) => (
+              <div
+                key={company.id}
+                className="flex items-center gap-3 p-3 rounded-lg bg-secondary/30 border border-border hover:border-primary/30 transition-colors"
+              >
+                <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                  <Building2 className="h-4 w-4 text-primary" />
+                </div>
+                <span className="text-sm font-medium text-foreground w-40 truncate shrink-0">
+                  {company.name}
+                </span>
+                <code className="text-xs text-muted-foreground font-mono flex-1 truncate bg-background/50 px-2 py-1 rounded border border-border">
+                  {company.apiKey}
+                </code>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="shrink-0 gap-1.5 text-xs"
+                  onClick={() => copyToClipboard(company.apiKey, `apikey-${company.id}`)}
+                >
+                  {copiedKey === `apikey-${company.id}` ? (
+                    <>
+                      <Check className="h-3 w-3 text-primary" />
+                      <span className="text-primary">Copiado</span>
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="h-3 w-3" />
+                      <span>Copiar</span>
+                    </>
+                  )}
+                </Button>
+              </div>
+            ))}
+          </div>
+        )}
+
+        <p className="text-xs text-muted-foreground">
+          No GitHub: <span className="text-foreground">Settings → Secrets and variables → Actions → New repository secret</span> → nome: <code className="bg-secondary/50 px-1 rounded">QA4_API_KEY</code>
+        </p>
       </div>
 
       {/* How it works */}
