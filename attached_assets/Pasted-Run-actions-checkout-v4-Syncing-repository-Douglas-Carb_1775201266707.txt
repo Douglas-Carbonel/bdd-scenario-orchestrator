@@ -1,0 +1,146 @@
+Run actions/checkout@v4
+Syncing repository: Douglas-Carbonel/qa-e2e-cypress
+Getting Git version info
+Temporarily overriding HOME='/home/runner/work/_temp/42ea7f60-1419-4bfb-9998-e2503f900b9e' before making global git config changes
+Adding repository directory to the temporary git global config as a safe directory
+/usr/bin/git config --global --add safe.directory /home/runner/work/qa-e2e-cypress/qa-e2e-cypress
+Deleting the contents of '/home/runner/work/qa-e2e-cypress/qa-e2e-cypress'
+Initializing the repository
+Disabling automatic garbage collection
+Setting up auth
+Fetching the repository
+Determining the checkout info
+/usr/bin/git sparse-checkout disable
+/usr/bin/git config --local --unset-all extensions.worktreeConfig
+Checking out the ref
+/usr/bin/git log -1 --format=%H
+92b68c1414838510a11e423ea8205bc30641db9d
+1s
+12s
+2s
+27s
+Run npx cypress run
+It looks like this is your first time using Cypress: 15.13.0
+
+[07:26:07]  Verifying Cypress can run /home/runner/.cache/Cypress/15.13.0/Cypress [started]
+[07:26:09]  Verifying Cypress can run /home/runner/.cache/Cypress/15.13.0/Cypress [COMPLETED]
+
+Opening Cypress...
+Warning: The allowCypressEnv configuration option is enabled. This allows any browser code to read values from Cypress.env(). This is insecure and will be removed in a future major version.
+
+1. Replace Cypress.env() calls with cy.env() (for sensitive values) or Cypress.expose() (for public configuration)
+2. Set allowCypressEnv: false in your Cypress configuration to disable Cypress.env()
+
+Learn more: https://on.cypress.io/cypress-env-migration
+
+[4QA] pastas configuradas: (nenhuma)
+
+====================================================================================================
+
+  (Run Starting)
+
+  ┌────────────────────────────────────────────────────────────────────────────────────────────────┐
+  │ Cypress:        15.13.0                                                                        │
+  │ Browser:        Electron 138 (headless)                                                        │
+  │ Node Version:   v20.20.1 (/opt/hostedtoolcache/node/20.20.1/x64/bin/node)                      │
+  │ Specs:          2 found (login-error.cy.js, login.cy.js)                                       │
+  │ Searched:       cypress/e2e/**/*.cy.***js,jsx,ts,tsx***                                            │
+  └────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+
+────────────────────────────────────────────────────────────────────────────────────────────────────
+                                                                                                    
+  Running:  login-error.cy.js                                                               (1 of 2)
+
+
+  SauceDemo Login invalido
+    1) Login inválido deve exibir erro
+
+
+  0 passing (7s)
+  1 failing
+
+  1) SauceDemo Login invalido
+       Login inválido deve exibir erro:
+     AssertionError: Timed out retrying after 4000ms: Expected to find element: `[data-test="errorzx"]`, but never found it.
+      at Context.eval (webpack://qa-e2e-cypress/./cypress/e2e/saucedemo/login-error.cy.js:22:40)
+
+
+
+[4QA] cypress/e2e/saucedemo/login-error.cy.js → pasta: "saucedemo", screenshots: 1
+[4QA] Pasta "saucedemo" não encontrada em QA4_COMPANIES — resultado não enviado.
+
+  (Results)
+
+  ┌────────────────────────────────────────────────────────────────────────────────────────────────┐
+  │ Tests:        1                                                                                │
+  │ Passing:      0                                                                                │
+  │ Failing:      1                                                                                │
+  │ Pending:      0                                                                                │
+  │ Skipped:      0                                                                                │
+  │ Screenshots:  1                                                                                │
+  │ Video:        false                                                                            │
+  │ Duration:     7 seconds                                                                        │
+  │ Spec Ran:     login-error.cy.js                                                                │
+  └────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+
+  (Screenshots)
+
+  -  /home/runner/work/qa-e2e-cypress/qa-e2e-cypress/cypress/screenshots/login-error.     (1280x720)
+     cy.js/SauceDemo Login invalido -- Login inválido deve exibir erro (failed).png                 
+
+
+────────────────────────────────────────────────────────────────────────────────────────────────────
+                                                                                                    
+  Running:  login.cy.js                                                                     (2 of 2)
+
+
+  SauceDemo Login
+    ✓ Login com sucesso (1156ms)
+
+
+  1 passing (3s)
+
+[4QA] cypress/e2e/saucedemo/login.cy.js → pasta: "saucedemo", screenshots: 0
+[4QA] Pasta "saucedemo" não encontrada em QA4_COMPANIES — resultado não enviado.
+
+  (Results)
+
+  ┌────────────────────────────────────────────────────────────────────────────────────────────────┐
+  │ Tests:        1                                                                                │
+  │ Passing:      1                                                                                │
+  │ Failing:      0                                                                                │
+  │ Pending:      0                                                                                │
+  │ Skipped:      0                                                                                │
+  │ Screenshots:  0                                                                                │
+  │ Video:        false                                                                            │
+  │ Duration:     2 seconds                                                                        │
+  │ Spec Ran:     login.cy.js                                                                      │
+  └────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+
+====================================================================================================
+
+  (Run Finished)
+
+
+       Spec                                              Tests  Passing  Failing  Pending  Skipped  
+  ┌────────────────────────────────────────────────────────────────────────────────────────────────┐
+  │ ✖  login-error.cy.js                        00:07        1        -        1        -        - │
+  ├────────────────────────────────────────────────────────────────────────────────────────────────┤
+  │ ✔  login.cy.js                              00:02        1        1        -        -        - │
+  └────────────────────────────────────────────────────────────────────────────────────────────────┘
+    ✖  1 of 2 failed (50%)                      00:09        2        1        1        -        -  
+
+----------------------------------------------------------------------------------------------------
+
+  Debug faster with full visibility.
+
+  Record to Cypress Cloud and get instant access to full test details and replays.
+  Inspect the DOM, network events, and console logs exactly as they ran in CI.
+
+  >> https://on.cypress.io/cloud-get-started
+
+----------------------------------------------------------------------------------------------------
+Error: Process completed with exit code 1.
