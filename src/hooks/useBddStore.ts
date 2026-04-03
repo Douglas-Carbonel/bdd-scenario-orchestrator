@@ -336,6 +336,27 @@ export function useBddStore() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["sprints"] }),
   });
 
+  const activateSprintMutation = useMutation({
+    mutationFn: async ({ sprintId, companyId }: { sprintId: string; companyId: string }) => {
+      const now = new Date();
+      const currentlyActive = sprints.filter(
+        (s) => s.companyId === companyId && s.status === "active" && s.id !== sprintId,
+      );
+      for (const s of currentlyActive) {
+        const fallback = s.endDate < now ? "completed" : "planned";
+        const { error } = await supabase.from("sprints").update({ status: fallback }).eq("id", s.id);
+        if (error) throw error;
+      }
+      const { error } = await supabase.from("sprints").update({ status: "active" }).eq("id", sprintId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Sprint ativada");
+      queryClient.invalidateQueries({ queryKey: ["sprints"] });
+    },
+    onError: () => toast.error("Erro ao ativar sprint"),
+  });
+
   // ── Suite mutations ──────────────────────────────────────────────────────────
   const addSuiteMutation = useMutation({
     mutationFn: async (suite: Omit<TestSuite, "id" | "createdAt" | "order">) => {
@@ -681,6 +702,10 @@ export function useBddStore() {
     (run: Omit<TestRun, "id">) => addTestRunMutation.mutate(run),
     [addTestRunMutation],
   );
+  const activateSprint = useCallback(
+    (sprintId: string, companyId: string) => activateSprintMutation.mutate({ sprintId, companyId }),
+    [activateSprintMutation],
+  );
   const moveScenarioToSuite = useCallback(
     (scenarioId: string, suiteId: string | undefined) =>
       moveScenarioToSuiteMutation.mutate({ scenarioId, suiteId }),
@@ -704,6 +729,7 @@ export function useBddStore() {
     addSprint,
     updateSprint,
     deleteSprint,
+    activateSprint,
     addSuite,
     updateSuite,
     deleteSuite,

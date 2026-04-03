@@ -24,6 +24,7 @@ interface SprintsViewProps {
   sprints: Sprint[];
   scenarios: Scenario[];
   onAddSprint: (sprint: Omit<Sprint, "id">) => void;
+  onActivateSprint: (sprintId: string, companyId: string) => void;
   getSprintStats: (sprintId: string) => {
     scenarioCount: number;
     passedCount: number;
@@ -36,6 +37,7 @@ export function SprintsView({
   sprints,
   scenarios,
   onAddSprint,
+  onActivateSprint,
   getSprintStats,
 }: SprintsViewProps) {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -43,7 +45,6 @@ export function SprintsView({
   const [companyId, setCompanyId] = useState("");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
-  const [status, setStatus] = useState<Sprint["status"]>("planned");
 
   const handleSave = () => {
     if (!name.trim() || !companyId || !startDate || !endDate) return;
@@ -53,14 +54,13 @@ export function SprintsView({
       companyId,
       startDate: new Date(startDate),
       endDate: new Date(endDate),
-      status,
+      status: "planned",
     });
     setIsDialogOpen(false);
     setName("");
     setCompanyId("");
     setStartDate("");
     setEndDate("");
-    setStatus("planned");
   };
 
   const activeSprints = sprints.filter((s) => s.status === "active");
@@ -99,6 +99,7 @@ export function SprintsView({
                   sprint={sprint}
                   {...stats}
                   companyName={getCompanyName(sprint.companyId)}
+                  onActivate={onActivateSprint}
                 />
               );
             })}
@@ -119,6 +120,7 @@ export function SprintsView({
                   sprint={sprint}
                   {...stats}
                   companyName={getCompanyName(sprint.companyId)}
+                  onActivate={onActivateSprint}
                 />
               );
             })}
@@ -139,6 +141,7 @@ export function SprintsView({
                   sprint={sprint}
                   {...stats}
                   companyName={getCompanyName(sprint.companyId)}
+                  onActivate={onActivateSprint}
                 />
               );
             })}
@@ -215,19 +218,6 @@ export function SprintsView({
                   onChange={(e) => setEndDate(e.target.value)}
                 />
               </div>
-            </div>
-            <div className="space-y-2">
-              <Label>Status</Label>
-              <Select value={status} onValueChange={(v) => setStatus(v as Sprint["status"])}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="planned">Planejada</SelectItem>
-                  <SelectItem value="active">Ativa</SelectItem>
-                  <SelectItem value="completed">Concluída</SelectItem>
-                </SelectContent>
-              </Select>
             </div>
           </div>
           <div className="flex justify-end gap-3">

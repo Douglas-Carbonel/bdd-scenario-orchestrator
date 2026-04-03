@@ -26,6 +26,7 @@ const Index = () => {
     updateProduct,
     deleteProduct,
     addSprint,
+    activateSprint,
     addScenario,
     updateScenario,
     addSuite,
@@ -97,6 +98,7 @@ const Index = () => {
             sprints={sprints}
             scenarios={scenarios}
             onAddSprint={addSprint}
+            onActivateSprint={activateSprint}
             getSprintStats={getSprintStats}
           />
         );
