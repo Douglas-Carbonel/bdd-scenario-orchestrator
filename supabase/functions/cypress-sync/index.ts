@@ -5,7 +5,7 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-function generateFeatureContent(scenario: any, companyName: string): string {
+function generateFeatureContent(scenario: any, productName: string, companyName: string): string {
   const userTags = (scenario.tags as string[]).map((tag: string) => `@${tag}`).join(" ");
   const qa4Tag = `@qa4:${scenario.id}`;
   const allTags = [qa4Tag, userTags].filter(Boolean).join(" ");
@@ -54,23 +54,33 @@ Deno.serve(async (req) => {
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    const { data: company, error: companyError } = await supabase
-      .from("companies")
-      .select("id, name")
+    // Look up product by api_key
+    const { data: product, error: productError } = await supabase
+      .from("products")
+      .select("id, name, company_id")
       .eq("api_key", apiKey)
       .single();
 
-    if (companyError || !company) {
+    if (productError || !product) {
       return new Response(
         JSON.stringify({ error: "Invalid API key" }),
         { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
+    const { data: company } = await supabase
+      .from("companies")
+      .select("name")
+      .eq("id", product.company_id)
+      .single();
+
+    const companyName = company?.name ?? "Unknown";
+
+    // Get scenarios for this product
     const { data: scenarios, error: scenariosError } = await supabase
       .from("scenarios")
       .select("*")
-      .eq("company_id", company.id);
+      .eq("product_id", product.id);
 
     if (scenariosError) {
       return new Response(
@@ -87,7 +97,7 @@ Deno.serve(async (req) => {
       return {
         id: scenario.id,
         path,
-        content: generateFeatureContent(scenario, company.name),
+        content: generateFeatureContent(scenario, product.name, companyName),
         feature: scenario.feature,
         title: scenario.title,
         status: scenario.status,
@@ -96,13 +106,11 @@ Deno.serve(async (req) => {
       };
     });
 
-    // map by file path: { "path/to/file.feature": "uuid" }  — for Cucumber/plugin usage
     const map: Record<string, string> = {};
     for (const f of features) {
       map[f.path] = f.id;
     }
 
-    // titleMap: { "Scenario title": "uuid" } — for plain Cypress usage
     const titleMap: Record<string, string> = {};
     for (const s of (scenarios || [])) {
       titleMap[s.title] = s.id;
@@ -110,7 +118,8 @@ Deno.serve(async (req) => {
 
     return new Response(
       JSON.stringify({
-        company: company.name,
+        company: companyName,
+        product: product.name,
         total: features.length,
         features,
         map,

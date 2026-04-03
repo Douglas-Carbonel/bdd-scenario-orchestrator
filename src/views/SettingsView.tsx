@@ -3,11 +3,12 @@ import { Settings, Code2, GitBranch, Database, Zap, Copy, Check, Terminal, Puzzl
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ExportDialog } from "@/components/export/ExportDialog";
-import { Company, Sprint, Scenario } from "@/types/bdd";
+import { Company, Product, Sprint, Scenario } from "@/types/bdd";
 import { toast } from "sonner";
 
 interface SettingsViewProps {
   companies: Company[];
+  products: Product[];
   sprints: Sprint[];
   scenarios: Scenario[];
 }
@@ -46,7 +47,7 @@ function CodeBlock({
   );
 }
 
-export function SettingsView({ companies, sprints, scenarios }: SettingsViewProps) {
+export function SettingsView({ companies, products, sprints, scenarios }: SettingsViewProps) {
   const [exportDialogOpen, setExportDialogOpen] = useState(false);
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
 
@@ -62,17 +63,17 @@ export function SettingsView({ companies, sprints, scenarios }: SettingsViewProp
 
   // ─── Snippets ────────────────────────────────────────────────────────────────
 
-  const companiesJson = companies.length > 0
+  const companiesJson = products.length > 0
     ? JSON.stringify(
         Object.fromEntries(
-          companies.map(c => [
-            c.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, ''),
-            c.apiKey
+          products.map(p => [
+            p.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, ''),
+            p.apiKey
           ])
         ),
         null, 2
       )
-    : `{\n  "saucedemo": "API_KEY_DA_EMPRESA_A",\n  "carhub": "API_KEY_DA_EMPRESA_B"\n}`;
+    : `{\n  "saucedemo": "API_KEY_DO_PRODUTO_A",\n  "carhub": "API_KEY_DO_PRODUTO_B"\n}`;
 
   const ciSyncSnippet = `# Adicione este step ANTES do step que roda o Cypress
 - name: Sync cenários do 4QA

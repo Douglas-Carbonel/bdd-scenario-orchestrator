@@ -2,13 +2,14 @@ import { useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import {
-  Company, Sprint, Scenario, TestSuite, SuiteTreeNode,
+  Company, Product, Sprint, Scenario, TestSuite, SuiteTreeNode,
   TeamMember, TestRun, DailyStats,
 } from "@/types/bdd";
 import { Database } from "@/integrations/supabase/types";
 
 // ─── DB row types ──────────────────────────────────────────────────────────────
 type DbCompany    = Database["public"]["Tables"]["companies"]["Row"];
+type DbProduct    = Database["public"]["Tables"]["products"]["Row"];
 type DbSprint     = Database["public"]["Tables"]["sprints"]["Row"];
 type DbScenario   = Database["public"]["Tables"]["scenarios"]["Row"];
 type DbTestSuite  = Database["public"]["Tables"]["test_suites"]["Row"];
@@ -21,7 +22,17 @@ function mapCompany(row: DbCompany): Company {
     id: row.id,
     name: row.name,
     description: row.description ?? undefined,
-    apiKey: row.api_key ?? "",
+    createdAt: new Date(row.created_at),
+  };
+}
+
+function mapProduct(row: DbProduct): Product {
+  return {
+    id: row.id,
+    companyId: row.company_id,
+    name: row.name,
+    description: row.description ?? undefined,
+    apiKey: row.api_key,
     createdAt: new Date(row.created_at),
   };
 }
@@ -31,6 +42,7 @@ function mapSprint(row: DbSprint): Sprint {
     id: row.id,
     name: row.name,
     companyId: row.company_id,
+    productId: row.product_id ?? undefined,
     startDate: new Date(row.start_date),
     endDate: new Date(row.end_date),
     status: row.status,
@@ -42,6 +54,7 @@ function mapScenario(row: DbScenario): Scenario {
     id: row.id,
     title: row.title,
     companyId: row.company_id,
+    productId: row.product_id ?? undefined,
     sprintId: row.sprint_id ?? undefined,
     suiteId: row.suite_id ?? undefined,
     feature: row.feature,
@@ -64,6 +77,7 @@ function mapSuite(row: DbTestSuite): TestSuite {
     id: row.id,
     name: row.name,
     companyId: row.company_id,
+    productId: row.product_id ?? undefined,
     parentId: row.parent_id,
     order: row.order,
     createdAt: new Date(row.created_at),
@@ -105,6 +119,15 @@ export function useBddStore() {
       const { data, error } = await supabase.from("companies").select("*").order("created_at");
       if (error) throw error;
       return data.map(mapCompany);
+    },
+  });
+
+  const { data: products = [] } = useQuery({
+    queryKey: ["products"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("products").select("*").order("created_at");
+      if (error) throw error;
+      return data.map(mapProduct);
     },
   });
 
@@ -158,7 +181,7 @@ export function useBddStore() {
 
   // ── Company mutations ────────────────────────────────────────────────────────
   const addCompanyMutation = useMutation({
-    mutationFn: async (company: Omit<Company, "id" | "createdAt" | "apiKey">) => {
+    mutationFn: async (company: Omit<Company, "id" | "createdAt">) => {
       const { data, error } = await supabase
         .from("companies")
         .insert({ name: company.name, description: company.description ?? null })
@@ -194,16 +217,63 @@ export function useBddStore() {
       await supabase.from("test_suites").delete().eq("company_id", id);
       await supabase.from("sprints").delete().eq("company_id", id);
       await supabase.from("team_members").delete().eq("company_id", id);
+      await supabase.from("products").delete().eq("company_id", id);
       const { error } = await supabase.from("companies").delete().eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["companies"] });
+      queryClient.invalidateQueries({ queryKey: ["products"] });
       queryClient.invalidateQueries({ queryKey: ["sprints"] });
       queryClient.invalidateQueries({ queryKey: ["scenarios"] });
       queryClient.invalidateQueries({ queryKey: ["suites"] });
       queryClient.invalidateQueries({ queryKey: ["team_members"] });
       queryClient.invalidateQueries({ queryKey: ["test_runs"] });
+    },
+  });
+
+  // ── Product mutations ────────────────────────────────────────────────────────
+  const addProductMutation = useMutation({
+    mutationFn: async (product: Omit<Product, "id" | "createdAt" | "apiKey">) => {
+      const { data, error } = await supabase
+        .from("products")
+        .insert({
+          company_id: product.companyId,
+          name: product.name,
+          description: product.description ?? null,
+        })
+        .select()
+        .single();
+      if (error) throw error;
+      return mapProduct(data);
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["products"] }),
+  });
+
+  const updateProductMutation = useMutation({
+    mutationFn: async ({ id, updates }: { id: string; updates: Partial<Product> }) => {
+      const dbUpdates: Record<string, unknown> = {};
+      if (updates.name !== undefined) dbUpdates.name = updates.name;
+      if (updates.description !== undefined) dbUpdates.description = updates.description ?? null;
+      const { error } = await supabase.from("products").update(dbUpdates).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["products"] }),
+  });
+
+  const deleteProductMutation = useMutation({
+    mutationFn: async (id: string) => {
+      await supabase.from("scenarios").update({ product_id: null }).eq("product_id", id);
+      await supabase.from("test_suites").update({ product_id: null }).eq("product_id", id);
+      await supabase.from("sprints").update({ product_id: null }).eq("product_id", id);
+      const { error } = await supabase.from("products").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["products"] });
+      queryClient.invalidateQueries({ queryKey: ["scenarios"] });
+      queryClient.invalidateQueries({ queryKey: ["suites"] });
+      queryClient.invalidateQueries({ queryKey: ["sprints"] });
     },
   });
 
@@ -215,6 +285,7 @@ export function useBddStore() {
         .insert({
           name: sprint.name,
           company_id: sprint.companyId,
+          product_id: sprint.productId ?? null,
           start_date: sprint.startDate.toISOString().split("T")[0],
           end_date: sprint.endDate.toISOString().split("T")[0],
           status: sprint.status,
@@ -321,6 +392,7 @@ export function useBddStore() {
         .insert({
           title: scenario.title,
           company_id: scenario.companyId,
+          product_id: scenario.productId ?? null,
           sprint_id: scenario.sprintId ?? null,
           suite_id: scenario.suiteId ?? null,
           feature: scenario.feature,
@@ -505,10 +577,22 @@ export function useBddStore() {
     [teamMembers],
   );
 
-  // ── Public interface (same as original hook) ─────────────────────────────────
+  // ── Public interface ─────────────────────────────────────────────────────────
   const addCompany = useCallback(
-    (company: Omit<Company, "id" | "createdAt" | "apiKey">) => addCompanyMutation.mutate(company),
+    (company: Omit<Company, "id" | "createdAt">) => addCompanyMutation.mutate(company),
     [addCompanyMutation],
+  );
+  const addProduct = useCallback(
+    (product: Omit<Product, "id" | "createdAt" | "apiKey">) => addProductMutation.mutate(product),
+    [addProductMutation],
+  );
+  const updateProduct = useCallback(
+    (id: string, updates: Partial<Product>) => updateProductMutation.mutate({ id, updates }),
+    [updateProductMutation],
+  );
+  const deleteProduct = useCallback(
+    (id: string) => deleteProductMutation.mutate(id),
+    [deleteProductMutation],
   );
   const updateCompany = useCallback(
     (id: string, updates: Partial<Company>) => updateCompanyMutation.mutate({ id, updates }),
@@ -572,6 +656,7 @@ export function useBddStore() {
 
   return {
     companies,
+    products,
     sprints,
     scenarios,
     suites,
@@ -580,6 +665,9 @@ export function useBddStore() {
     addCompany,
     updateCompany,
     deleteCompany,
+    addProduct,
+    updateProduct,
+    deleteProduct,
     addSprint,
     updateSprint,
     deleteSprint,

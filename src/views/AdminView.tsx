@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { Check, X, Clock, Building2, Mail, User, Key, Loader2 } from "lucide-react";
+import { Check, X, Clock, Building2, Mail, User, Loader2 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -14,7 +14,6 @@ interface PendingUser {
   email: string;
   company_id: string | null;
   company_name: string | null;
-  company_api_key: string | null;
   approval_status: string;
   created_at: string;
 }
@@ -49,25 +48,22 @@ export function AdminView() {
       const usersWithCompanies = await Promise.all(
         (profiles || []).map(async (profile) => {
           let company_name = null;
-          let company_api_key = null;
 
           if (profile.company_id) {
             const { data: company } = await supabase
               .from("companies")
-              .select("name, api_key")
+              .select("name")
               .eq("id", profile.company_id)
               .single();
 
             if (company) {
               company_name = company.name;
-              company_api_key = company.api_key;
             }
           }
 
           return {
             ...profile,
             company_name,
-            company_api_key,
           };
         })
       );
@@ -247,14 +243,6 @@ export function AdminView() {
                         <div className="flex items-center gap-1">
                           <Building2 className="h-3 w-3" />
                           {user.company_name}
-                        </div>
-                      )}
-                      {user.company_api_key && user.approval_status === "approved" && (
-                        <div className="flex items-center gap-1">
-                          <Key className="h-3 w-3" />
-                          <code className="text-xs bg-muted px-1.5 py-0.5 rounded">
-                            {user.company_api_key}
-                          </code>
                         </div>
                       )}
                       <span>

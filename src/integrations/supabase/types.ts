@@ -16,27 +16,59 @@ export type Database = {
     Tables: {
       companies: {
         Row: {
-          api_key: string | null
           created_at: string
           description: string | null
           id: string
           name: string
         }
         Insert: {
-          api_key?: string | null
           created_at?: string
           description?: string | null
           id?: string
           name: string
         }
         Update: {
-          api_key?: string | null
           created_at?: string
           description?: string | null
           id?: string
           name?: string
         }
         Relationships: []
+      }
+      products: {
+        Row: {
+          api_key: string
+          company_id: string
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+        }
+        Insert: {
+          api_key?: string
+          company_id: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+        }
+        Update: {
+          api_key?: string
+          company_id?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "products_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profiles: {
         Row: {
@@ -93,6 +125,7 @@ export type Database = {
           given_steps: Json
           id: string
           priority: Database["public"]["Enums"]["priority"]
+          product_id: string | null
           sprint_id: string | null
           status: Database["public"]["Enums"]["scenario_status"]
           suite_id: string | null
@@ -112,6 +145,7 @@ export type Database = {
           given_steps?: Json
           id?: string
           priority?: Database["public"]["Enums"]["priority"]
+          product_id?: string | null
           sprint_id?: string | null
           status?: Database["public"]["Enums"]["scenario_status"]
           suite_id?: string | null
@@ -131,6 +165,7 @@ export type Database = {
           given_steps?: Json
           id?: string
           priority?: Database["public"]["Enums"]["priority"]
+          product_id?: string | null
           sprint_id?: string | null
           status?: Database["public"]["Enums"]["scenario_status"]
           suite_id?: string | null
@@ -178,6 +213,7 @@ export type Database = {
           end_date: string
           id: string
           name: string
+          product_id: string | null
           start_date: string
           status: Database["public"]["Enums"]["sprint_status"]
         }
@@ -187,6 +223,7 @@ export type Database = {
           end_date: string
           id?: string
           name: string
+          product_id?: string | null
           start_date: string
           status?: Database["public"]["Enums"]["sprint_status"]
         }
@@ -196,6 +233,7 @@ export type Database = {
           end_date?: string
           id?: string
           name?: string
+          product_id?: string | null
           start_date?: string
           status?: Database["public"]["Enums"]["sprint_status"]
         }
@@ -205,6 +243,13 @@ export type Database = {
             columns: ["company_id"]
             isOneToOne: false
             referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sprints_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
             referencedColumns: ["id"]
           },
         ]
@@ -299,6 +344,7 @@ export type Database = {
           name: string
           order: number
           parent_id: string | null
+          product_id: string | null
         }
         Insert: {
           company_id: string
@@ -307,6 +353,7 @@ export type Database = {
           name: string
           order?: number
           parent_id?: string | null
+          product_id?: string | null
         }
         Update: {
           company_id?: string
@@ -315,6 +362,7 @@ export type Database = {
           name?: string
           order?: number
           parent_id?: string | null
+          product_id?: string | null
         }
         Relationships: [
           {

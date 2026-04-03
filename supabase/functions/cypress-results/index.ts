@@ -40,19 +40,25 @@ Deno.serve(async (req) => {
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Validate api_key
-    const { data: company, error: companyError } = await supabase
-      .from("companies")
-      .select("id, name")
+    // Validate api_key — look up product
+    const { data: product, error: productError } = await supabase
+      .from("products")
+      .select("id, name, company_id")
       .eq("api_key", apiKey)
       .single();
 
-    if (companyError || !company) {
+    if (productError || !product) {
       return new Response(
         JSON.stringify({ error: "Invalid API key" }),
         { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
+
+    const { data: company } = await supabase
+      .from("companies")
+      .select("name")
+      .eq("id", product.company_id)
+      .single();
 
     const body = await req.json();
     const results: TestResult[] = Array.isArray(body.results) ? body.results : [];
@@ -64,12 +70,12 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Validate scenario IDs belong to this company
+    // Validate scenario IDs belong to this product
     const scenarioIds = results.map(r => r.scenario_id);
     const { data: validScenarios } = await supabase
       .from("scenarios")
       .select("id")
-      .eq("company_id", company.id)
+      .eq("product_id", product.id)
       .in("id", scenarioIds);
 
     const validIds = new Set((validScenarios || []).map((s: any) => s.id));
@@ -77,12 +83,11 @@ Deno.serve(async (req) => {
 
     if (invalidIds.length > 0) {
       return new Response(
-        JSON.stringify({ error: `Invalid scenario IDs for this company: ${invalidIds.join(", ")}` }),
+        JSON.stringify({ error: `Invalid scenario IDs for this product: ${invalidIds.join(", ")}` }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    // Insert test runs and update scenario statuses
     const now = new Date().toISOString();
     const testRuns = results.map(r => ({
       scenario_id: r.scenario_id,
@@ -120,7 +125,8 @@ Deno.serve(async (req) => {
     return new Response(
       JSON.stringify({
         success: true,
-        company: company.name,
+        company: company?.name ?? "Unknown",
+        product: product.name,
         processed: insertedRuns?.length || 0,
         results: insertedRuns,
       }),

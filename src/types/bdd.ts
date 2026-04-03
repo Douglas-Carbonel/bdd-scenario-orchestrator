@@ -2,6 +2,14 @@ export interface Company {
   id: string;
   name: string;
   description?: string;
+  createdAt: Date;
+}
+
+export interface Product {
+  id: string;
+  companyId: string;
+  name: string;
+  description?: string;
   apiKey: string;
   createdAt: Date;
 }
@@ -10,6 +18,7 @@ export interface Sprint {
   id: string;
   name: string;
   companyId: string;
+  productId?: string;
   startDate: Date;
   endDate: Date;
   status: 'planned' | 'active' | 'completed';
@@ -19,6 +28,7 @@ export interface TestSuite {
   id: string;
   name: string;
   companyId: string;
+  productId?: string;
   parentId: string | null;
   order: number;
   createdAt: Date;
@@ -38,6 +48,7 @@ export interface Scenario {
   id: string;
   title: string;
   companyId: string;
+  productId?: string;
   sprintId?: string;
   suiteId?: string;
   feature: string;

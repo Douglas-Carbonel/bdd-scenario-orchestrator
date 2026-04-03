@@ -13,6 +13,7 @@ const Index = () => {
   const [activeView, setActiveView] = useState("dashboard");
   const {
     companies,
+    products,
     sprints,
     scenarios,
     suites,
@@ -21,6 +22,9 @@ const Index = () => {
     addCompany,
     updateCompany,
     deleteCompany,
+    addProduct,
+    updateProduct,
+    deleteProduct,
     addSprint,
     addScenario,
     updateScenario,
@@ -53,11 +57,15 @@ const Index = () => {
         return (
           <CompaniesView
             companies={companies}
+            products={products}
             scenarios={scenarios}
             sprints={sprints}
             onAddCompany={addCompany}
             onEditCompany={updateCompany}
             onDeleteCompany={deleteCompany}
+            onAddProduct={addProduct}
+            onEditProduct={updateProduct}
+            onDeleteProduct={deleteProduct}
           />
         );
       case "scenarios":
@@ -93,6 +101,7 @@ const Index = () => {
         return (
           <SettingsView
             companies={companies}
+            products={products}
             sprints={sprints}
             scenarios={scenarios}
           />
