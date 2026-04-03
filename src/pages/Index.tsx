@@ -72,6 +72,7 @@ const Index = () => {
         return (
           <ScenariosView
             companies={companies}
+            products={products}
             sprints={sprints}
             scenarios={scenarios}
             suites={suites}

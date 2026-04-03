@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { ScenarioCard } from "@/components/scenarios/ScenarioCard";
 import { ScenarioForm } from "@/components/scenarios/ScenarioForm";
 import { SuiteTree } from "@/components/suites/SuiteTree";
-import { Company, Sprint, Scenario, TestSuite, SuiteTreeNode, TeamMember, TestRun } from "@/types/bdd";
+import { Company, Product, Sprint, Scenario, TestSuite, SuiteTreeNode, TeamMember, TestRun } from "@/types/bdd";
 import { cn } from "@/lib/utils";
 import {
   Dialog,
@@ -23,6 +23,7 @@ import {
 
 interface ScenariosViewProps {
   companies: Company[];
+  products: Product[];
   sprints: Sprint[];
   scenarios: Scenario[];
   suites: TestSuite[];
@@ -40,6 +41,7 @@ interface ScenariosViewProps {
 
 export function ScenariosView({
   companies,
+  products,
   sprints,
   scenarios,
   suites,
@@ -273,6 +275,7 @@ export function ScenariosView({
           </DialogHeader>
           <ScenarioForm
             companies={companies}
+            products={products}
             sprints={sprints}
             suites={suites.filter((s) => s.companyId === filterCompany)}
             teamMembers={teamMembers.filter((m) => m.companyId === filterCompany)}

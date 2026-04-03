@@ -1,5 +1,6 @@
 import { useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import {
   Company, Product, Sprint, Scenario, TestSuite, SuiteTreeNode,
@@ -247,7 +248,13 @@ export function useBddStore() {
       if (error) throw error;
       return mapProduct(data);
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["products"] }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["products"] });
+      toast.success("Produto criado com sucesso!");
+    },
+    onError: (error: Error) => {
+      toast.error(`Erro ao criar produto: ${error.message}`);
+    },
   });
 
   const updateProductMutation = useMutation({
@@ -258,7 +265,13 @@ export function useBddStore() {
       const { error } = await supabase.from("products").update(dbUpdates).eq("id", id);
       if (error) throw error;
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["products"] }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["products"] });
+      toast.success("Produto atualizado!");
+    },
+    onError: (error: Error) => {
+      toast.error(`Erro ao atualizar produto: ${error.message}`);
+    },
   });
 
   const deleteProductMutation = useMutation({
@@ -274,6 +287,9 @@ export function useBddStore() {
       queryClient.invalidateQueries({ queryKey: ["scenarios"] });
       queryClient.invalidateQueries({ queryKey: ["suites"] });
       queryClient.invalidateQueries({ queryKey: ["sprints"] });
+    },
+    onError: (error: Error) => {
+      toast.error(`Erro ao excluir produto: ${error.message}`);
     },
   });
 

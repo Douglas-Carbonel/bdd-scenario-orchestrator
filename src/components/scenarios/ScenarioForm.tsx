@@ -3,7 +3,7 @@ import { Plus, X, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Scenario, Company, Sprint, TestSuite, TeamMember, Priority } from "@/types/bdd";
+import { Scenario, Company, Product, Sprint, TestSuite, TeamMember, Priority } from "@/types/bdd";
 import {
   Select,
   SelectContent,
@@ -14,6 +14,7 @@ import {
 
 interface ScenarioFormProps {
   companies: Company[];
+  products: Product[];
   sprints: Sprint[];
   suites: TestSuite[];
   teamMembers: TeamMember[];
@@ -32,6 +33,7 @@ const priorityOptions: { value: Priority; label: string; color: string }[] = [
 
 export function ScenarioForm({ 
   companies, 
+  products,
   sprints, 
   suites,
   teamMembers,
@@ -43,6 +45,7 @@ export function ScenarioForm({
   const [title, setTitle] = useState(initialData?.title || "");
   const [feature, setFeature] = useState(initialData?.feature || "");
   const [companyId, setCompanyId] = useState(initialData?.companyId || companies[0]?.id || "");
+  const [productId, setProductId] = useState(initialData?.productId || "");
   const [sprintId, setSprintId] = useState(initialData?.sprintId || "");
   const [suiteId, setSuiteId] = useState(initialData?.suiteId || defaultSuiteId || "");
   const [priority, setPriority] = useState<Priority>(initialData?.priority || "medium");
@@ -95,11 +98,18 @@ export function ScenarioForm({
     setTags(tags.filter((t) => t !== tag));
   };
 
+  const handleCompanyChange = (id: string) => {
+    setCompanyId(id);
+    setProductId("");
+    setSprintId("");
+  };
+
   const handleSubmit = () => {
     onSave({
       title,
       feature,
       companyId,
+      productId: productId || undefined,
       sprintId: sprintId || undefined,
       suiteId: suiteId || undefined,
       priority,
@@ -113,6 +123,7 @@ export function ScenarioForm({
     });
   };
 
+  const filteredProducts = products.filter((p) => p.companyId === companyId);
   const filteredSprints = sprints.filter((s) => s.companyId === companyId);
   const filteredSuites = suites.filter((s) => s.companyId === companyId);
   const filteredTeamMembers = teamMembers.filter((m) => m.companyId === companyId);
@@ -155,10 +166,10 @@ export function ScenarioForm({
         </div>
       </div>
 
-      <div className="grid gap-4 grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
         <div className="space-y-2">
           <Label>Empresa</Label>
-          <Select value={companyId} onValueChange={setCompanyId}>
+          <Select value={companyId} onValueChange={handleCompanyChange}>
             <SelectTrigger>
               <SelectValue placeholder="Selecione a empresa" />
             </SelectTrigger>
@@ -166,6 +177,26 @@ export function ScenarioForm({
               {companies.map((company) => (
                 <SelectItem key={company.id} value={company.id}>
                   {company.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="space-y-2">
+          <Label>Produto</Label>
+          <Select
+            value={productId || "none"}
+            onValueChange={(v) => setProductId(v === "none" ? "" : v)}
+            disabled={!companyId || filteredProducts.length === 0}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Sem produto" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="none">Sem produto</SelectItem>
+              {filteredProducts.map((product) => (
+                <SelectItem key={product.id} value={product.id}>
+                  {product.name}
                 </SelectItem>
               ))}
             </SelectContent>
