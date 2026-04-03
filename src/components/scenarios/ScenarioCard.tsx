@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Clock, Tag, Play, CheckCircle2, XCircle, FileEdit, AlertTriangle, User, Copy, Check, History, ChevronDown, ChevronUp, Bot, ImageIcon, X, Trash2 } from "lucide-react";
+import { Clock, Tag, Play, CheckCircle2, XCircle, FileEdit, AlertTriangle, User, Copy, Check, History, ChevronDown, ChevronUp, Bot, ImageIcon, X, Trash2, Layers } from "lucide-react";
 import { Scenario, Priority, TestRun } from "@/types/bdd";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -14,6 +14,7 @@ interface ScenarioCardProps {
   onEdit?: (scenario: Scenario) => void;
   onRun?: (scenario: Scenario) => void;
   onClearRuns?: (scenarioId: string) => void;
+  getSprintName?: (sprintId: string) => string | undefined;
 }
 
 const statusConfig = {
@@ -43,7 +44,7 @@ function formatRelativeTime(date: Date): string {
   return `${days}d atrás`;
 }
 
-export function ScenarioCard({ scenario, assigneeName, runs = [], onEdit, onRun, onClearRuns }: ScenarioCardProps) {
+export function ScenarioCard({ scenario, assigneeName, runs = [], onEdit, onRun, onClearRuns, getSprintName }: ScenarioCardProps) {
   const [copied, setCopied] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
   const [showAllRuns, setShowAllRuns] = useState(false);
@@ -202,6 +203,12 @@ export function ScenarioCard({ scenario, assigneeName, runs = [], onEdit, onRun,
                           <Bot className="h-3 w-3" />
                           <span className="font-mono">{run.executedBy}</span>
                         </div>
+                        {run.sprintId && getSprintName?.(run.sprintId) && (
+                          <div className="flex items-center gap-0.5 text-primary/70">
+                            <Layers className="h-3 w-3" />
+                            <span className="truncate max-w-[80px]">{getSprintName(run.sprintId)}</span>
+                          </div>
+                        )}
                         {run.errorMessage && (
                           <span className="text-destructive truncate max-w-[120px]" title={run.errorMessage}>
                             {run.errorMessage}

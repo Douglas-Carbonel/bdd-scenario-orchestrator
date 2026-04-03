@@ -68,6 +68,7 @@ export interface Scenario {
 export interface TestRun {
   id: string;
   scenarioId: string;
+  sprintId?: string;
   executedBy: string;
   startedAt: Date;
   completedAt?: Date;

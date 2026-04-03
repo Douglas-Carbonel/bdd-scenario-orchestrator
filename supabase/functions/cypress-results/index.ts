@@ -89,9 +89,20 @@ Deno.serve(async (req) => {
       );
     }
 
+    // Look up the active sprint for this company (if any)
+    const { data: activeSprint } = await supabase
+      .from("sprints")
+      .select("id")
+      .eq("company_id", product.company_id)
+      .eq("status", "active")
+      .maybeSingle();
+
+    const sprintId = activeSprint?.id ?? null;
+
     const now = new Date().toISOString();
     const testRuns = results.map(r => ({
       scenario_id: r.scenario_id,
+      sprint_id: sprintId,
       status: r.status,
       duration: r.duration || null,
       error_message: r.error_message || null,

@@ -260,6 +260,7 @@ export function ScenariosView({
                     runs={getScenarioRuns(scenario.id)}
                     onEdit={openEditDialog}
                     onClearRuns={clearScenarioRuns}
+                    getSprintName={(id) => sprints.find(s => s.id === id)?.name}
                   />
                 </div>
               ))}

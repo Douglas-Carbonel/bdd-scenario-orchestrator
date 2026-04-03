@@ -99,6 +99,7 @@ function mapTestRun(row: DbTestRun): TestRun {
   return {
     id: row.id,
     scenarioId: row.scenario_id,
+    sprintId: (row as any).sprint_id ?? undefined,
     executedBy: row.executed_by,
     startedAt: new Date(row.started_at),
     completedAt: row.completed_at ? new Date(row.completed_at) : undefined,
