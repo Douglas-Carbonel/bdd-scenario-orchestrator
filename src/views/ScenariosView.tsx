@@ -277,12 +277,13 @@ export function ScenariosView({
             companies={companies}
             products={products}
             sprints={sprints}
-            suites={suites.filter((s) => s.companyId === filterCompany)}
-            teamMembers={teamMembers.filter((m) => m.companyId === filterCompany)}
+            suites={suites}
+            teamMembers={teamMembers}
             onSave={handleSave}
             onCancel={() => setIsDialogOpen(false)}
             initialData={editingScenario || undefined}
             defaultSuiteId={selectedSuiteId || undefined}
+            defaultCompanyId={filterCompany !== "all" ? filterCompany : companies[0]?.id}
           />
         </DialogContent>
       </Dialog>

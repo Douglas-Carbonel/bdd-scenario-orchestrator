@@ -22,6 +22,7 @@ interface ScenarioFormProps {
   onCancel: () => void;
   initialData?: Scenario;
   defaultSuiteId?: string;
+  defaultCompanyId?: string;
 }
 
 const priorityOptions: { value: Priority; label: string; color: string }[] = [
@@ -41,10 +42,13 @@ export function ScenarioForm({
   onCancel, 
   initialData,
   defaultSuiteId,
+  defaultCompanyId,
 }: ScenarioFormProps) {
   const [title, setTitle] = useState(initialData?.title || "");
   const [feature, setFeature] = useState(initialData?.feature || "");
-  const [companyId, setCompanyId] = useState(initialData?.companyId || companies[0]?.id || "");
+  const [companyId, setCompanyId] = useState(
+    initialData?.companyId || defaultCompanyId || companies[0]?.id || ""
+  );
   const [productId, setProductId] = useState(initialData?.productId || "");
   const [sprintId, setSprintId] = useState(initialData?.sprintId || "");
   const [suiteId, setSuiteId] = useState(initialData?.suiteId || defaultSuiteId || "");
