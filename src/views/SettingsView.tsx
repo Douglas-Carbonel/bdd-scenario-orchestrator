@@ -172,12 +172,10 @@ module.exports = defineConfig({
           const duration    = lastAttempt.duration || 0
           const errorMsg    = lastAttempt.error?.message || null
 
-          // Upload screenshots desta execução (falhas capturam automaticamente)
+          // Upload screenshots desta execução (casa pelo testId do Cypress)
           const evidenceUrls = []
           if (supabaseKey) {
-            const shots = (results.screenshots || []).filter(s =>
-              s.path.includes(title.substring(0, 40).replace(/[^a-z0-9]/gi, ' ').trim())
-            )
+            const shots = (results.screenshots || []).filter(s => s.testId === test.testId)
             for (const ss of shots) {
               try {
                 const file     = fs.readFileSync(ss.path)
@@ -186,8 +184,14 @@ module.exports = defineConfig({
                   \`\${SUPABASE_URL}/storage/v1/object/evidence/\${fileName}\`,
                   { method: 'POST', headers: { 'Authorization': \`Bearer \${supabaseKey}\`, 'Content-Type': 'image/png' }, body: file }
                 )
-                if (res.ok) evidenceUrls.push(\`\${SUPABASE_URL}/storage/v1/object/public/evidence/\${fileName}\`)
-              } catch (_) {}
+                if (res.ok) {
+                  evidenceUrls.push(\`\${SUPABASE_URL}/storage/v1/object/public/evidence/\${fileName}\`)
+                } else {
+                  console.warn('4QA: falha no upload de evidência', res.status, await res.text())
+                }
+              } catch (e) {
+                console.warn('4QA: erro ao ler screenshot', e.message)
+              }
             }
           }
 
