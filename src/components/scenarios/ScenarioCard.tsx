@@ -1,11 +1,11 @@
 import { useState } from "react";
-import { Clock, Tag, Play, CheckCircle2, XCircle, FileEdit, AlertTriangle, User, Copy, Check, History, ChevronDown, ChevronUp, Bot, ImageIcon, X } from "lucide-react";
+import { Clock, Tag, Play, CheckCircle2, XCircle, FileEdit, AlertTriangle, User, Copy, Check, History, ChevronDown, ChevronUp, Bot, ImageIcon, X, Trash2 } from "lucide-react";
 import { Scenario, Priority, TestRun } from "@/types/bdd";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 
 interface ScenarioCardProps {
   scenario: Scenario;
@@ -13,6 +13,7 @@ interface ScenarioCardProps {
   runs?: TestRun[];
   onEdit?: (scenario: Scenario) => void;
   onRun?: (scenario: Scenario) => void;
+  onClearRuns?: (scenarioId: string) => void;
 }
 
 const statusConfig = {
@@ -42,16 +43,21 @@ function formatRelativeTime(date: Date): string {
   return `${days}d atrás`;
 }
 
-export function ScenarioCard({ scenario, assigneeName, runs = [], onEdit, onRun }: ScenarioCardProps) {
+export function ScenarioCard({ scenario, assigneeName, runs = [], onEdit, onRun, onClearRuns }: ScenarioCardProps) {
   const [copied, setCopied] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
+  const [showAllRuns, setShowAllRuns] = useState(false);
+  const [showClearConfirm, setShowClearConfirm] = useState(false);
   const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
   const status = statusConfig[scenario.status];
   const StatusIcon = status.icon;
   const priority = priorityConfig[scenario.priority];
 
-  const recentRuns = runs.slice(0, 10);
-  const lastRun = recentRuns[0];
+  const sortedRuns = [...runs].sort((a, b) => b.startedAt.getTime() - a.startedAt.getTime());
+  const displayRuns = showAllRuns ? sortedRuns : sortedRuns.slice(0, 5);
+  const lastRun = sortedRuns[0];
+  const passCount = sortedRuns.filter(r => r.status === "passed").length;
+  const passRate = sortedRuns.length > 0 ? Math.round((passCount / sortedRuns.length) * 100) : null;
 
   const handleCopyId = () => {
     navigator.clipboard.writeText(scenario.id);
@@ -153,7 +159,7 @@ export function ScenarioCard({ scenario, assigneeName, runs = [], onEdit, onRun 
         </div>
 
         {/* Run History Summary */}
-        {recentRuns.length > 0 && (
+        {sortedRuns.length > 0 && (
           <div className="space-y-2">
             <button
               className="w-full flex items-center justify-between text-xs text-muted-foreground hover:text-foreground transition-colors"
@@ -162,15 +168,17 @@ export function ScenarioCard({ scenario, assigneeName, runs = [], onEdit, onRun 
             >
               <div className="flex items-center gap-2">
                 <History className="h-3 w-3" />
-                <span>Histórico ({recentRuns.length} execuções)</span>
+                <span>{sortedRuns.length} execuç{sortedRuns.length === 1 ? "ão" : "ões"}</span>
+                {passRate !== null && (
+                  <span className={cn("font-medium", passRate >= 80 ? "text-success" : passRate >= 50 ? "text-yellow-400" : "text-destructive")}>
+                    {passRate}% aprovação
+                  </span>
+                )}
                 <div className="flex items-center gap-0.5">
-                  {recentRuns.slice(0, 8).map((run) => (
+                  {sortedRuns.slice(0, 10).map((run) => (
                     <div
                       key={run.id}
-                      className={cn(
-                        "h-2 w-2 rounded-full",
-                        run.status === "passed" ? "bg-success" : "bg-destructive"
-                      )}
+                      className={cn("h-2 w-2 rounded-full", run.status === "passed" ? "bg-success" : "bg-destructive")}
                       title={`${run.status} - ${formatRelativeTime(run.startedAt)}`}
                     />
                   ))}
@@ -181,7 +189,7 @@ export function ScenarioCard({ scenario, assigneeName, runs = [], onEdit, onRun 
 
             {showHistory && (
               <div className="space-y-1.5 border-t border-border pt-2">
-                {recentRuns.map((run) => (
+                {displayRuns.map((run) => (
                   <div key={run.id} className="space-y-1.5" data-testid={`run-item-${run.id}`}>
                     <div className="flex items-center justify-between text-xs px-2 py-1.5 rounded-md bg-secondary/30">
                       <div className="flex items-center gap-2">
@@ -227,13 +235,34 @@ export function ScenarioCard({ scenario, assigneeName, runs = [], onEdit, onRun 
                     )}
                   </div>
                 ))}
+
+                {/* Ver mais / Ver menos + Limpar */}
+                <div className="flex items-center justify-between pt-1">
+                  {sortedRuns.length > 5 && (
+                    <button
+                      className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+                      onClick={() => setShowAllRuns(!showAllRuns)}
+                    >
+                      {showAllRuns ? `Ver menos` : `Ver todas (${sortedRuns.length})`}
+                    </button>
+                  )}
+                  {onClearRuns && (
+                    <button
+                      className="ml-auto flex items-center gap-1 text-xs text-muted-foreground hover:text-destructive transition-colors"
+                      onClick={() => setShowClearConfirm(true)}
+                    >
+                      <Trash2 className="h-3 w-3" />
+                      Limpar histórico
+                    </button>
+                  )}
+                </div>
               </div>
             )}
           </div>
         )}
 
         {/* No runs yet */}
-        {recentRuns.length === 0 && (
+        {sortedRuns.length === 0 && (
           <div className="flex items-center gap-2 text-xs text-muted-foreground/60 italic">
             <History className="h-3 w-3" />
             <span>Nenhuma execução registrada</span>
@@ -286,6 +315,33 @@ export function ScenarioCard({ scenario, assigneeName, runs = [], onEdit, onRun 
               className="w-full h-auto max-h-[85vh] object-contain rounded-md"
             />
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Clear history confirmation */}
+      <Dialog open={showClearConfirm} onOpenChange={setShowClearConfirm}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Limpar histórico de execuções?</DialogTitle>
+            <DialogDescription>
+              Todas as {sortedRuns.length} execuç{sortedRuns.length === 1 ? "ão" : "ões"} deste cenário serão removidas permanentemente. Esta ação não pode ser desfeita.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowClearConfirm(false)}>Cancelar</Button>
+            <Button
+              variant="destructive"
+              onClick={() => {
+                onClearRuns?.(scenario.id);
+                setShowClearConfirm(false);
+                setShowHistory(false);
+                setShowAllRuns(false);
+              }}
+            >
+              <Trash2 className="h-4 w-4 mr-1" />
+              Limpar histórico
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

@@ -37,6 +37,7 @@ interface ScenariosViewProps {
   getSuiteTree: (companyId: string) => SuiteTreeNode[];
   getUnsortedScenarios: (companyId: string) => Scenario[];
   getScenarioRuns: (scenarioId: string) => TestRun[];
+  clearScenarioRuns: (scenarioId: string) => void;
 }
 
 export function ScenariosView({
@@ -55,6 +56,7 @@ export function ScenariosView({
   getSuiteTree,
   getUnsortedScenarios,
   getScenarioRuns,
+  clearScenarioRuns,
 }: ScenariosViewProps) {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingScenario, setEditingScenario] = useState<Scenario | null>(null);
@@ -257,6 +259,7 @@ export function ScenariosView({
                     scenario={scenario}
                     runs={getScenarioRuns(scenario.id)}
                     onEdit={openEditDialog}
+                    onClearRuns={clearScenarioRuns}
                   />
                 </div>
               ))}

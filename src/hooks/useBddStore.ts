@@ -477,6 +477,18 @@ export function useBddStore() {
   });
 
   // ── Test run mutations ───────────────────────────────────────────────────────
+  const clearScenarioRunsMutation = useMutation({
+    mutationFn: async (scenarioId: string) => {
+      const { error } = await supabase.from("test_runs").delete().eq("scenario_id", scenarioId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Histórico limpo");
+      queryClient.invalidateQueries({ queryKey: ["test_runs"] });
+    },
+    onError: () => toast.error("Erro ao limpar histórico"),
+  });
+
   const addTestRunMutation = useMutation({
     mutationFn: async (run: Omit<TestRun, "id">) => {
       const { data, error } = await supabase
@@ -661,6 +673,10 @@ export function useBddStore() {
     (id: string) => deleteScenarioMutation.mutate(id),
     [deleteScenarioMutation],
   );
+  const clearScenarioRuns = useCallback(
+    (scenarioId: string) => clearScenarioRunsMutation.mutate(scenarioId),
+    [clearScenarioRunsMutation],
+  );
   const addTestRun = useCallback(
     (run: Omit<TestRun, "id">) => addTestRunMutation.mutate(run),
     [addTestRunMutation],
@@ -698,6 +714,7 @@ export function useBddStore() {
     addScenario,
     updateScenario,
     deleteScenario,
+    clearScenarioRuns,
     addTestRun,
     getScenarioRuns,
     getCompanyStats,
