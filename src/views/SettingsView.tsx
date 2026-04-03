@@ -177,7 +177,7 @@ module.exports = defineConfig({
       // 2. Após cada spec: reporta resultados + faz upload de evidências
       on('after:spec', async (spec, results) => {
         const map         = config.env.QA4_SCENARIO_MAP || {}
-        const specParts   = (spec.relative || '').split('/')
+        const specParts   = (spec.relative || '').split(/[\\\\/]/)
         const folder      = specParts.length >= 3 ? specParts[2] : 'default'
         const supabaseKey = process.env.SUPABASE_ANON_KEY
         const allShots    = results.screenshots || []
