@@ -62,35 +62,28 @@ export function SettingsView({ companies, sprints, scenarios }: SettingsViewProp
 
   // ─── Snippets ────────────────────────────────────────────────────────────────
 
+  const companiesJson = companies.length > 0
+    ? JSON.stringify(
+        Object.fromEntries(
+          companies.map(c => [
+            c.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, ''),
+            c.apiKey
+          ])
+        ),
+        null, 2
+      )
+    : `{\n  "saucedemo": "API_KEY_DA_EMPRESA_A",\n  "carhub": "API_KEY_DA_EMPRESA_B"\n}`;
+
   const ciSyncSnippet = `# Adicione este step ANTES do step que roda o Cypress
 - name: Sync cenários do 4QA
   env:
-    QA4_API_KEY: \${{ secrets.QA4_API_KEY }}
-  run: |
-    node -e "
-      const https = require('https')
-      const fs    = require('fs')
-      const path  = require('path')
-
-      const url = '${syncEndpoint}?api_key=' + process.env.QA4_API_KEY
-      https.get(url, res => {
-        let data = ''
-        res.on('data', d => data += d)
-        res.on('end', () => {
-          const { titleMap } = JSON.parse(data)
-
-          // Salva o mapa título → ID para o qa4-reporter.js ler
-          fs.writeFileSync('qa4-scenarios.json', JSON.stringify(titleMap, null, 2), 'utf-8')
-
-          console.log('4QA: mapa gerado com ' + Object.keys(titleMap).length + ' cenários')
-        })
-      })
-    "`;
+    QA4_COMPANIES: \${{ secrets.QA4_COMPANIES }}
+  run: node scripts/qa4-sync.js`;
 
   const reporterSnippet = `// cypress/support/qa4-reporter.js
 //
-// Lê o mapa gerado pelo sync (qa4-scenarios.json via Cypress.env)
-// e reporta o resultado de cada teste automaticamente.
+// Detecta automaticamente a empresa pelo caminho do arquivo de teste
+// (pasta dentro de cypress/e2e/) e reporta o resultado no 4QA.
 
 const RESULTS_ENDPOINT = '${resultsEndpoint}'
 
@@ -102,18 +95,20 @@ const RESULTS_ENDPOINT = '${resultsEndpoint}'
  */
 function reportToQA4(testTitle, state, duration, errorMessage) {
   const scenarioMap = Cypress.env('QA4_SCENARIO_MAP') || {}
-  const scenarioId  = scenarioMap[testTitle]
-  const apiKey      = Cypress.env('QA4_API_KEY')
 
-  if (!scenarioId) {
-    Cypress.log({ name: '4QA', message: \`cenário "\${testTitle}" não encontrado no mapa\` })
+  // Detecta a pasta do produto pelo caminho do spec
+  // ex: "cypress/e2e/saucedemo/login.cy.js" → "saucedemo"
+  const specParts = (Cypress.spec.relative || '').split('/')
+  const folder    = specParts.length >= 3 ? specParts[2] : 'default'
+
+  const entry = scenarioMap[\`\${folder}:\${testTitle}\`]
+
+  if (!entry) {
+    Cypress.log({ name: '4QA', message: \`cenário "\${folder}:\${testTitle}" não encontrado\` })
     return
   }
 
-  if (!apiKey) {
-    Cypress.log({ name: '4QA', message: 'QA4_API_KEY não configurada' })
-    return
-  }
+  const { scenarioId, apiKey } = entry
 
   cy.request({
     method: 'POST',
@@ -129,7 +124,7 @@ function reportToQA4(testTitle, state, duration, errorMessage) {
     },
     failOnStatusCode: false,
   }).then(() => {
-    Cypress.log({ name: '4QA', message: \`reportado: \${state} → \${testTitle}\` })
+    Cypress.log({ name: '4QA', message: \`reportado: \${folder} / \${testTitle} → \${state}\` })
   })
 }
 
@@ -142,24 +137,21 @@ const fs = require('fs')
 module.exports = defineConfig({
   e2e: {
     setupNodeEvents(on, config) {
-      // Carrega o mapa título→ID gerado pelo sync e injeta no env
+      // Carrega o mapa gerado pelo qa4-sync.js e injeta no env
       try {
-        const titleMap = JSON.parse(fs.readFileSync('qa4-scenarios.json', 'utf-8'))
-        config.env.QA4_SCENARIO_MAP = titleMap
+        const map = JSON.parse(fs.readFileSync('qa4-scenarios.json', 'utf-8'))
+        config.env.QA4_SCENARIO_MAP = map
       } catch (e) {
         console.warn('4QA: qa4-scenarios.json não encontrado — rode o sync primeiro')
       }
       return config
     },
   },
-  env: {
-    // Defina QA4_API_KEY como variável de ambiente no CI
-    QA4_API_KEY: process.env.QA4_API_KEY,
-  },
 })`;
 
-  const testSnippet = `// cypress/e2e/login.cy.js  ← seu teste, quase sem alteração
-const { reportToQA4 } = require('../../support/qa4-reporter')
+  const testSnippet = `// cypress/e2e/saucedemo/login.cy.js
+// A pasta "saucedemo" é usada pelo reporter para identificar a empresa.
+const { reportToQA4 } = require('../../../support/qa4-reporter')
 
 describe('SauceDemo Login', () => {
 
@@ -168,7 +160,6 @@ describe('SauceDemo Login', () => {
   })
 
   afterEach(function () {
-    // Só isso — o ID é resolvido automaticamente pelo reporter
     reportToQA4(
       this.currentTest.title,
       this.currentTest.state,
@@ -191,8 +182,7 @@ describe('SauceDemo Login', () => {
     cy.get('[data-test="error"]').should('be.visible')
   })
 
-})
-// ↑ Removeu o objeto SCENARIOS hardcoded. Só isso.`;
+})`;
 
   const fullWorkflowSnippet = `# .github/workflows/cypress.yml
 name: Cypress BDD Tests
@@ -222,27 +212,10 @@ jobs:
 
       - name: Sync cenários do 4QA
         env:
-          QA4_API_KEY: \${{ secrets.QA4_API_KEY }}
-        run: |
-          node -e "
-            const https = require('https')
-            const fs    = require('fs')
-
-            const url = '${syncEndpoint}?api_key=' + process.env.QA4_API_KEY
-            https.get(url, res => {
-              let data = ''
-              res.on('data', d => data += d)
-              res.on('end', () => {
-                const { titleMap } = JSON.parse(data)
-                fs.writeFileSync('qa4-scenarios.json', JSON.stringify(titleMap, null, 2), 'utf-8')
-                console.log('4QA: ' + Object.keys(titleMap).length + ' cenários sincronizados')
-              })
-            })
-          "
+          QA4_COMPANIES: \${{ secrets.QA4_COMPANIES }}
+        run: node scripts/qa4-sync.js
 
       - name: Rodar testes Cypress
-        env:
-          QA4_API_KEY: \${{ secrets.QA4_API_KEY }}
         run: npx cypress run`;
 
   return (
@@ -259,58 +232,62 @@ jobs:
             <Key className="h-5 w-5 text-yellow-400" />
           </div>
           <div>
-            <h3 className="font-semibold text-foreground">API Keys das Empresas</h3>
+            <h3 className="font-semibold text-foreground">Secret do GitHub — <code className="text-xs font-mono bg-secondary/50 px-1 rounded">QA4_COMPANIES</code></h3>
             <p className="text-sm text-muted-foreground">
-              Copie a key da empresa e cole como <code className="bg-secondary/50 px-1 rounded text-xs">QA4_API_KEY</code> nos secrets do repositório GitHub correspondente.
+              Um único secret com todas as empresas. O reporter detecta automaticamente a empresa pelo caminho do arquivo de teste.
             </p>
           </div>
         </div>
 
-        {companies.length === 0 ? (
-          <div className="rounded-lg bg-secondary/30 border border-border p-6 text-center">
-            <p className="text-sm text-muted-foreground">Nenhuma empresa cadastrada ainda.</p>
+        <div className="rounded-lg bg-secondary/30 border border-border overflow-hidden">
+          <div className="flex items-center justify-between px-4 py-2 border-b border-border bg-secondary/20">
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-medium text-muted-foreground">Valor do secret</span>
+              <Badge className="bg-primary/20 text-primary text-xs">QA4_COMPANIES</Badge>
+            </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="gap-1.5 text-xs h-7"
+              onClick={() => copyToClipboard(companiesJson, "companies-json")}
+            >
+              {copiedKey === "companies-json" ? (
+                <>
+                  <Check className="h-3 w-3 text-primary" />
+                  <span className="text-primary">Copiado!</span>
+                </>
+              ) : (
+                <>
+                  <Copy className="h-3 w-3" />
+                  <span>Copiar tudo</span>
+                </>
+              )}
+            </Button>
           </div>
-        ) : (
-          <div className="space-y-2">
-            {companies.map((company) => (
-              <div
-                key={company.id}
-                className="flex items-center gap-3 p-3 rounded-lg bg-secondary/30 border border-border hover:border-primary/30 transition-colors"
-              >
-                <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-                  <Building2 className="h-4 w-4 text-primary" />
+          <pre className="p-4 text-xs font-mono text-muted-foreground overflow-x-auto leading-relaxed">
+            {companiesJson}
+          </pre>
+        </div>
+
+        {companies.length > 0 && (
+          <div className="space-y-1.5">
+            <p className="text-xs font-medium text-muted-foreground">Mapeamento pasta → empresa:</p>
+            {companies.map((company) => {
+              const folder = company.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')
+              return (
+                <div key={company.id} className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <Building2 className="h-3 w-3 shrink-0" />
+                  <code className="bg-secondary/50 px-1 rounded">cypress/e2e/{folder}/</code>
+                  <span>→</span>
+                  <span className="text-foreground font-medium">{company.name}</span>
                 </div>
-                <span className="text-sm font-medium text-foreground w-40 truncate shrink-0">
-                  {company.name}
-                </span>
-                <code className="text-xs text-muted-foreground font-mono flex-1 truncate bg-background/50 px-2 py-1 rounded border border-border">
-                  {company.apiKey}
-                </code>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="shrink-0 gap-1.5 text-xs"
-                  onClick={() => copyToClipboard(company.apiKey, `apikey-${company.id}`)}
-                >
-                  {copiedKey === `apikey-${company.id}` ? (
-                    <>
-                      <Check className="h-3 w-3 text-primary" />
-                      <span className="text-primary">Copiado</span>
-                    </>
-                  ) : (
-                    <>
-                      <Copy className="h-3 w-3" />
-                      <span>Copiar</span>
-                    </>
-                  )}
-                </Button>
-              </div>
-            ))}
+              )
+            })}
           </div>
         )}
 
-        <p className="text-xs text-muted-foreground">
-          No GitHub: <span className="text-foreground">Settings → Secrets and variables → Actions → New repository secret</span> → nome: <code className="bg-secondary/50 px-1 rounded">QA4_API_KEY</code>
+        <p className="text-xs text-muted-foreground border-t border-border pt-3">
+          No GitHub: <span className="text-foreground">Settings → Secrets and variables → Actions → New repository secret</span> → nome: <code className="bg-secondary/50 px-1 rounded">QA4_COMPANIES</code> → cole o JSON acima
         </p>
       </div>
 
