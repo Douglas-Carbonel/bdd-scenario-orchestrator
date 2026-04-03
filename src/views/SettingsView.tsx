@@ -133,15 +133,35 @@ module.exports = { reportToQA4 }`;
 
   const configSnippet = `// cypress.config.js
 const { defineConfig } = require('cypress')
-const fs   = require('fs')
-const path = require('path')
+const https = require('https')
+const fs    = require('fs')
+const path  = require('path')
 
 const RESULTS_ENDPOINT = '${resultsEndpoint}'
 const SUPABASE_URL     = 'https://${SUPABASE_PROJECT_ID}.supabase.co'
 
+// Compatível com Node 14, 16 e 18+
+function httpPost(url, headers, body) {
+  return new Promise((resolve) => {
+    const u   = new URL(url)
+    const buf = Buffer.isBuffer(body) ? body : Buffer.from(JSON.stringify(body))
+    const req = https.request(
+      { hostname: u.hostname, path: u.pathname + u.search, method: 'POST',
+        headers: { ...headers, 'Content-Length': buf.length } },
+      (res) => {
+        let data = ''
+        res.on('data', c => data += c)
+        res.on('end', () => resolve({ ok: res.statusCode < 300, status: res.statusCode, body: data }))
+      }
+    )
+    req.on('error', (e) => { console.warn('[4QA] erro de rede:', e.message); resolve({ ok: false }) })
+    req.write(buf)
+    req.end()
+  })
+}
+
 module.exports = defineConfig({
   e2e: {
-    specPattern: 'cypress/e2e/**/**/*.{cy.js,spec.js,cy.ts,spec.ts}',
     screenshotOnRunFailure: true,
 
     setupNodeEvents(on, config) {
@@ -149,8 +169,9 @@ module.exports = defineConfig({
       try {
         const map = JSON.parse(fs.readFileSync('qa4-scenarios.json', 'utf-8'))
         config.env.QA4_SCENARIO_MAP = map
+        console.log('[4QA] mapa carregado:', Object.keys(map).length, 'cenários')
       } catch (e) {
-        console.warn('4QA: qa4-scenarios.json não encontrado — rode o sync primeiro')
+        console.warn('[4QA] qa4-scenarios.json não encontrado — rode o sync primeiro')
       }
 
       // 2. Após cada spec: reporta resultados + faz upload de evidências
@@ -159,47 +180,65 @@ module.exports = defineConfig({
         const specParts   = (spec.relative || '').split('/')
         const folder      = specParts.length >= 3 ? specParts[2] : 'default'
         const supabaseKey = process.env.SUPABASE_ANON_KEY
+        const allShots    = results.screenshots || []
+
+        console.log(\`[4QA] \${spec.relative} → pasta: "\${folder}", testes: \${results.tests?.length || 0}, screenshots: \${allShots.length}\`)
 
         const byApiKey = {}
 
         for (const test of (results.tests || [])) {
           const title = test.title[test.title.length - 1]
           const entry = map[\`\${folder}:\${title}\`]
-          if (!entry) continue
+
+          if (!entry) {
+            console.log(\`[4QA] sem mapeamento: "\${folder}:\${title}"\`)
+            continue
+          }
 
           const lastAttempt = (test.attempts || []).slice(-1)[0] || {}
           const status      = lastAttempt.state === 'passed' ? 'passed' : 'failed'
           const duration    = lastAttempt.duration || 0
           const errorMsg    = lastAttempt.error?.message || null
 
-          // Upload screenshots desta execução (casa pelo testId do Cypress)
+          // Casa screenshots por testId (Cypress 12+) ou pelo título no caminho (fallback)
+          const shots = allShots.filter(s =>
+            (test.testId && s.testId === test.testId) ||
+            path.basename(s.path).toLowerCase().includes(
+              title.toLowerCase().replace(/[^a-z0-9]/g, ' ').trim().substring(0, 30)
+            )
+          )
+          console.log(\`[4QA] "\${title}": status=\${status}, screenshots=\${shots.length}\`)
+
           const evidenceUrls = []
-          if (supabaseKey) {
-            const shots = (results.screenshots || []).filter(s => s.testId === test.testId)
+          if (supabaseKey && shots.length > 0) {
             for (const ss of shots) {
               try {
                 const file     = fs.readFileSync(ss.path)
                 const fileName = \`\${entry.scenarioId}/\${Date.now()}-\${path.basename(ss.path)}\`
-                const res      = await fetch(
+                const res      = await httpPost(
                   \`\${SUPABASE_URL}/storage/v1/object/evidence/\${fileName}\`,
-                  { method: 'POST', headers: { 'Authorization': \`Bearer \${supabaseKey}\`, 'Content-Type': 'image/png' }, body: file }
+                  { 'Authorization': \`Bearer \${supabaseKey}\`, 'Content-Type': 'image/png' },
+                  file
                 )
                 if (res.ok) {
-                  evidenceUrls.push(\`\${SUPABASE_URL}/storage/v1/object/public/evidence/\${fileName}\`)
+                  const url = \`\${SUPABASE_URL}/storage/v1/object/public/evidence/\${fileName}\`
+                  evidenceUrls.push(url)
+                  console.log('[4QA] evidência enviada:', url)
                 } else {
-                  console.warn('4QA: falha no upload de evidência', res.status, await res.text())
+                  console.warn('[4QA] upload falhou:', res.status, res.body)
                 }
               } catch (e) {
-                console.warn('4QA: erro ao ler screenshot', e.message)
+                console.warn('[4QA] erro ao processar screenshot:', e.message)
               }
             }
+          } else if (!supabaseKey) {
+            console.warn('[4QA] SUPABASE_ANON_KEY não definida — evidências desativadas')
           }
 
           if (!byApiKey[entry.apiKey]) byApiKey[entry.apiKey] = []
           byApiKey[entry.apiKey].push({
             scenario_id:   entry.scenarioId,
-            status,
-            duration,
+            status, duration,
             error_message: errorMsg,
             executed_by:   'cypress-ci',
             evidence_urls: evidenceUrls.length ? evidenceUrls : undefined,
@@ -208,11 +247,12 @@ module.exports = defineConfig({
 
         // Envia resultados agrupados por produto
         for (const [apiKey, res] of Object.entries(byApiKey)) {
-          await fetch(\`\${RESULTS_ENDPOINT}?api_key=\${apiKey}\`, {
-            method:  'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body:    JSON.stringify({ results: res }),
-          }).catch(e => console.warn('4QA evidence error:', e.message))
+          const r = await httpPost(
+            \`\${RESULTS_ENDPOINT}?api_key=\${apiKey}\`,
+            { 'Content-Type': 'application/json' },
+            res
+          )
+          console.log('[4QA] resultados enviados:', r.status, r.ok ? 'OK' : r.body)
         }
       })
 
