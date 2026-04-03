@@ -246,28 +246,36 @@ jobs:
               <span className="text-xs font-medium text-muted-foreground">Valor do secret</span>
               <Badge className="bg-primary/20 text-primary text-xs">QA4_COMPANIES</Badge>
             </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="gap-1.5 text-xs h-7"
-              onClick={() => copyToClipboard(companiesJson, "companies-json")}
-            >
-              {copiedKey === "companies-json" ? (
-                <>
-                  <Check className="h-3 w-3 text-primary" />
-                  <span className="text-primary">Copiado!</span>
-                </>
-              ) : (
-                <>
-                  <Copy className="h-3 w-3" />
-                  <span>Copiar tudo</span>
-                </>
-              )}
-            </Button>
           </div>
           <pre className="p-4 text-xs font-mono text-muted-foreground overflow-x-auto leading-relaxed">
             {companiesJson}
           </pre>
+        </div>
+
+        <Button
+          size="lg"
+          className="w-full gap-2 text-sm font-semibold"
+          onClick={() => copyToClipboard(companiesJson, "companies-json")}
+        >
+          {copiedKey === "companies-json" ? (
+            <>
+              <Check className="h-4 w-4" />
+              Copiado! Cole no GitHub Secrets como QA4_COMPANIES
+            </>
+          ) : (
+            <>
+              <Copy className="h-4 w-4" />
+              Copiar valor do secret QA4_COMPANIES
+            </>
+          )}
+        </Button>
+
+        <div className="rounded-lg bg-green-500/10 border border-green-500/20 px-4 py-3 text-xs text-green-400 flex items-start gap-2">
+          <Check className="h-3.5 w-3.5 shrink-0 mt-0.5" />
+          <span>
+            As API Keys já estão incluídas e atualizadas — geradas direto do banco de dados.
+            Basta copiar e colar no GitHub sem editar nada.
+          </span>
         </div>
 
         {products.length > 0 && (
@@ -292,7 +300,7 @@ jobs:
         )}
 
         <p className="text-xs text-muted-foreground border-t border-border pt-3">
-          No GitHub: <span className="text-foreground">Settings → Secrets and variables → Actions → New repository secret</span> → nome: <code className="bg-secondary/50 px-1 rounded">QA4_COMPANIES</code> → cole o JSON acima
+          No GitHub: <span className="text-foreground">Settings → Secrets and variables → Actions → New repository secret</span> → nome: <code className="bg-secondary/50 px-1 rounded">QA4_COMPANIES</code> → cole o valor copiado acima
         </p>
       </div>
 
