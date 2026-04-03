@@ -295,6 +295,7 @@ export type Database = {
           created_at: string
           duration: number | null
           error_message: string | null
+          evidence_urls: string[] | null
           executed_by: string
           id: string
           logs: Json | null
@@ -307,6 +308,7 @@ export type Database = {
           created_at?: string
           duration?: number | null
           error_message?: string | null
+          evidence_urls?: string[] | null
           executed_by: string
           id?: string
           logs?: Json | null
@@ -319,6 +321,7 @@ export type Database = {
           created_at?: string
           duration?: number | null
           error_message?: string | null
+          evidence_urls?: string[] | null
           executed_by?: string
           id?: string
           logs?: Json | null

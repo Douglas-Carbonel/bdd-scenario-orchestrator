@@ -104,6 +104,7 @@ function mapTestRun(row: DbTestRun): TestRun {
     completedAt: row.completed_at ? new Date(row.completed_at) : undefined,
     duration: row.duration ?? undefined,
     status: row.status,
+    evidenceUrls: (row as any).evidence_urls ?? undefined,
     errorMessage: row.error_message ?? undefined,
     logs: (row.logs as string[] | null) ?? undefined,
   };

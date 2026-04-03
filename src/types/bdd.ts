@@ -75,6 +75,7 @@ export interface TestRun {
   status: 'running' | 'passed' | 'failed';
   errorMessage?: string;
   logs?: string[];
+  evidenceUrls?: string[];
 }
 
 export interface SuiteTreeNode extends TestSuite {

@@ -36,7 +36,7 @@ API keys live on **Products**, not Companies. One company can have many products
 - `supabase/functions/cypress-sync/` — Edge function for CI sync (looks up product by api_key)
 - `supabase/functions/cypress-results/` — Edge function for CI results (looks up product by api_key)
 - `scripts/qa4-sync.js` — Node.js CI sync script (reads QA4_COMPANIES JSON secret)
-- `scripts/qa4-reporter.js` — Node.js CI reporter (reads QA4_COMPANIES JSON secret)
+- `scripts/qa4-reporter.js` — Legacy reporter (deprecated; after:spec in cypress.config.js handles reporting now)
 
 ## Environment Variables (Replit Secrets)
 All managed via Replit's environment variable system (no .env file needed):
@@ -60,7 +60,9 @@ The app uses a Supabase project (ID: ivmdgybacqbkpyamtjrd) for:
 
 Admin email: douglascarbonell@outlook.com (auto-approved and assigned admin role on signup)
 
-Migration to apply in Supabase dashboard: `supabase/migrations/20260403032914_add_products.sql`
+Migrations to apply in Supabase dashboard:
+- `supabase/migrations/20260403032914_add_products.sql`
+- `supabase/migrations/20260403070000_add_evidence.sql` — adds `evidence_urls text[]` to `test_runs` + creates `evidence` storage bucket
 
 ## Cypress CI Integration
 - **Sync endpoint**: `https://{project_id}.supabase.co/functions/v1/cypress-sync?api_key={product_api_key}`
@@ -69,3 +71,5 @@ Migration to apply in Supabase dashboard: `supabase/migrations/20260403032914_ad
 - CI uses a single `QA4_COMPANIES` JSON secret: `{ "product-folder-name": "product-api-key" }`
 - Script `scripts/qa4-sync.js` detects product by Cypress spec folder path automatically
 - Settings view shows the `QA4_COMPANIES` JSON ready to copy
+- **Evidence**: `cypress.config.js` `after:spec` hook uploads screenshots to Supabase Storage (`evidence` bucket) and sends URLs with results. Requires `SUPABASE_ANON_KEY` as a GitHub secret. No separate reporter file needed.
+- ScenarioCard shows evidence thumbnails in run history with a lightbox on click

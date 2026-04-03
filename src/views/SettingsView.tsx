@@ -133,40 +133,98 @@ module.exports = { reportToQA4 }`;
 
   const configSnippet = `// cypress.config.js
 const { defineConfig } = require('cypress')
-const fs = require('fs')
+const fs   = require('fs')
+const path = require('path')
+
+const RESULTS_ENDPOINT = '${resultsEndpoint}'
+const SUPABASE_URL     = 'https://${SUPABASE_PROJECT_ID}.supabase.co'
 
 module.exports = defineConfig({
   e2e: {
+    specPattern: 'cypress/e2e/**/**/*.{cy.js,spec.js,cy.ts,spec.ts}',
+    screenshotOnRunFailure: true,
+
     setupNodeEvents(on, config) {
-      // Carrega o mapa gerado pelo qa4-sync.js e injeta no env
+      // 1. Carrega o mapa de cenários gerado pelo qa4-sync.js
       try {
         const map = JSON.parse(fs.readFileSync('qa4-scenarios.json', 'utf-8'))
         config.env.QA4_SCENARIO_MAP = map
       } catch (e) {
         console.warn('4QA: qa4-scenarios.json não encontrado — rode o sync primeiro')
       }
+
+      // 2. Após cada spec: reporta resultados + faz upload de evidências
+      on('after:spec', async (spec, results) => {
+        const map         = config.env.QA4_SCENARIO_MAP || {}
+        const specParts   = (spec.relative || '').split('/')
+        const folder      = specParts.length >= 3 ? specParts[2] : 'default'
+        const supabaseKey = process.env.SUPABASE_ANON_KEY
+
+        const byApiKey = {}
+
+        for (const test of (results.tests || [])) {
+          const title = test.title[test.title.length - 1]
+          const entry = map[\`\${folder}:\${title}\`]
+          if (!entry) continue
+
+          const lastAttempt = (test.attempts || []).slice(-1)[0] || {}
+          const status      = lastAttempt.state === 'passed' ? 'passed' : 'failed'
+          const duration    = lastAttempt.duration || 0
+          const errorMsg    = lastAttempt.error?.message || null
+
+          // Upload screenshots desta execução (falhas capturam automaticamente)
+          const evidenceUrls = []
+          if (supabaseKey) {
+            const shots = (results.screenshots || []).filter(s =>
+              s.path.includes(title.substring(0, 40).replace(/[^a-z0-9]/gi, ' ').trim())
+            )
+            for (const ss of shots) {
+              try {
+                const file     = fs.readFileSync(ss.path)
+                const fileName = \`\${entry.scenarioId}/\${Date.now()}-\${path.basename(ss.path)}\`
+                const res      = await fetch(
+                  \`\${SUPABASE_URL}/storage/v1/object/evidence/\${fileName}\`,
+                  { method: 'POST', headers: { 'Authorization': \`Bearer \${supabaseKey}\`, 'Content-Type': 'image/png' }, body: file }
+                )
+                if (res.ok) evidenceUrls.push(\`\${SUPABASE_URL}/storage/v1/object/public/evidence/\${fileName}\`)
+              } catch (_) {}
+            }
+          }
+
+          if (!byApiKey[entry.apiKey]) byApiKey[entry.apiKey] = []
+          byApiKey[entry.apiKey].push({
+            scenario_id:   entry.scenarioId,
+            status,
+            duration,
+            error_message: errorMsg,
+            executed_by:   'cypress-ci',
+            evidence_urls: evidenceUrls.length ? evidenceUrls : undefined,
+          })
+        }
+
+        // Envia resultados agrupados por produto
+        for (const [apiKey, res] of Object.entries(byApiKey)) {
+          await fetch(\`\${RESULTS_ENDPOINT}?api_key=\${apiKey}\`, {
+            method:  'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body:    JSON.stringify({ results: res }),
+          }).catch(e => console.warn('4QA evidence error:', e.message))
+        }
+      })
+
       return config
     },
   },
 })`;
 
   const testSnippet = `// cypress/e2e/saucedemo/login.cy.js
-// A pasta "saucedemo" é usada pelo reporter para identificar a empresa.
-const { reportToQA4 } = require('../../../support/qa4-reporter')
+// Nenhuma importação extra necessária — o cypress.config.js cuida de tudo.
+// Screenshots de falha são capturadas e enviadas automaticamente.
 
 describe('SauceDemo Login', () => {
 
   beforeEach(() => {
     cy.visit('https://www.saucedemo.com/')
-  })
-
-  afterEach(function () {
-    reportToQA4(
-      this.currentTest.title,
-      this.currentTest.state,
-      this.currentTest.duration,
-      this.currentTest.err ? this.currentTest.err.message : null,
-    )
   })
 
   it('Login com sucesso', () => {
@@ -217,6 +275,8 @@ jobs:
         run: node scripts/qa4-sync.js
 
       - name: Rodar testes Cypress
+        env:
+          SUPABASE_ANON_KEY: \${{ secrets.SUPABASE_ANON_KEY }}
         run: npx cypress run`;
 
   return (
@@ -320,7 +380,7 @@ jobs:
           {[
             { n: "1", color: "text-primary", bg: "bg-primary/10", title: "Cria o cenário no 4QA", desc: "Dê um título que bata exatamente com o it() do seu teste." },
             { n: "2", color: "text-accent", bg: "bg-accent/10", title: "CI roda o sync", desc: "Gera o qa4-scenarios.json com o mapa título → ID automaticamente." },
-            { n: "3", color: "text-green-400", bg: "bg-green-400/10", title: "Cypress executa", desc: "O cypress.config.js carrega o mapa. O reporter usa para encontrar o ID." },
+            { n: "3", color: "text-green-400", bg: "bg-green-400/10", title: "Cypress executa", desc: "O cypress.config.js carrega o mapa e reporta resultados + screenshots via after:spec." },
             { n: "4", color: "text-yellow-400", bg: "bg-yellow-400/10", title: "Dashboard atualiza", desc: "Cada teste reporta passed/failed sem você tocar em nenhum ID." },
           ].map((s) => (
             <div key={s.n} className="rounded-lg bg-secondary/30 border border-border p-4 space-y-2">
@@ -399,45 +459,34 @@ jobs:
           <CodeBlock code={ciSyncSnippet} copyKey="ci" copiedKey={copiedKey} onCopy={copyToClipboard} />
         </div>
 
-        {/* Step 2 - reporter */}
-        <div className="glass-card rounded-xl p-6 space-y-3">
-          <div className="flex items-center gap-3">
-            <div className="h-8 w-8 rounded-full bg-green-400/10 flex items-center justify-center shrink-0">
-              <span className="text-sm font-bold text-green-400">2</span>
-            </div>
-            <div>
-              <h4 className="font-semibold text-foreground flex items-center gap-2">
-                <Puzzle className="h-4 w-4" />
-                Arquivo reporter — <code className="text-xs font-mono bg-secondary/50 px-1 rounded">cypress/support/qa4-reporter.js</code>
-              </h4>
-              <p className="text-sm text-muted-foreground">Substitua o seu arquivo atual por este. Ele resolve o ID pelo título automaticamente.</p>
-            </div>
-          </div>
-          <CodeBlock code={reporterSnippet} copyKey="reporter" copiedKey={copiedKey} onCopy={copyToClipboard} />
-        </div>
-
-        {/* Step 3 - cypress.config.js */}
+        {/* Step 2 - cypress.config.js */}
         <div className="glass-card rounded-xl p-6 space-y-3">
           <div className="flex items-center gap-3">
             <div className="h-8 w-8 rounded-full bg-yellow-400/10 flex items-center justify-center shrink-0">
-              <span className="text-sm font-bold text-yellow-400">3</span>
+              <span className="text-sm font-bold text-yellow-400">2</span>
             </div>
             <div>
               <h4 className="font-semibold text-foreground flex items-center gap-2">
                 <FileJson className="h-4 w-4" />
                 Atualizar — <code className="text-xs font-mono bg-secondary/50 px-1 rounded">cypress.config.js</code>
               </h4>
-              <p className="text-sm text-muted-foreground">Adicione o bloco <code className="text-xs bg-secondary/50 px-1 rounded">setupNodeEvents</code> para carregar o mapa no env do Cypress.</p>
+              <p className="text-sm text-muted-foreground">
+                O hook <code className="text-xs bg-secondary/50 px-1 rounded">after:spec</code> reporta resultados e faz upload de screenshots automaticamente.
+                Adicione <code className="text-xs bg-secondary/50 px-1 rounded">SUPABASE_ANON_KEY</code> como secret no GitHub para habilitar evidências.
+              </p>
             </div>
           </div>
           <CodeBlock code={configSnippet} copyKey="config" copiedKey={copiedKey} onCopy={copyToClipboard} />
+          <div className="rounded-lg bg-green-400/5 border border-green-400/20 px-3 py-2 text-xs text-green-300">
+            Arquivo <code>cypress/support/qa4-reporter.js</code> não é mais necessário — pode removê-lo.
+          </div>
         </div>
 
-        {/* Step 4 - test change */}
+        {/* Step 3 - test change */}
         <div className="glass-card rounded-xl p-6 space-y-3">
           <div className="flex items-center gap-3">
             <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-              <span className="text-sm font-bold text-primary">4</span>
+              <span className="text-sm font-bold text-primary">3</span>
             </div>
             <div>
               <h4 className="font-semibold text-foreground flex items-center gap-2">
@@ -445,7 +494,7 @@ jobs:
                 Seu teste — mudança mínima
               </h4>
               <p className="text-sm text-muted-foreground">
-                Remova o objeto <code className="text-xs bg-secondary/50 px-1 rounded">SCENARIOS</code> hardcoded e passe <code className="text-xs bg-secondary/50 px-1 rounded">this.currentTest.title</code> diretamente. Só isso.
+                Seus testes ficam limpos — sem imports de reporter, sem <code className="text-xs bg-secondary/50 px-1 rounded">afterEach</code>. O título do <code className="text-xs bg-secondary/50 px-1 rounded">it()</code> precisa ser igual ao título cadastrado no 4QA.
               </p>
             </div>
           </div>

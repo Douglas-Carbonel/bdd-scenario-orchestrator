@@ -1,10 +1,11 @@
 import { useState } from "react";
-import { Clock, Tag, Play, CheckCircle2, XCircle, FileEdit, AlertTriangle, User, Copy, Check, History, ChevronDown, ChevronUp, Bot } from "lucide-react";
+import { Clock, Tag, Play, CheckCircle2, XCircle, FileEdit, AlertTriangle, User, Copy, Check, History, ChevronDown, ChevronUp, Bot, ImageIcon, X } from "lucide-react";
 import { Scenario, Priority, TestRun } from "@/types/bdd";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 
 interface ScenarioCardProps {
   scenario: Scenario;
@@ -44,6 +45,7 @@ function formatRelativeTime(date: Date): string {
 export function ScenarioCard({ scenario, assigneeName, runs = [], onEdit, onRun }: ScenarioCardProps) {
   const [copied, setCopied] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
+  const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
   const status = statusConfig[scenario.status];
   const StatusIcon = status.icon;
   const priority = priorityConfig[scenario.priority];
@@ -180,33 +182,49 @@ export function ScenarioCard({ scenario, assigneeName, runs = [], onEdit, onRun 
             {showHistory && (
               <div className="space-y-1.5 border-t border-border pt-2">
                 {recentRuns.map((run) => (
-                  <div
-                    key={run.id}
-                    className="flex items-center justify-between text-xs px-2 py-1.5 rounded-md bg-secondary/30"
-                    data-testid={`run-item-${run.id}`}
-                  >
-                    <div className="flex items-center gap-2">
-                      {run.status === "passed" ? (
-                        <CheckCircle2 className="h-3 w-3 text-success shrink-0" />
-                      ) : (
-                        <XCircle className="h-3 w-3 text-destructive shrink-0" />
-                      )}
-                      <div className="flex items-center gap-1 text-muted-foreground">
-                        <Bot className="h-3 w-3" />
-                        <span className="font-mono">{run.executedBy}</span>
+                  <div key={run.id} className="space-y-1.5" data-testid={`run-item-${run.id}`}>
+                    <div className="flex items-center justify-between text-xs px-2 py-1.5 rounded-md bg-secondary/30">
+                      <div className="flex items-center gap-2">
+                        {run.status === "passed" ? (
+                          <CheckCircle2 className="h-3 w-3 text-success shrink-0" />
+                        ) : (
+                          <XCircle className="h-3 w-3 text-destructive shrink-0" />
+                        )}
+                        <div className="flex items-center gap-1 text-muted-foreground">
+                          <Bot className="h-3 w-3" />
+                          <span className="font-mono">{run.executedBy}</span>
+                        </div>
+                        {run.errorMessage && (
+                          <span className="text-destructive truncate max-w-[120px]" title={run.errorMessage}>
+                            {run.errorMessage}
+                          </span>
+                        )}
                       </div>
-                      {run.errorMessage && (
-                        <span className="text-destructive truncate max-w-[120px]" title={run.errorMessage}>
-                          {run.errorMessage}
-                        </span>
-                      )}
+                      <div className="flex items-center gap-2 text-muted-foreground shrink-0">
+                        {run.evidenceUrls && run.evidenceUrls.length > 0 && (
+                          <div className="flex items-center gap-0.5 text-primary">
+                            <ImageIcon className="h-3 w-3" />
+                            <span>{run.evidenceUrls.length}</span>
+                          </div>
+                        )}
+                        {run.duration && <span>{run.duration}ms</span>}
+                        <span>{formatRelativeTime(run.startedAt)}</span>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-2 text-muted-foreground shrink-0">
-                      {run.duration && (
-                        <span>{run.duration}ms</span>
-                      )}
-                      <span>{formatRelativeTime(run.startedAt)}</span>
-                    </div>
+                    {run.evidenceUrls && run.evidenceUrls.length > 0 && (
+                      <div className="flex gap-1.5 px-2 flex-wrap">
+                        {run.evidenceUrls.map((url, i) => (
+                          <button
+                            key={i}
+                            onClick={() => setLightboxUrl(url)}
+                            className="h-12 w-20 rounded-md overflow-hidden border border-border hover:border-primary transition-colors shrink-0"
+                            title="Ver evidência"
+                          >
+                            <img src={url} alt={`Evidência ${i + 1}`} className="h-full w-full object-cover" />
+                          </button>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
@@ -249,6 +267,27 @@ export function ScenarioCard({ scenario, assigneeName, runs = [], onEdit, onRun 
           </div>
         </div>
       </div>
+
+      {/* Evidence Lightbox */}
+      <Dialog open={!!lightboxUrl} onOpenChange={() => setLightboxUrl(null)}>
+        <DialogContent className="max-w-4xl p-2 bg-black/90 border-border">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="absolute top-2 right-2 z-10 text-white hover:bg-white/20"
+            onClick={() => setLightboxUrl(null)}
+          >
+            <X className="h-4 w-4" />
+          </Button>
+          {lightboxUrl && (
+            <img
+              src={lightboxUrl}
+              alt="Evidência"
+              className="w-full h-auto max-h-[85vh] object-contain rounded-md"
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

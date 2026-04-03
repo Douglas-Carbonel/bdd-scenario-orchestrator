@@ -11,6 +11,7 @@ interface TestResult {
   duration?: number;
   error_message?: string;
   executed_by?: string;
+  evidence_urls?: string[];
 }
 
 Deno.serve(async (req) => {
@@ -94,6 +95,7 @@ Deno.serve(async (req) => {
       status: r.status,
       duration: r.duration || null,
       error_message: r.error_message || null,
+      evidence_urls: r.evidence_urls?.length ? r.evidence_urls : null,
       executed_by: r.executed_by || "cypress-ci",
       started_at: now,
       completed_at: now,
