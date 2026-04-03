@@ -96,10 +96,16 @@ Deno.serve(async (req) => {
       };
     });
 
-    // Build the map: { "path/to/file.feature": "scenario-uuid" }
+    // map by file path: { "path/to/file.feature": "uuid" }  — for Cucumber/plugin usage
     const map: Record<string, string> = {};
     for (const f of features) {
       map[f.path] = f.id;
+    }
+
+    // titleMap: { "Scenario title": "uuid" } — for plain Cypress usage
+    const titleMap: Record<string, string> = {};
+    for (const s of (scenarios || [])) {
+      titleMap[s.title] = s.id;
     }
 
     return new Response(
@@ -108,6 +114,7 @@ Deno.serve(async (req) => {
         total: features.length,
         features,
         map,
+        titleMap,
       }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
