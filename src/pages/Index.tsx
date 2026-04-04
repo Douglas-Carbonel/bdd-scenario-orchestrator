@@ -43,6 +43,9 @@ const Index = () => {
     getScenarioRuns,
     clearScenarioRuns,
     addTestRun,
+    addDefect,
+    updateDefect,
+    getScenarioDefects,
   } = useBddStore();
 
   const renderView = () => {
@@ -93,6 +96,9 @@ const Index = () => {
             getScenarioRuns={getScenarioRuns}
             clearScenarioRuns={clearScenarioRuns}
             onAddTestRun={addTestRun}
+            getScenarioDefects={getScenarioDefects}
+            onAddDefect={addDefect}
+            onUpdateDefect={updateDefect}
           />
         );
       case "sprints":

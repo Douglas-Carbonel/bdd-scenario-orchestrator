@@ -67,6 +67,23 @@ export interface Scenario {
   updatedAt: Date;
 }
 
+export type DefectStatus = 'open' | 'fixed' | 'verified' | 'reopened';
+export type DefectSeverity = 'critical' | 'high' | 'medium' | 'low';
+
+export interface Defect {
+  id: string;
+  scenarioId: string;
+  testRunId?: string;
+  title: string;
+  description?: string;
+  severity: DefectSeverity;
+  status: DefectStatus;
+  reportedBy: string;
+  fixNote?: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
 export interface TestRun {
   id: string;
   scenarioId: string;

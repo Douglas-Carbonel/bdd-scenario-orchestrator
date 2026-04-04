@@ -4,7 +4,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import {
   Company, Product, Sprint, Scenario, TestSuite, SuiteTreeNode,
-  TeamMember, TestRun, DailyStats,
+  TeamMember, TestRun, DailyStats, Defect, DefectStatus, DefectSeverity,
 } from "@/types/bdd";
 import { Database } from "@/integrations/supabase/types";
 
@@ -16,6 +16,7 @@ type DbScenario   = Database["public"]["Tables"]["scenarios"]["Row"];
 type DbTestSuite  = Database["public"]["Tables"]["test_suites"]["Row"];
 type DbTeamMember = Database["public"]["Tables"]["team_members"]["Row"];
 type DbTestRun    = Database["public"]["Tables"]["test_runs"]["Row"];
+type DbDefect     = Database["public"]["Tables"]["defects"]["Row"];
 
 // ─── Mappers (DB → App) ────────────────────────────────────────────────────────
 function mapCompany(row: DbCompany): Company {
@@ -112,6 +113,22 @@ function mapTestRun(row: DbTestRun): TestRun {
   };
 }
 
+function mapDefect(row: DbDefect): Defect {
+  return {
+    id: row.id,
+    scenarioId: row.scenario_id,
+    testRunId: row.test_run_id ?? undefined,
+    title: row.title,
+    description: row.description ?? undefined,
+    severity: row.severity as DefectSeverity,
+    status: row.status as DefectStatus,
+    reportedBy: row.reported_by,
+    fixNote: row.fix_note ?? undefined,
+    createdAt: new Date(row.created_at),
+    updatedAt: new Date(row.updated_at),
+  };
+}
+
 // ─── Hook ──────────────────────────────────────────────────────────────────────
 export function useBddStore() {
   const queryClient = useQueryClient();
@@ -180,6 +197,18 @@ export function useBddStore() {
         .order("started_at", { ascending: false });
       if (error) throw error;
       return data.map(mapTestRun);
+    },
+  });
+
+  const { data: defects = [] } = useQuery({
+    queryKey: ["defects"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("defects")
+        .select("*")
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data.map(mapDefect);
     },
   });
 
@@ -541,6 +570,42 @@ export function useBddStore() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["test_runs"] }),
   });
 
+  const addDefectMutation = useMutation({
+    mutationFn: async (defect: Omit<Defect, "id" | "createdAt" | "updatedAt">) => {
+      const { data, error } = await supabase
+        .from("defects")
+        .insert({
+          scenario_id: defect.scenarioId,
+          test_run_id: defect.testRunId ?? null,
+          title: defect.title,
+          description: defect.description ?? null,
+          severity: defect.severity,
+          status: defect.status ?? "open",
+          reported_by: defect.reportedBy,
+          fix_note: defect.fixNote ?? null,
+        })
+        .select()
+        .single();
+      if (error) throw error;
+      return mapDefect(data);
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["defects"] }),
+  });
+
+  const updateDefectMutation = useMutation({
+    mutationFn: async ({ id, updates }: { id: string; updates: Partial<Defect> }) => {
+      const dbUpdates: Record<string, unknown> = { updated_at: new Date().toISOString() };
+      if (updates.status !== undefined) dbUpdates.status = updates.status;
+      if (updates.severity !== undefined) dbUpdates.severity = updates.severity;
+      if (updates.title !== undefined) dbUpdates.title = updates.title;
+      if (updates.description !== undefined) dbUpdates.description = updates.description ?? null;
+      if (updates.fixNote !== undefined) dbUpdates.fix_note = updates.fixNote ?? null;
+      const { error } = await supabase.from("defects").update(dbUpdates).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["defects"] }),
+  });
+
   // ── Computed functions (same interface as before) ────────────────────────────
   const getSuiteTree = useCallback(
     (companyId: string): SuiteTreeNode[] => {
@@ -787,6 +852,18 @@ export function useBddStore() {
     (run: Omit<TestRun, "id">) => addTestRunMutation.mutate(run),
     [addTestRunMutation],
   );
+  const addDefect = useCallback(
+    (defect: Omit<Defect, "id" | "createdAt" | "updatedAt">) => addDefectMutation.mutate(defect),
+    [addDefectMutation],
+  );
+  const updateDefect = useCallback(
+    (id: string, updates: Partial<Defect>) => updateDefectMutation.mutate({ id, updates }),
+    [updateDefectMutation],
+  );
+  const getScenarioDefects = useCallback(
+    (scenarioId: string) => defects.filter((d) => d.scenarioId === scenarioId),
+    [defects],
+  );
   const activateSprint = useCallback(
     (sprintId: string, companyId: string) => activateSprintMutation.mutate({ sprintId, companyId }),
     [activateSprintMutation],
@@ -828,6 +905,9 @@ export function useBddStore() {
     clearScenarioRuns,
     addTestRun,
     getScenarioRuns,
+    addDefect,
+    updateDefect,
+    getScenarioDefects,
     getCompanyStats,
     getSprintStats,
     getSprintComparison,

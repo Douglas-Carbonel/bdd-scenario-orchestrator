@@ -35,6 +35,56 @@ export type Database = {
         }
         Relationships: []
       }
+      defects: {
+        Row: {
+          id: string
+          scenario_id: string
+          test_run_id: string | null
+          title: string
+          description: string | null
+          severity: string
+          status: string
+          reported_by: string
+          fix_note: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          scenario_id: string
+          test_run_id?: string | null
+          title: string
+          description?: string | null
+          severity?: string
+          status?: string
+          reported_by: string
+          fix_note?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          scenario_id?: string
+          test_run_id?: string | null
+          title?: string
+          description?: string | null
+          severity?: string
+          status?: string
+          reported_by?: string
+          fix_note?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "defects_scenario_id_fkey"
+            columns: ["scenario_id"]
+            isOneToOne: false
+            referencedRelation: "scenarios"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       products: {
         Row: {
           api_key: string

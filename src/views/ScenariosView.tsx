@@ -6,7 +6,7 @@ import { ScenarioCard } from "@/components/scenarios/ScenarioCard";
 import { ScenarioForm } from "@/components/scenarios/ScenarioForm";
 import { ManualExecutionDialog } from "@/components/scenarios/ManualExecutionDialog";
 import { SuiteTree } from "@/components/suites/SuiteTree";
-import { Company, Product, Sprint, Scenario, TestSuite, SuiteTreeNode, TeamMember, TestRun } from "@/types/bdd";
+import { Company, Product, Sprint, Scenario, TestSuite, SuiteTreeNode, TeamMember, TestRun, Defect } from "@/types/bdd";
 import { cn } from "@/lib/utils";
 import {
   Dialog,
@@ -40,6 +40,9 @@ interface ScenariosViewProps {
   getScenarioRuns: (scenarioId: string) => TestRun[];
   clearScenarioRuns: (scenarioId: string) => void;
   onAddTestRun: (run: Omit<TestRun, "id">) => void;
+  getScenarioDefects: (scenarioId: string) => Defect[];
+  onAddDefect: (defect: Omit<Defect, "id" | "createdAt" | "updatedAt">) => void;
+  onUpdateDefect: (id: string, updates: Partial<Defect>) => void;
 }
 
 export function ScenariosView({
@@ -60,6 +63,9 @@ export function ScenariosView({
   getScenarioRuns,
   clearScenarioRuns,
   onAddTestRun,
+  getScenarioDefects,
+  onAddDefect,
+  onUpdateDefect,
 }: ScenariosViewProps) {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingScenario, setEditingScenario] = useState<Scenario | null>(null);
@@ -298,9 +304,12 @@ export function ScenariosView({
                   <ScenarioCard
                     scenario={scenario}
                     runs={getScenarioRuns(scenario.id)}
+                    defects={getScenarioDefects(scenario.id)}
                     onEdit={openEditDialog}
                     onRun={handleRunScenario}
                     onClearRuns={clearScenarioRuns}
+                    onAddDefect={onAddDefect}
+                    onUpdateDefect={onUpdateDefect}
                     getSprintName={(id) => sprints.find(s => s.id === id)?.name}
                   />
                 </div>

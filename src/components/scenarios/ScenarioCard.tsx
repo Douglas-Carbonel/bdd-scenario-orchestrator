@@ -1,20 +1,31 @@
 import { useState } from "react";
-import { Clock, Tag, Play, CheckCircle2, XCircle, FileEdit, AlertTriangle, User, Copy, Check, History, ChevronDown, ChevronUp, Bot, ImageIcon, X, Trash2, Layers } from "lucide-react";
-import { Scenario, Priority, TestRun } from "@/types/bdd";
+import { Clock, Tag, Play, CheckCircle2, XCircle, FileEdit, AlertTriangle, User, Copy, Check, History, ChevronDown, ChevronUp, Bot, ImageIcon, X, Trash2, Layers, Bug, Plus, RotateCcw, Wrench } from "lucide-react";
+import { Scenario, Priority, TestRun, Defect, DefectStatus } from "@/types/bdd";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { DefectDialog } from "@/components/defects/DefectDialog";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 
+interface DefectDialogState {
+  open: boolean;
+  defect?: Defect;
+  testRunId?: string;
+  prefilledTitle?: string;
+}
+
 interface ScenarioCardProps {
   scenario: Scenario;
   assigneeName?: string;
   runs?: TestRun[];
+  defects?: Defect[];
   onEdit?: (scenario: Scenario) => void;
   onRun?: (scenario: Scenario) => void;
   onClearRuns?: (scenarioId: string) => void;
+  onAddDefect?: (defect: Omit<Defect, "id" | "createdAt" | "updatedAt">) => void;
+  onUpdateDefect?: (id: string, updates: Partial<Defect>) => void;
   getSprintName?: (sprintId: string) => string | undefined;
 }
 
@@ -45,12 +56,37 @@ function formatRelativeTime(date: Date): string {
   return `${days}d atrás`;
 }
 
-export function ScenarioCard({ scenario, assigneeName, runs = [], onEdit, onRun, onClearRuns, getSprintName }: ScenarioCardProps) {
+const defectStatusColors: Record<DefectStatus, string> = {
+  open:     "bg-destructive",
+  reopened: "bg-orange-400",
+  fixed:    "bg-primary",
+  verified: "bg-success",
+};
+
+const defectStatusLabels: Record<DefectStatus, string> = {
+  open:     "Aberto",
+  reopened: "Reaberto",
+  fixed:    "Corrigido",
+  verified: "Verificado",
+};
+
+const defectStatusIcons: Record<DefectStatus, typeof Bug> = {
+  open:     Bug,
+  reopened: RotateCcw,
+  fixed:    Wrench,
+  verified: CheckCircle2,
+};
+
+export function ScenarioCard({ scenario, assigneeName, runs = [], defects = [], onEdit, onRun, onClearRuns, onAddDefect, onUpdateDefect, getSprintName }: ScenarioCardProps) {
   const [copied, setCopied] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
   const [showAllRuns, setShowAllRuns] = useState(false);
   const [showClearConfirm, setShowClearConfirm] = useState(false);
+  const [showDefects, setShowDefects] = useState(false);
+  const [defectDialog, setDefectDialog] = useState<DefectDialogState>({ open: false });
   const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
+
+  const openDefects = defects.filter((d) => d.status === "open" || d.status === "reopened");
   const status = statusConfig[scenario.status];
   const StatusIcon = status.icon;
   const priority = priorityConfig[scenario.priority];
@@ -83,6 +119,16 @@ export function ScenarioCard({ scenario, assigneeName, runs = [], onEdit, onRun,
             <p className="text-sm text-muted-foreground font-mono">{scenario.feature}</p>
           </div>
           <div className="flex items-center gap-2 shrink-0">
+            {openDefects.length > 0 && (
+              <Badge
+                variant="outline"
+                className="border-destructive/40 text-destructive bg-destructive/5 text-xs px-2 py-0.5 cursor-pointer"
+                onClick={() => setShowDefects(true)}
+              >
+                <Bug className="h-3 w-3 mr-1" />
+                {openDefects.length}
+              </Badge>
+            )}
             {scenario.executionType === "manual" ? (
               <Badge variant="outline" className="border-emerald-500/40 text-emerald-400 bg-emerald-500/5 text-xs px-2 py-0.5">
                 <User className="h-3 w-3 mr-1" />
@@ -232,6 +278,32 @@ export function ScenarioCard({ scenario, assigneeName, runs = [], onEdit, onRun,
                         )}
                       </div>
                       <div className="flex items-center gap-2 text-muted-foreground shrink-0">
+                        {run.status === "failed" && onAddDefect && (
+                          <TooltipProvider delayDuration={200}>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setDefectDialog({
+                                      open: true,
+                                      testRunId: run.id,
+                                      prefilledTitle: run.errorMessage
+                                        ? `Falha: ${run.errorMessage.substring(0, 80)}`
+                                        : `Falha em: ${scenario.title}`,
+                                    });
+                                  }}
+                                  className="text-destructive/40 hover:text-destructive transition-colors"
+                                >
+                                  <Bug className="h-3 w-3" />
+                                </button>
+                              </TooltipTrigger>
+                              <TooltipContent side="top">
+                                <p className="text-xs">Registrar defeito</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        )}
                         {run.evidenceUrls && run.evidenceUrls.length > 0 && (
                           <div className="flex items-center gap-0.5 text-primary">
                             <ImageIcon className="h-3 w-3" />
@@ -292,6 +364,71 @@ export function ScenarioCard({ scenario, assigneeName, runs = [], onEdit, onRun,
           </div>
         )}
 
+        {/* Defects Section */}
+        {(defects.length > 0 || onAddDefect) && (
+          <div className="space-y-1.5">
+            <button
+              className="w-full flex items-center justify-between text-xs text-muted-foreground hover:text-foreground transition-colors"
+              onClick={() => setShowDefects(!showDefects)}
+            >
+              <div className="flex items-center gap-2">
+                <Bug className="h-3 w-3" />
+                <span>
+                  {defects.length === 0
+                    ? "Nenhum defeito"
+                    : `${defects.length} defeito${defects.length !== 1 ? "s" : ""}`}
+                </span>
+                {openDefects.length > 0 && (
+                  <span className="text-destructive font-medium">
+                    · {openDefects.length} aberto{openDefects.length > 1 ? "s" : ""}
+                  </span>
+                )}
+              </div>
+              {showDefects ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
+            </button>
+
+            {showDefects && (
+              <div className="space-y-1.5 border-t border-border pt-2">
+                {defects.map((defect) => {
+                  const DIcon = defectStatusIcons[defect.status];
+                  return (
+                    <button
+                      key={defect.id}
+                      className="w-full flex items-center justify-between text-xs px-2 py-1.5 rounded-md bg-secondary/30 hover:bg-secondary/50 transition-colors text-left"
+                      onClick={() => setDefectDialog({ open: true, defect })}
+                    >
+                      <div className="flex items-center gap-2 min-w-0">
+                        <div className={cn("h-2 w-2 rounded-full shrink-0", defectStatusColors[defect.status])} />
+                        <span className="truncate text-foreground/80">{defect.title}</span>
+                      </div>
+                      <div className="flex items-center gap-2 shrink-0 ml-2 text-muted-foreground">
+                        <span className="text-xs">{
+                          defect.severity === "critical" ? "Crítico" :
+                          defect.severity === "high" ? "Alto" :
+                          defect.severity === "medium" ? "Médio" : "Baixo"
+                        }</span>
+                        <DIcon className={cn("h-3 w-3",
+                          defect.status === "open" || defect.status === "reopened" ? "text-destructive" :
+                          defect.status === "verified" ? "text-success" : "text-primary"
+                        )} />
+                      </div>
+                    </button>
+                  );
+                })}
+                {onAddDefect && (
+                  <button
+                    className="w-full flex items-center justify-center gap-1.5 text-xs px-2 py-1.5 rounded-md border border-dashed border-destructive/30 text-destructive/60 hover:border-destructive/60 hover:text-destructive transition-colors"
+                    onClick={() => setDefectDialog({ open: true })}
+                  >
+                    <Plus className="h-3 w-3" />
+                    Registrar Defeito
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Footer */}
         <div className="flex items-center justify-between pt-2 border-t border-border">
           <div className="flex items-center gap-3 text-muted-foreground">
@@ -335,6 +472,19 @@ export function ScenarioCard({ scenario, assigneeName, runs = [], onEdit, onRun,
           </div>
         </div>
       </div>
+
+      {/* Defect Dialog */}
+      <DefectDialog
+        open={defectDialog.open}
+        onOpenChange={(open) => setDefectDialog((s) => ({ ...s, open }))}
+        scenarioId={scenario.id}
+        scenarioTitle={scenario.title}
+        testRunId={defectDialog.testRunId}
+        prefilledTitle={defectDialog.prefilledTitle}
+        defect={defectDialog.defect}
+        onAdd={(d) => onAddDefect?.(d)}
+        onUpdate={(id, updates) => onUpdateDefect?.(id, updates)}
+      />
 
       {/* Evidence Lightbox */}
       <Dialog open={!!lightboxUrl} onOpenChange={() => setLightboxUrl(null)}>
