@@ -36,6 +36,7 @@ const Index = () => {
     getSuiteTree,
     getUnsortedScenarios,
     getSprintStats,
+    getSprintComparison,
     getDailyStats,
     getTeamMember,
     getScenarioRuns,
@@ -100,6 +101,7 @@ const Index = () => {
             onAddSprint={addSprint}
             onActivateSprint={activateSprint}
             getSprintStats={getSprintStats}
+            getSprintComparison={getSprintComparison}
           />
         );
       case "settings":

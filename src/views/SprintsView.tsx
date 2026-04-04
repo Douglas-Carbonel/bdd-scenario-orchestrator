@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { SprintCard } from "@/components/sprints/SprintCard";
+import { SprintComparison } from "@/components/sprints/SprintComparison";
 import { Company, Sprint, Scenario } from "@/types/bdd";
 import {
   Dialog,
@@ -30,6 +31,7 @@ interface SprintsViewProps {
     passedCount: number;
     failedCount: number;
   };
+  getSprintComparison: (companyId: string) => any[];
 }
 
 export function SprintsView({
@@ -39,6 +41,7 @@ export function SprintsView({
   onAddSprint,
   onActivateSprint,
   getSprintStats,
+  getSprintComparison,
 }: SprintsViewProps) {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [name, setName] = useState("");
@@ -82,6 +85,14 @@ export function SprintsView({
           Nova Sprint
         </Button>
       </div>
+
+      {/* Sprint Comparison */}
+      {sprints.length >= 2 && (
+        <SprintComparison
+          companies={companies}
+          getSprintComparison={getSprintComparison}
+        />
+      )}
 
       {/* Active Sprints */}
       {activeSprints.length > 0 && (

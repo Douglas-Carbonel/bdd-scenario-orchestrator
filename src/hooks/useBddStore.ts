@@ -618,6 +618,54 @@ export function useBddStore() {
     [testRuns, scenarios],
   );
 
+  const getSprintComparison = useCallback(
+    (companyId: string) => {
+      const companySprints = sprints
+        .filter((s) => s.companyId === companyId)
+        .sort((a, b) => a.startDate.getTime() - b.startDate.getTime());
+
+      const stats = companySprints.map((sprint) => {
+        const sprintRuns = testRuns.filter((r) => r.sprintId === sprint.id);
+
+        if (sprintRuns.length > 0) {
+          const passed = sprintRuns.filter((r) => r.status === "passed").length;
+          const failed = sprintRuns.filter((r) => r.status === "failed").length;
+          return {
+            sprint,
+            totalRuns: sprintRuns.length,
+            passedRuns: passed,
+            failedRuns: failed,
+            passRate: Math.round((passed / sprintRuns.length) * 100),
+            dataSource: "runs" as const,
+          };
+        }
+
+        const sprintScenarios = scenarios.filter((s) => s.sprintId === sprint.id);
+        const passed = sprintScenarios.filter((s) => s.status === "passed").length;
+        const failed = sprintScenarios.filter((s) => s.status === "failed").length;
+        const total = passed + failed;
+        return {
+          sprint,
+          totalRuns: sprintScenarios.length,
+          passedRuns: passed,
+          failedRuns: failed,
+          passRate: total > 0 ? Math.round((passed / total) * 100) : null,
+          dataSource: "scenarios" as const,
+        };
+      });
+
+      return stats.map((s, i) => {
+        const prevWithData = stats.slice(0, i).reverse().find((p) => p.passRate !== null);
+        const delta =
+          s.passRate !== null && prevWithData?.passRate != null
+            ? s.passRate - prevWithData.passRate
+            : null;
+        return { ...s, delta };
+      });
+    },
+    [sprints, testRuns, scenarios],
+  );
+
   const getTeamMember = useCallback(
     (id: string) => teamMembers.find((m) => m.id === id),
     [teamMembers],
@@ -746,6 +794,7 @@ export function useBddStore() {
     getScenarioRuns,
     getCompanyStats,
     getSprintStats,
+    getSprintComparison,
     getDailyStats,
     getTeamMember,
     getCompanyTeamMembers,
