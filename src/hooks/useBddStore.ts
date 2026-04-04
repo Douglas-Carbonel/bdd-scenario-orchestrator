@@ -583,13 +583,33 @@ export function useBddStore() {
   const getSprintStats = useCallback(
     (sprintId: string) => {
       const sprintScenarios = scenarios.filter((s) => s.sprintId === sprintId);
+      const sprintRuns = testRuns.filter((r) => r.sprintId === sprintId);
+
+      if (sprintRuns.length > 0) {
+        const sortedRuns = [...sprintRuns].sort(
+          (a, b) => b.startedAt.getTime() - a.startedAt.getTime(),
+        );
+        const latestStatusByScenario = new Map<string, string>();
+        for (const run of sortedRuns) {
+          if (!latestStatusByScenario.has(run.scenarioId)) {
+            latestStatusByScenario.set(run.scenarioId, run.status);
+          }
+        }
+        const statuses = [...latestStatusByScenario.values()];
+        return {
+          scenarioCount: sprintScenarios.length,
+          passedCount: statuses.filter((s) => s === "passed").length,
+          failedCount: statuses.filter((s) => s === "failed").length,
+        };
+      }
+
       return {
         scenarioCount: sprintScenarios.length,
         passedCount: sprintScenarios.filter((s) => s.status === "passed").length,
         failedCount: sprintScenarios.filter((s) => s.status === "failed").length,
       };
     },
-    [scenarios],
+    [scenarios, testRuns],
   );
 
   const getUnsortedScenarios = useCallback(
