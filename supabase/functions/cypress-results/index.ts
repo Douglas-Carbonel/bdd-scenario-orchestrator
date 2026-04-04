@@ -89,20 +89,9 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Look up the active sprint for this company (if any)
-    const { data: activeSprint } = await supabase
-      .from("sprints")
-      .select("id")
-      .eq("company_id", product.company_id)
-      .eq("status", "active")
-      .maybeSingle();
-
-    const sprintId = activeSprint?.id ?? null;
-
     const now = new Date().toISOString();
     const testRuns = results.map(r => ({
       scenario_id: r.scenario_id,
-      sprint_id: sprintId,
       status: r.status,
       duration: r.duration || null,
       error_message: r.error_message || null,
@@ -122,6 +111,26 @@ Deno.serve(async (req) => {
         JSON.stringify({ error: "Failed to insert test runs", details: insertError.message }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
+    }
+
+    // Try to tag runs with the active sprint (requires sprint_id column — applied via migration)
+    try {
+      const { data: activeSprint } = await supabase
+        .from("sprints")
+        .select("id")
+        .eq("company_id", product.company_id)
+        .eq("status", "active")
+        .maybeSingle();
+
+      if (activeSprint && insertedRuns?.length) {
+        const insertedIds = insertedRuns.map((r: any) => r.id);
+        await supabase
+          .from("test_runs")
+          .update({ sprint_id: activeSprint.id })
+          .in("id", insertedIds);
+      }
+    } catch (_) {
+      // sprint_id column may not exist yet — skip silently
     }
 
     // Update scenario statuses
