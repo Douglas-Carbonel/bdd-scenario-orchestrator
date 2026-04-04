@@ -323,10 +323,15 @@ export function useBddStore() {
       if (updates.status !== undefined) dbUpdates.status = updates.status;
       if (updates.startDate !== undefined) dbUpdates.start_date = updates.startDate.toISOString().split("T")[0];
       if (updates.endDate !== undefined) dbUpdates.end_date = updates.endDate.toISOString().split("T")[0];
+      if ("productId" in updates) dbUpdates.product_id = updates.productId ?? null;
       const { error } = await supabase.from("sprints").update(dbUpdates).eq("id", id);
       if (error) throw error;
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["sprints"] }),
+    onSuccess: () => {
+      toast.success("Sprint atualizada");
+      queryClient.invalidateQueries({ queryKey: ["sprints"] });
+    },
+    onError: () => toast.error("Erro ao atualizar sprint"),
   });
 
   const deleteSprintMutation = useMutation({

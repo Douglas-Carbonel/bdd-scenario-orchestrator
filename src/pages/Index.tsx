@@ -37,6 +37,7 @@ const Index = () => {
     getUnsortedScenarios,
     getSprintStats,
     getSprintComparison,
+    updateSprint,
     getDailyStats,
     getTeamMember,
     getScenarioRuns,
@@ -101,6 +102,7 @@ const Index = () => {
             scenarios={scenarios}
             onAddSprint={addSprint}
             onActivateSprint={activateSprint}
+            onUpdateSprint={updateSprint}
             getSprintStats={getSprintStats}
             getSprintComparison={getSprintComparison}
           />

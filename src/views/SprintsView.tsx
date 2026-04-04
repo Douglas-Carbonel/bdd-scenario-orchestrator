@@ -28,6 +28,7 @@ interface SprintsViewProps {
   scenarios: Scenario[];
   onAddSprint: (sprint: Omit<Sprint, "id">) => void;
   onActivateSprint: (sprintId: string, companyId: string) => void;
+  onUpdateSprint: (id: string, updates: Partial<Sprint>) => void;
   getSprintStats: (sprintId: string) => {
     scenarioCount: number;
     passedCount: number;
@@ -45,6 +46,7 @@ export function SprintsView({
   scenarios,
   onAddSprint,
   onActivateSprint,
+  onUpdateSprint,
   getSprintStats,
   getSprintComparison,
 }: SprintsViewProps) {
@@ -212,7 +214,9 @@ export function SprintsView({
                     {...getSprintStats(sprint.id)}
                     companyName={getCompanyName(sprint.companyId)}
                     productName={getProductName(sprint.productId)}
+                    products={products}
                     onActivate={onActivateSprint}
+                    onUpdate={onUpdateSprint}
                   />
                 ))}
               </div>
@@ -233,7 +237,9 @@ export function SprintsView({
                     {...getSprintStats(sprint.id)}
                     companyName={getCompanyName(sprint.companyId)}
                     productName={getProductName(sprint.productId)}
+                    products={products}
                     onActivate={onActivateSprint}
+                    onUpdate={onUpdateSprint}
                   />
                 ))}
               </div>
@@ -254,7 +260,9 @@ export function SprintsView({
                     {...getSprintStats(sprint.id)}
                     companyName={getCompanyName(sprint.companyId)}
                     productName={getProductName(sprint.productId)}
+                    products={products}
                     onActivate={onActivateSprint}
+                    onUpdate={onUpdateSprint}
                   />
                 ))}
               </div>
