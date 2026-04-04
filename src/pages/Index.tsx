@@ -42,6 +42,7 @@ const Index = () => {
     getTeamMember,
     getScenarioRuns,
     clearScenarioRuns,
+    addTestRun,
   } = useBddStore();
 
   const renderView = () => {
@@ -91,6 +92,7 @@ const Index = () => {
             getUnsortedScenarios={getUnsortedScenarios}
             getScenarioRuns={getScenarioRuns}
             clearScenarioRuns={clearScenarioRuns}
+            onAddTestRun={addTestRun}
           />
         );
       case "sprints":

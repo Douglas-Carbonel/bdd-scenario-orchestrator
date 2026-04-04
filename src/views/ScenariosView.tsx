@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScenarioCard } from "@/components/scenarios/ScenarioCard";
 import { ScenarioForm } from "@/components/scenarios/ScenarioForm";
+import { ManualExecutionDialog } from "@/components/scenarios/ManualExecutionDialog";
 import { SuiteTree } from "@/components/suites/SuiteTree";
 import { Company, Product, Sprint, Scenario, TestSuite, SuiteTreeNode, TeamMember, TestRun } from "@/types/bdd";
 import { cn } from "@/lib/utils";
@@ -38,6 +39,7 @@ interface ScenariosViewProps {
   getUnsortedScenarios: (companyId: string) => Scenario[];
   getScenarioRuns: (scenarioId: string) => TestRun[];
   clearScenarioRuns: (scenarioId: string) => void;
+  onAddTestRun: (run: Omit<TestRun, "id">) => void;
 }
 
 export function ScenariosView({
@@ -57,9 +59,11 @@ export function ScenariosView({
   getUnsortedScenarios,
   getScenarioRuns,
   clearScenarioRuns,
+  onAddTestRun,
 }: ScenariosViewProps) {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingScenario, setEditingScenario] = useState<Scenario | null>(null);
+  const [runningScenario, setRunningScenario] = useState<Scenario | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [filterCompany, setFilterCompany] = useState<string>(companies[0]?.id || "all");
   const [filterStatus, setFilterStatus] = useState<string>("all");
@@ -122,6 +126,15 @@ export function ScenariosView({
   const handleAddSuite = (name: string, parentId: string | null) => {
     if (filterCompany === "all") return;
     onAddSuite({ name, companyId: filterCompany, parentId });
+  };
+
+  const handleRunScenario = (scenario: Scenario) => {
+    setRunningScenario(scenario);
+  };
+
+  const handleExecutionSubmit = (run: Omit<TestRun, "id">, scenarioStatus: "passed" | "failed") => {
+    onAddTestRun(run);
+    onUpdateScenario(run.scenarioId, { status: scenarioStatus });
   };
 
   // Get current suite name for header
@@ -259,6 +272,7 @@ export function ScenariosView({
                     scenario={scenario}
                     runs={getScenarioRuns(scenario.id)}
                     onEdit={openEditDialog}
+                    onRun={handleRunScenario}
                     onClearRuns={clearScenarioRuns}
                     getSprintName={(id) => sprints.find(s => s.id === id)?.name}
                   />
@@ -269,7 +283,16 @@ export function ScenariosView({
         </div>
       </div>
 
-      {/* Dialog */}
+      {/* Manual Execution Dialog */}
+      <ManualExecutionDialog
+        scenario={runningScenario}
+        sprints={sprints}
+        open={!!runningScenario}
+        onOpenChange={(open) => { if (!open) setRunningScenario(null); }}
+        onSubmit={handleExecutionSubmit}
+      />
+
+      {/* Create/Edit Dialog */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
