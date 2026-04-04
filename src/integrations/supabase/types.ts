@@ -121,6 +121,7 @@ export type Database = {
           company_id: string
           created_at: string
           estimated_duration: number
+          execution_type: string
           feature: string
           given_steps: Json
           id: string
@@ -141,6 +142,7 @@ export type Database = {
           company_id: string
           created_at?: string
           estimated_duration?: number
+          execution_type?: string
           feature: string
           given_steps?: Json
           id?: string
@@ -161,6 +163,7 @@ export type Database = {
           company_id?: string
           created_at?: string
           estimated_duration?: number
+          execution_type?: string
           feature?: string
           given_steps?: Json
           id?: string

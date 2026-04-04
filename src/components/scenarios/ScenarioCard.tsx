@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Clock, Tag, Play, CheckCircle2, XCircle, FileEdit, AlertTriangle, User, Copy, Check, History, ChevronDown, ChevronUp, Bot, ImageIcon, X, Trash2, Layers } from "lucide-react";
 import { Scenario, Priority, TestRun } from "@/types/bdd";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -81,10 +82,23 @@ export function ScenarioCard({ scenario, assigneeName, runs = [], onEdit, onRun,
             </div>
             <p className="text-sm text-muted-foreground font-mono">{scenario.feature}</p>
           </div>
-          <Badge className={cn("shrink-0", status.className)}>
-            <StatusIcon className="h-3 w-3 mr-1" />
-            {status.label}
-          </Badge>
+          <div className="flex items-center gap-2 shrink-0">
+            {scenario.executionType === "manual" ? (
+              <Badge variant="outline" className="border-emerald-500/40 text-emerald-400 bg-emerald-500/5 text-xs px-2 py-0.5">
+                <User className="h-3 w-3 mr-1" />
+                Manual
+              </Badge>
+            ) : (
+              <Badge variant="outline" className="border-primary/40 text-primary/70 bg-primary/5 text-xs px-2 py-0.5">
+                <Bot className="h-3 w-3 mr-1" />
+                E2E
+              </Badge>
+            )}
+            <Badge className={cn("shrink-0", status.className)}>
+              <StatusIcon className="h-3 w-3 mr-1" />
+              {status.label}
+            </Badge>
+          </div>
         </div>
 
         {/* BDD Steps */}
@@ -200,7 +214,9 @@ export function ScenarioCard({ scenario, assigneeName, runs = [], onEdit, onRun,
                           <XCircle className="h-3 w-3 text-destructive shrink-0" />
                         )}
                         <div className="flex items-center gap-1 text-muted-foreground">
-                          <Bot className="h-3 w-3" />
+                          {scenario.executionType === "manual"
+                            ? <User className="h-3 w-3" />
+                            : <Bot className="h-3 w-3" />}
                           <span className="font-mono">{run.executedBy}</span>
                         </div>
                         {run.sprintId && getSprintName?.(run.sprintId) && (
@@ -296,10 +312,26 @@ export function ScenarioCard({ scenario, assigneeName, runs = [], onEdit, onRun,
             <Button variant="ghost" size="sm" onClick={() => onEdit?.(scenario)} data-testid={`button-edit-${scenario.id}`}>
               <FileEdit className="h-4 w-4" />
             </Button>
-            <Button variant="default" size="sm" onClick={() => onRun?.(scenario)} data-testid={`button-run-${scenario.id}`}>
-              <Play className="h-4 w-4" />
-              Executar
-            </Button>
+            {scenario.executionType === "manual" ? (
+              <Button variant="default" size="sm" onClick={() => onRun?.(scenario)} data-testid={`button-run-${scenario.id}`}>
+                <Play className="h-4 w-4" />
+                Executar
+              </Button>
+            ) : (
+              <TooltipProvider delayDuration={200}>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-primary/5 border border-primary/20 text-primary/60 text-xs font-medium cursor-default select-none">
+                      <Bot className="h-3.5 w-3.5" />
+                      CI
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent side="top">
+                    <p className="text-xs">Executado automaticamente via Cypress CI</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            )}
           </div>
         </div>
       </div>

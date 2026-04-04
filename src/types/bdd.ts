@@ -35,6 +35,7 @@ export interface TestSuite {
 }
 
 export type Priority = 'critical' | 'high' | 'medium' | 'low';
+export type ExecutionType = 'manual' | 'automated';
 
 export interface TeamMember {
   id: string;
@@ -61,6 +62,7 @@ export interface Scenario {
   estimatedDuration: number;
   actualDuration?: number;
   status: 'draft' | 'ready' | 'running' | 'passed' | 'failed';
+  executionType: ExecutionType;
   createdAt: Date;
   updatedAt: Date;
 }

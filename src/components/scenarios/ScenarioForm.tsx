@@ -1,9 +1,10 @@
 import { useState } from "react";
-import { Plus, X, Trash2 } from "lucide-react";
+import { Plus, X, Trash2, User, Bot } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Scenario, Company, Product, Sprint, TestSuite, TeamMember, Priority } from "@/types/bdd";
+import { Scenario, Company, Product, Sprint, TestSuite, TeamMember, Priority, ExecutionType } from "@/types/bdd";
+import { cn } from "@/lib/utils";
 import {
   Select,
   SelectContent,
@@ -60,6 +61,7 @@ export function ScenarioForm({
   const [tags, setTags] = useState<string[]>(initialData?.tags || []);
   const [tagInput, setTagInput] = useState("");
   const [estimatedDuration, setEstimatedDuration] = useState(initialData?.estimatedDuration || 5);
+  const [executionType, setExecutionType] = useState<ExecutionType>(initialData?.executionType || "automated");
 
   const addStep = (type: "given" | "when" | "then") => {
     if (type === "given") setGiven([...given, ""]);
@@ -123,6 +125,7 @@ export function ScenarioForm({
       then: then.filter((t) => t.trim()),
       tags,
       estimatedDuration,
+      executionType,
       status: initialData?.status || "draft",
     });
   };
@@ -283,6 +286,44 @@ export function ScenarioForm({
             min={1}
           />
         </div>
+      </div>
+
+      {/* Execution Type */}
+      <div className="space-y-2">
+        <Label>Tipo de Execução</Label>
+        <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={() => setExecutionType("automated")}
+            className={cn(
+              "flex-1 flex items-center justify-center gap-2 px-3 py-2.5 rounded-md border text-sm font-medium transition-all",
+              executionType === "automated"
+                ? "border-primary bg-primary/10 text-primary"
+                : "border-border text-muted-foreground hover:border-primary/40"
+            )}
+          >
+            <Bot className="h-4 w-4" />
+            E2E / Automatizado
+          </button>
+          <button
+            type="button"
+            onClick={() => setExecutionType("manual")}
+            className={cn(
+              "flex-1 flex items-center justify-center gap-2 px-3 py-2.5 rounded-md border text-sm font-medium transition-all",
+              executionType === "manual"
+                ? "border-emerald-500 bg-emerald-500/10 text-emerald-400"
+                : "border-border text-muted-foreground hover:border-emerald-500/40"
+            )}
+          >
+            <User className="h-4 w-4" />
+            Manual
+          </button>
+        </div>
+        <p className="text-xs text-muted-foreground">
+          {executionType === "automated"
+            ? "Cenário executado via Cypress CI — resultados chegam automaticamente."
+            : "Cenário executado manualmente pelo time de QA."}
+        </p>
       </div>
 
       {/* BDD Steps */}

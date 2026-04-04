@@ -68,6 +68,7 @@ function mapScenario(row: DbScenario): Scenario {
     estimatedDuration: row.estimated_duration,
     actualDuration: row.actual_duration ?? undefined,
     status: row.status,
+    executionType: (row.execution_type === "manual" ? "manual" : "automated") as "manual" | "automated",
     createdAt: new Date(row.created_at),
     updatedAt: new Date(row.updated_at),
   };
@@ -449,6 +450,7 @@ export function useBddStore() {
           estimated_duration: scenario.estimatedDuration,
           actual_duration: scenario.actualDuration ?? null,
           status: scenario.status,
+          execution_type: scenario.executionType ?? "automated",
         })
         .select()
         .single();
@@ -474,6 +476,7 @@ export function useBddStore() {
       if (updates.assigneeId !== undefined) dbUpdates.assignee_id = updates.assigneeId ?? null;
       if (updates.estimatedDuration !== undefined) dbUpdates.estimated_duration = updates.estimatedDuration;
       if (updates.actualDuration !== undefined) dbUpdates.actual_duration = updates.actualDuration ?? null;
+      if (updates.executionType !== undefined) dbUpdates.execution_type = updates.executionType;
       const { error } = await supabase.from("scenarios").update(dbUpdates).eq("id", id);
       if (error) throw error;
     },

@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { Plus, Search, Filter, PanelLeftClose, PanelLeft } from "lucide-react";
+import { Plus, Search, Filter, PanelLeftClose, PanelLeft, Bot, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScenarioCard } from "@/components/scenarios/ScenarioCard";
@@ -67,6 +67,7 @@ export function ScenariosView({
   const [searchQuery, setSearchQuery] = useState("");
   const [filterCompany, setFilterCompany] = useState<string>(companies[0]?.id || "all");
   const [filterStatus, setFilterStatus] = useState<string>("all");
+  const [filterExecType, setFilterExecType] = useState<"all" | "manual" | "automated">("all");
   const [selectedSuiteId, setSelectedSuiteId] = useState<string | null>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
@@ -90,13 +91,14 @@ export function ScenariosView({
         scenario.tags.some((tag) => tag.toLowerCase().includes(searchQuery.toLowerCase()));
       const matchesCompany = filterCompany === "all" || scenario.companyId === filterCompany;
       const matchesStatus = filterStatus === "all" || scenario.status === filterStatus;
+      const matchesExecType = filterExecType === "all" || scenario.executionType === filterExecType;
       const matchesSuite = selectedSuiteId === null 
         ? !scenario.suiteId 
         : scenario.suiteId === selectedSuiteId || isInSuiteTree(selectedSuiteId, scenario.suiteId, suites);
       
-      return matchesSearch && matchesCompany && matchesStatus && matchesSuite;
+      return matchesSearch && matchesCompany && matchesStatus && matchesExecType && matchesSuite;
     });
-  }, [scenarios, searchQuery, filterCompany, filterStatus, selectedSuiteId, suites]);
+  }, [scenarios, searchQuery, filterCompany, filterStatus, filterExecType, selectedSuiteId, suites]);
 
   const openCreateDialog = () => {
     setEditingScenario(null);
@@ -237,6 +239,31 @@ export function ScenariosView({
                 <SelectItem value="failed">Falhou</SelectItem>
               </SelectContent>
             </Select>
+
+            {/* Execution type filter */}
+            <div className="flex rounded-md border border-border overflow-hidden shrink-0">
+              {(["all", "automated", "manual"] as const).map((type) => (
+                <button
+                  key={type}
+                  onClick={() => setFilterExecType(type)}
+                  className={cn(
+                    "flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium transition-colors border-r border-border last:border-r-0",
+                    filterExecType === type
+                      ? type === "manual"
+                        ? "bg-emerald-500/15 text-emerald-400"
+                        : type === "automated"
+                          ? "bg-primary/15 text-primary"
+                          : "bg-secondary text-foreground"
+                      : "text-muted-foreground hover:text-foreground hover:bg-secondary/50"
+                  )}
+                >
+                  {type === "all" && <Filter className="h-3 w-3" />}
+                  {type === "automated" && <Bot className="h-3 w-3" />}
+                  {type === "manual" && <User className="h-3 w-3" />}
+                  {type === "all" ? "Todos" : type === "automated" ? "E2E" : "Manual"}
+                </button>
+              ))}
+            </div>
           </div>
 
           {/* Scenarios Grid */}
