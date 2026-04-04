@@ -12,6 +12,7 @@ interface SprintCardProps {
   passedCount: number;
   failedCount: number;
   companyName: string;
+  productName?: string;
   onActivate?: (sprintId: string, companyId: string) => void;
 }
 
@@ -21,7 +22,7 @@ const statusConfig = {
   completed: { label: "Concluída", className: "bg-success/20 text-success" },
 };
 
-export function SprintCard({ sprint, scenarioCount, passedCount, failedCount, companyName, onActivate }: SprintCardProps) {
+export function SprintCard({ sprint, scenarioCount, passedCount, failedCount, companyName, productName, onActivate }: SprintCardProps) {
   const status = statusConfig[sprint.status];
   const progress = scenarioCount > 0 ? ((passedCount + failedCount) / scenarioCount) * 100 : 0;
   const passRate = passedCount + failedCount > 0 ? Math.round((passedCount / (passedCount + failedCount)) * 100) : null;
@@ -33,7 +34,9 @@ export function SprintCard({ sprint, scenarioCount, passedCount, failedCount, co
     )}>
       <div className="flex items-start justify-between mb-4">
         <div className="min-w-0 flex-1">
-          <p className="text-xs text-muted-foreground mb-1">{companyName}</p>
+          <p className="text-xs text-muted-foreground mb-1">
+            {companyName}{productName ? ` · ${productName}` : ""}
+          </p>
           <h3 className="text-lg font-semibold text-foreground">{sprint.name}</h3>
         </div>
         <div className="flex items-center gap-2 shrink-0 ml-2">

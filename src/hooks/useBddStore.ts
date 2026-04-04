@@ -619,9 +619,13 @@ export function useBddStore() {
   );
 
   const getSprintComparison = useCallback(
-    (companyId: string) => {
+    (companyId: string, productId?: string) => {
       const companySprints = sprints
-        .filter((s) => s.companyId === companyId)
+        .filter(
+          (s) =>
+            s.companyId === companyId &&
+            (!productId || s.productId === productId),
+        )
         .sort((a, b) => a.startDate.getTime() - b.startDate.getTime());
 
       const stats = companySprints.map((sprint) => {
@@ -640,7 +644,11 @@ export function useBddStore() {
           };
         }
 
-        const sprintScenarios = scenarios.filter((s) => s.sprintId === sprint.id);
+        const sprintScenarios = scenarios.filter(
+          (s) =>
+            s.sprintId === sprint.id &&
+            (!productId || s.productId === productId),
+        );
         const passed = sprintScenarios.filter((s) => s.status === "passed").length;
         const failed = sprintScenarios.filter((s) => s.status === "failed").length;
         const total = passed + failed;

@@ -96,6 +96,7 @@ const Index = () => {
         return (
           <SprintsView
             companies={companies}
+            products={products}
             sprints={sprints}
             scenarios={scenarios}
             onAddSprint={addSprint}
