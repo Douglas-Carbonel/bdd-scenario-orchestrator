@@ -277,7 +277,11 @@ module.exports = defineConfig({
         const r = await httpRequest(
           'POST',
           \`\${RESULTS_ENDPOINT}?api_key=\${apiKey}\`,
-          { 'Content-Type': 'application/json' },
+          {
+            'Content-Type': 'application/json',
+            'Authorization': \`Bearer \${supabaseKey}\`,
+            'apikey': supabaseKey,
+          },
           { results: payload }
         )
         console.log('[4QA] resultados enviados:', r.status, r.ok ? 'OK' : r.body)
