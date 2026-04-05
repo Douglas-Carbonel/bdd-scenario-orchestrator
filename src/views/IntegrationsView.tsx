@@ -1,11 +1,14 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
-  Code2, GitBranch, Zap, Copy, Check, Terminal,
-  FileJson, Key, Building2, Puzzle, ChevronDown,
+  Copy, Check, Terminal, Key, Building2,
+  Code2, GitBranch, FileJson, Zap, ArrowRight, ExternalLink,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import {
+  Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription,
+} from "@/components/ui/sheet";
 import { Company, Product } from "@/types/bdd";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -17,108 +20,201 @@ interface IntegrationsViewProps {
 
 const SUPABASE_PROJECT_ID = import.meta.env.VITE_SUPABASE_PROJECT_ID;
 
+/* ─── Helpers ──────────────────────────────────────────────── */
+
 function CodeBlock({
-  code,
-  copyKey,
-  copiedKey,
-  onCopy,
+  code, copyKey, copiedKey, onCopy,
 }: {
-  code: string;
-  copyKey: string;
-  copiedKey: string | null;
+  code: string; copyKey: string; copiedKey: string | null;
   onCopy: (text: string, key: string) => void;
 }) {
   return (
-    <div className="relative">
+    <div className="relative group">
       <Button
-        variant="ghost"
-        size="sm"
-        className="absolute top-2 right-2 z-10"
+        variant="ghost" size="sm"
+        className="absolute top-2 right-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity"
         onClick={() => onCopy(code, copyKey)}
       >
-        {copiedKey === copyKey ? (
-          <Check className="h-3 w-3 text-primary" />
-        ) : (
-          <Copy className="h-3 w-3" />
-        )}
+        {copiedKey === copyKey
+          ? <Check className="h-3 w-3 text-primary" />
+          : <Copy className="h-3 w-3" />}
       </Button>
-      <pre className="p-4 rounded-lg bg-background/80 border border-border text-xs font-mono text-muted-foreground overflow-x-auto whitespace-pre leading-relaxed">
+      <pre className="p-4 rounded-lg bg-black/40 border border-border/60 text-xs font-mono text-muted-foreground overflow-x-auto whitespace-pre leading-relaxed">
         {code}
       </pre>
     </div>
   );
 }
 
-interface IntegrationCardProps {
+/* ─── Integration definitions ──────────────────────────────── */
+
+type IntegrationStatus = "active" | "coming_soon";
+type IntegrationCategory = "ci_cd" | "project" | "notification" | "testing";
+
+interface Integration {
   id: string;
-  icon: React.ReactNode;
-  title: string;
+  name: string;
+  category: IntegrationCategory;
   description: string;
-  badge?: string;
-  badgeColor?: string;
-  children?: React.ReactNode;
-  defaultOpen?: boolean;
+  status: IntegrationStatus;
+  iconBg: string;
+  iconColor: string;
+  iconEmoji: string;
+  docsUrl?: string;
 }
 
+const INTEGRATIONS: Integration[] = [
+  {
+    id: "cypress",
+    name: "Cypress",
+    category: "ci_cd",
+    description: "Sync cenários e reporte resultados automaticamente via GitHub Actions.",
+    status: "active",
+    iconBg: "bg-emerald-500/15",
+    iconColor: "text-emerald-400",
+    iconEmoji: "🌲",
+    docsUrl: "https://docs.cypress.io",
+  },
+  {
+    id: "playwright",
+    name: "Playwright",
+    category: "testing",
+    description: "Integração nativa com Playwright + CI para reporte de resultados.",
+    status: "coming_soon",
+    iconBg: "bg-violet-500/15",
+    iconColor: "text-violet-400",
+    iconEmoji: "🎭",
+    docsUrl: "https://playwright.dev",
+  },
+  {
+    id: "github",
+    name: "GitHub",
+    category: "ci_cd",
+    description: "Vincule PRs a cenários BDD e visualize status direto no 4QA.",
+    status: "coming_soon",
+    iconBg: "bg-slate-500/15",
+    iconColor: "text-slate-300",
+    iconEmoji: "🐙",
+  },
+  {
+    id: "jira",
+    name: "Jira",
+    category: "project",
+    description: "Crie tickets automaticamente quando um cenário falhar em produção.",
+    status: "coming_soon",
+    iconBg: "bg-blue-500/15",
+    iconColor: "text-blue-400",
+    iconEmoji: "📋",
+  },
+  {
+    id: "slack",
+    name: "Slack",
+    category: "notification",
+    description: "Notificações em tempo real de falhas e execuções no canal do time.",
+    status: "coming_soon",
+    iconBg: "bg-amber-500/15",
+    iconColor: "text-amber-400",
+    iconEmoji: "💬",
+  },
+  {
+    id: "notion",
+    name: "Notion",
+    category: "project",
+    description: "Exporte cenários e resultados para páginas Notion automaticamente.",
+    status: "coming_soon",
+    iconBg: "bg-zinc-500/15",
+    iconColor: "text-zinc-300",
+    iconEmoji: "📝",
+  },
+];
+
+const CATEGORY_LABELS: Record<IntegrationCategory, string> = {
+  ci_cd: "CI/CD",
+  project: "Gestão",
+  notification: "Notificações",
+  testing: "Testes",
+};
+
+/* ─── Integration Card ─────────────────────────────────────── */
+
 function IntegrationCard({
-  id,
-  icon,
-  title,
-  description,
-  badge,
-  badgeColor = "bg-primary/20 text-primary",
-  children,
-  defaultOpen = false,
-}: IntegrationCardProps) {
-  const [open, setOpen] = useState(defaultOpen);
+  integration,
+  onConfigure,
+}: {
+  integration: Integration;
+  onConfigure: (id: string) => void;
+}) {
+  const isActive = integration.status === "active";
 
   return (
-    <div className="glass-card rounded-xl overflow-hidden">
-      <button
-        className="w-full flex items-center gap-4 p-5 text-left hover:bg-secondary/10 transition-colors"
-        onClick={() => setOpen(!open)}
-      >
-        <div className="h-11 w-11 rounded-xl bg-secondary/40 flex items-center justify-center shrink-0">
-          {icon}
-        </div>
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 flex-wrap">
-            <h3 className="font-semibold text-foreground">{title}</h3>
-            {badge && (
-              <Badge className={cn("text-xs", badgeColor)}>{badge}</Badge>
-            )}
-          </div>
-          <p className="text-sm text-muted-foreground truncate">{description}</p>
-        </div>
-        <ChevronDown
-          className={cn(
-            "h-4 w-4 text-muted-foreground shrink-0 transition-transform duration-200",
-            open && "rotate-180"
-          )}
-        />
-      </button>
-
-      {open && children && (
-        <div className="border-t border-border p-5 space-y-4">
-          {children}
-        </div>
+    <div
+      className={cn(
+        "glass-card rounded-2xl p-5 flex flex-col gap-4 transition-all duration-200",
+        isActive
+          ? "hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5 cursor-pointer"
+          : "opacity-60"
       )}
+      onClick={isActive ? () => onConfigure(integration.id) : undefined}
+    >
+      {/* Top row */}
+      <div className="flex items-start justify-between">
+        <div className={cn("h-12 w-12 rounded-xl flex items-center justify-center text-2xl", integration.iconBg)}>
+          {integration.iconEmoji}
+        </div>
+        <Badge
+          variant={isActive ? "default" : "outline"}
+          className={cn(
+            "text-xs font-medium",
+            isActive
+              ? "bg-emerald-500/20 text-emerald-400 border-emerald-500/20 hover:bg-emerald-500/20"
+              : "text-muted-foreground border-border"
+          )}
+        >
+          {isActive ? "Ativo" : "Em breve"}
+        </Badge>
+      </div>
+
+      {/* Info */}
+      <div className="space-y-1 flex-1">
+        <div className="flex items-center gap-2">
+          <h3 className="font-semibold text-foreground">{integration.name}</h3>
+          <span className="text-xs text-muted-foreground/60 bg-secondary/40 px-1.5 py-0.5 rounded">
+            {CATEGORY_LABELS[integration.category]}
+          </span>
+        </div>
+        <p className="text-sm text-muted-foreground leading-relaxed">
+          {integration.description}
+        </p>
+      </div>
+
+      {/* Action */}
+      <div>
+        {isActive ? (
+          <Button size="sm" variant="outline" className="w-full gap-1.5 group/btn">
+            Configurar
+            <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover/btn:translate-x-0.5" />
+          </Button>
+        ) : (
+          <Button size="sm" variant="ghost" disabled className="w-full text-muted-foreground">
+            Em desenvolvimento
+          </Button>
+        )}
+      </div>
     </div>
   );
 }
 
-export function IntegrationsView({ companies, products }: IntegrationsViewProps) {
-  const { t } = useTranslation();
-  const [copiedKey, setCopiedKey] = useState<string | null>(null);
+/* ─── Cypress Sheet content ────────────────────────────────── */
 
-  const copyToClipboard = (text: string, key: string) => {
-    navigator.clipboard.writeText(text);
-    setCopiedKey(key);
-    setTimeout(() => setCopiedKey(null), 2000);
-    toast.success(t("settings.copied"));
-  };
-
-  const syncEndpoint = `https://${SUPABASE_PROJECT_ID}.supabase.co/functions/v1/cypress-sync`;
+function CypressSheetContent({
+  companies, products, copiedKey, onCopy,
+}: {
+  companies: Company[];
+  products: Product[];
+  copiedKey: string | null;
+  onCopy: (text: string, key: string) => void;
+}) {
+  const syncEndpoint    = `https://${SUPABASE_PROJECT_ID}.supabase.co/functions/v1/cypress-sync`;
   const resultsEndpoint = `https://${SUPABASE_PROJECT_ID}.supabase.co/functions/v1/cypress-results`;
 
   const companiesJson = products.length > 0
@@ -128,371 +224,309 @@ export function IntegrationsView({ companies, products }: IntegrationsViewProps)
             p.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, ''),
             p.apiKey,
           ])
-        ),
-        null, 2
+        ), null, 2
       )
-    : `{\n  "saucedemo": "API_KEY_DO_PRODUTO_A",\n  "carhub": "API_KEY_DO_PRODUTO_B"\n}`;
+    : `{\n  "saucedemo": "API_KEY_PRODUTO_A",\n  "carhub": "API_KEY_PRODUTO_B"\n}`;
 
-  const ciSyncSnippet = `# Adicione este step ANTES do step que roda o Cypress
-- name: Sync cenários do 4QA
+  const ciSyncSnippet = `- name: Sync cenários do 4QA
   env:
     QA4_COMPANIES: \${{ secrets.QA4_COMPANIES }}
   run: node scripts/qa4-sync.js`;
 
-  const reporterSnippet = `// cypress/support/qa4-reporter.js
-const RESULTS_ENDPOINT = '${resultsEndpoint}'
+  const configSnippet = `// cypress.config.js  (trecho — after:spec)
+on('after:spec', async (spec, results) => {
+  const folder = spec.relative.split('/')[2]
+  const apiKey = folderToApiKey[folder]
+  if (!apiKey) return
 
-function reportToQA4(testTitle, state, duration, errorMessage) {
-  const scenarioMap = Cypress.env('QA4_SCENARIO_MAP') || {}
-  const specParts = (Cypress.spec.relative || '').split('/')
-  const folder    = specParts.length >= 3 ? specParts[2] : 'default'
-  const entry = scenarioMap[\`\${folder}:\${testTitle}\`]
-
-  if (!entry) {
-    Cypress.log({ name: '4QA', message: \`cenário "\${folder}:\${testTitle}" não encontrado\` })
-    return
-  }
-
-  const { scenarioId, apiKey } = entry
-  cy.request({
-    method: 'POST',
-    url: \`\${RESULTS_ENDPOINT}?api_key=\${apiKey}\`,
-    body: {
-      results: [{
-        scenario_id:   scenarioId,
-        status:        state === 'passed' ? 'passed' : 'failed',
-        duration, error_message: errorMessage || null,
-        executed_by: 'cypress-ci',
-      }],
-    },
-    failOnStatusCode: false,
-  })
-}
-
-module.exports = { reportToQA4 }`;
-
-  const configSnippet = `// cypress.config.js
-const { defineConfig } = require('cypress')
-const https = require('https')
-const fs    = require('fs')
-const path  = require('path')
-
-const SYNC_ENDPOINT    = '${syncEndpoint}'
-const RESULTS_ENDPOINT = '${resultsEndpoint}'
-const SUPABASE_URL     = 'https://${SUPABASE_PROJECT_ID}.supabase.co'
-
-function httpRequest(method, url, headers, body) {
-  return new Promise((resolve) => {
-    const u   = new URL(url)
-    const buf = body ? Buffer.from(JSON.stringify(body)) : null
-    const req = https.request(
-      { hostname: u.hostname, path: u.pathname + u.search, method,
-        headers: { ...headers, ...(buf ? { 'Content-Length': buf.length } : {}) } },
-      (res) => {
-        let data = ''
-        res.on('data', c => data += c)
-        res.on('end', () => resolve({ ok: res.statusCode < 300, status: res.statusCode, body: data }))
-      }
-    )
-    req.on('error', (e) => resolve({ ok: false, body: e.message }))
-    if (buf) req.write(buf)
-    req.end()
-  })
-}
-
-const cache = {}
-
-module.exports = defineConfig({
-  e2e: {
-    screenshotOnRunFailure: true,
-    setupNodeEvents(on, config) {
-      let folderToApiKey = {}
-      try { folderToApiKey = JSON.parse(process.env.QA4_COMPANIES || '{}') } catch (e) {}
-
-      on('after:spec', async (spec, results) => {
-        const specParts = (spec.relative || '').split(/[\\\\/]/)
-        const folder    = specParts.length >= 3 ? specParts[2] : specParts[0]
-        const apiKey    = folderToApiKey[folder]
-        if (!apiKey) return
-
-        if (!cache[folder]) {
-          const res = await httpRequest('GET', \`\${SYNC_ENDPOINT}?api_key=\${apiKey}\`, {}, null)
-          if (!res.ok) return
-          cache[folder] = JSON.parse(res.body).titleMap || {}
-        }
-
-        const titleMap = cache[folder]
-        const payload  = []
-
-        for (const test of (results.tests || [])) {
-          const title      = test.title[test.title.length - 1]
-          const scenarioId = titleMap[title]
-          if (!scenarioId) continue
-          const last = (test.attempts || []).slice(-1)[0] || {}
-          payload.push({
-            scenario_id: scenarioId,
-            status: last.state === 'passed' ? 'passed' : 'failed',
-            duration: last.duration || 0,
-            error_message: last.error?.message || null,
-            executed_by: 'cypress-ci',
-          })
-        }
-
-        if (payload.length === 0) return
-        await httpRequest('POST', \`\${RESULTS_ENDPOINT}?api_key=\${apiKey}\`,
-          { 'Content-Type': 'application/json' }, { results: payload })
-      })
-      return config
-    },
-  },
+  // Sincroniza titleMap via GET /cypress-sync
+  // Envia resultados via POST /cypress-results
+  // Screenshots são enviados automaticamente
 })`;
 
-  const fullWorkflowSnippet = `# .github/workflows/cypress.yml
-name: Cypress BDD Tests
-
-on:
-  push:
-    branches: [main, develop]
-  pull_request:
-    branches: [main]
-
-jobs:
-  cypress:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: 'npm'
-      - run: npm ci
-      - name: Rodar testes Cypress
-        env:
-          QA4_COMPANIES: \${{ secrets.QA4_COMPANIES }}
-          SUPABASE_ANON_KEY: \${{ secrets.SUPABASE_ANON_KEY }}
-        run: npx cypress run`;
+  const workflowSnippet = `# .github/workflows/cypress.yml
+- name: Rodar testes Cypress
+  env:
+    QA4_COMPANIES: \${{ secrets.QA4_COMPANIES }}
+    SUPABASE_ANON_KEY: \${{ secrets.SUPABASE_ANON_KEY }}
+  run: npx cypress run`;
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="space-y-2">
-        <h1 className="text-3xl font-bold text-foreground">{t("integrations.title")}</h1>
-        <p className="text-muted-foreground">{t("integrations.subtitle")}</p>
+    <div className="space-y-8 overflow-y-auto h-full pb-8">
+
+      {/* How it works */}
+      <section className="space-y-3">
+        <div className="flex items-center gap-2">
+          <Zap className="h-4 w-4 text-primary" />
+          <h4 className="font-semibold text-foreground">Como funciona</h4>
+        </div>
+        <div className="grid grid-cols-2 gap-2">
+          {[
+            { n: "1", color: "text-primary",      bg: "bg-primary/10",      title: "Crie o cenário no 4QA",    desc: "Título = it() do seu teste" },
+            { n: "2", color: "text-blue-400",      bg: "bg-blue-400/10",     title: "CI sincroniza",            desc: "Gera mapa título → ID" },
+            { n: "3", color: "text-emerald-400",   bg: "bg-emerald-400/10",  title: "Cypress roda",             desc: "Reporta resultados + prints" },
+            { n: "4", color: "text-yellow-400",    bg: "bg-yellow-400/10",   title: "Dashboard atualiza",       desc: "Sem IDs hardcoded" },
+          ].map(s => (
+            <div key={s.n} className="rounded-xl bg-secondary/30 border border-border/60 p-3 space-y-2">
+              <div className={cn("h-6 w-6 rounded-full flex items-center justify-center", s.bg)}>
+                <span className={cn("text-xs font-bold", s.color)}>{s.n}</span>
+              </div>
+              <p className="text-xs font-semibold text-foreground">{s.title}</p>
+              <p className="text-xs text-muted-foreground">{s.desc}</p>
+            </div>
+          ))}
+        </div>
+        <div className="rounded-lg bg-primary/5 border border-primary/20 p-3 text-xs text-muted-foreground">
+          <span className="font-medium text-foreground">Regra de ouro: </span>
+          O título do <code className="bg-secondary/50 px-1 rounded">it()</code> no Cypress deve ser
+          idêntico ao <strong className="text-foreground">título do cenário</strong> no 4QA.
+        </div>
+      </section>
+
+      {/* API Keys */}
+      <section className="space-y-3">
+        <div className="flex items-center gap-2">
+          <Key className="h-4 w-4 text-yellow-400" />
+          <h4 className="font-semibold text-foreground">
+            Secret <code className="text-xs font-mono bg-secondary/50 px-1.5 rounded ml-1">QA4_COMPANIES</code>
+          </h4>
+        </div>
+
+        <div className="rounded-xl bg-secondary/20 border border-border overflow-hidden">
+          <div className="flex items-center justify-between px-4 py-2.5 border-b border-border bg-secondary/30">
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-muted-foreground">Valor do secret</span>
+              <Badge className="bg-primary/20 text-primary text-xs border-0">QA4_COMPANIES</Badge>
+            </div>
+            <Button variant="ghost" size="sm" className="h-7 gap-1.5 text-xs"
+              onClick={() => onCopy(companiesJson, "companies-json")}>
+              {copiedKey === "companies-json"
+                ? <><Check className="h-3 w-3 text-primary" /> Copiado!</>
+                : <><Copy className="h-3 w-3" /> Copiar</>}
+            </Button>
+          </div>
+          <pre className="p-4 text-xs font-mono text-muted-foreground overflow-x-auto leading-relaxed">
+            {companiesJson}
+          </pre>
+        </div>
+
+        {products.length > 0 && (
+          <div className="space-y-1.5">
+            <p className="text-xs text-muted-foreground font-medium">Pasta → Produto:</p>
+            {products.map(product => {
+              const folder  = product.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+              const company = companies.find(c => c.id === product.companyId);
+              return (
+                <div key={product.id} className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <Building2 className="h-3 w-3 shrink-0" />
+                  <code className="bg-secondary/50 px-1 rounded">cypress/e2e/{folder}/</code>
+                  <span>→</span>
+                  <span className="text-foreground font-medium">{product.name}</span>
+                  {company && <span className="opacity-50">({company.name})</span>}
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        <p className="text-xs text-muted-foreground rounded-lg bg-secondary/20 border border-border p-3">
+          No GitHub: <span className="text-foreground font-medium">Settings → Secrets → Actions → New secret</span>
+          {" "}→ nome: <code className="bg-secondary/50 px-1 rounded">QA4_COMPANIES</code>
+        </p>
+      </section>
+
+      {/* Endpoints */}
+      <section className="space-y-3">
+        <div className="flex items-center gap-2">
+          <Code2 className="h-4 w-4 text-accent" />
+          <h4 className="font-semibold text-foreground">Endpoints</h4>
+          <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/20 text-xs">Ativos</Badge>
+        </div>
+        <div className="space-y-2">
+          {[
+            { label: "GET — Sync cenários", key: "sync",    url: `${syncEndpoint}?api_key=YOUR_KEY` },
+            { label: "POST — Resultados",   key: "results", url: `${resultsEndpoint}?api_key=YOUR_KEY` },
+          ].map(ep => (
+            <div key={ep.key} className="rounded-lg bg-secondary/20 border border-border p-3">
+              <div className="flex items-center justify-between mb-1.5">
+                <span className="text-xs font-medium text-muted-foreground">{ep.label}</span>
+                <Button variant="ghost" size="sm" className="h-6 w-6 p-0"
+                  onClick={() => onCopy(ep.url.replace('?api_key=YOUR_KEY', ''), ep.key)}>
+                  {copiedKey === ep.key
+                    ? <Check className="h-3 w-3 text-primary" />
+                    : <Copy className="h-3 w-3" />}
+                </Button>
+              </div>
+              <code className="text-xs text-foreground/80 break-all">{ep.url}</code>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Setup steps */}
+      <section className="space-y-3">
+        <div className="flex items-center gap-2">
+          <GitBranch className="h-4 w-4 text-foreground" />
+          <h4 className="font-semibold text-foreground">Configuração passo a passo</h4>
+        </div>
+
+        {/* Step 1 */}
+        <div className="space-y-2">
+          <div className="flex items-center gap-2">
+            <div className="h-5 w-5 rounded-full bg-blue-400/10 flex items-center justify-center shrink-0">
+              <span className="text-xs font-bold text-blue-400">1</span>
+            </div>
+            <p className="text-sm font-medium text-foreground">
+              Step no CI <code className="text-xs font-mono bg-secondary/50 px-1 rounded ml-1">.github/workflows/cypress.yml</code>
+            </p>
+          </div>
+          <CodeBlock code={ciSyncSnippet} copyKey="ci" copiedKey={copiedKey} onCopy={onCopy} />
+        </div>
+
+        {/* Step 2 */}
+        <div className="space-y-2">
+          <div className="flex items-center gap-2">
+            <div className="h-5 w-5 rounded-full bg-yellow-400/10 flex items-center justify-center shrink-0">
+              <span className="text-xs font-bold text-yellow-400">2</span>
+            </div>
+            <p className="text-sm font-medium text-foreground">
+              <FileJson className="h-3.5 w-3.5 inline mr-1" />
+              <code className="text-xs font-mono bg-secondary/50 px-1 rounded">cypress.config.js</code>
+            </p>
+          </div>
+          <CodeBlock code={configSnippet} copyKey="config" copiedKey={copiedKey} onCopy={onCopy} />
+        </div>
+
+        {/* Step 3 */}
+        <div className="space-y-2">
+          <div className="flex items-center gap-2">
+            <div className="h-5 w-5 rounded-full bg-emerald-400/10 flex items-center justify-center shrink-0">
+              <span className="text-xs font-bold text-emerald-400">3</span>
+            </div>
+            <p className="text-sm font-medium text-foreground">
+              Workflow completo
+            </p>
+          </div>
+          <CodeBlock code={workflowSnippet} copyKey="workflow" copiedKey={copiedKey} onCopy={onCopy} />
+        </div>
+      </section>
+
+      {/* Docs link */}
+      <a
+        href="https://docs.cypress.io"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors"
+      >
+        <ExternalLink className="h-3.5 w-3.5" />
+        Documentação oficial do Cypress
+      </a>
+    </div>
+  );
+}
+
+/* ─── Main View ────────────────────────────────────────────── */
+
+export function IntegrationsView({ companies, products }: IntegrationsViewProps) {
+  const { t } = useTranslation();
+  const [openSheet, setOpenSheet] = useState<string | null>(null);
+  const [copiedKey, setCopiedKey] = useState<string | null>(null);
+
+  const copyToClipboard = (text: string, key: string) => {
+    navigator.clipboard.writeText(text);
+    setCopiedKey(key);
+    setTimeout(() => setCopiedKey(null), 2000);
+    toast.success(t("settings.copied"));
+  };
+
+  const active   = INTEGRATIONS.filter(i => i.status === "active");
+  const upcoming = INTEGRATIONS.filter(i => i.status === "coming_soon");
+
+  return (
+    <>
+      <div className="space-y-8">
+        {/* Header */}
+        <div className="space-y-2">
+          <h1 className="text-3xl font-bold text-foreground">{t("integrations.title")}</h1>
+          <p className="text-muted-foreground">{t("integrations.subtitle")}</p>
+        </div>
+
+        {/* Active integrations */}
+        <section className="space-y-4">
+          <div className="flex items-center gap-2">
+            <h2 className="text-sm font-semibold text-foreground uppercase tracking-wider">
+              Disponíveis
+            </h2>
+            <div className="h-px flex-1 bg-border" />
+            <span className="text-xs text-muted-foreground">{active.length}</span>
+          </div>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {active.map((integration, i) => (
+              <div key={integration.id} className="animate-slide-up" style={{ animationDelay: `${i * 60}ms` }}>
+                <IntegrationCard
+                  integration={integration}
+                  onConfigure={setOpenSheet}
+                />
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* Upcoming integrations */}
+        <section className="space-y-4">
+          <div className="flex items-center gap-2">
+            <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
+              Em breve
+            </h2>
+            <div className="h-px flex-1 bg-border" />
+            <span className="text-xs text-muted-foreground">{upcoming.length}</span>
+          </div>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {upcoming.map((integration, i) => (
+              <div key={integration.id} className="animate-slide-up" style={{ animationDelay: `${(active.length + i) * 60}ms` }}>
+                <IntegrationCard
+                  integration={integration}
+                  onConfigure={setOpenSheet}
+                />
+              </div>
+            ))}
+          </div>
+        </section>
       </div>
 
-      {/* ── Cypress / GitHub Actions ── */}
-      <IntegrationCard
-        id="cypress"
-        icon={<Terminal className="h-5 w-5 text-emerald-400" />}
-        title="Cypress + GitHub Actions"
-        description={t("integrations.cypressDesc")}
-        badge={t("settings.statusActive")}
-        badgeColor="bg-emerald-500/20 text-emerald-400"
-        defaultOpen={true}
-      >
-        {/* Secret QA4_COMPANIES */}
-        <div className="space-y-3">
-          <div className="flex items-center gap-2">
-            <Key className="h-4 w-4 text-yellow-400" />
-            <h4 className="font-semibold text-foreground text-sm">
-              Secret do GitHub — <code className="text-xs font-mono bg-secondary/50 px-1 rounded">QA4_COMPANIES</code>
-            </h4>
-          </div>
-          <p className="text-xs text-muted-foreground">
-            Um único secret com todos os produtos. O reporter detecta o produto pelo caminho da pasta do arquivo de teste.
-          </p>
-
-          <div className="rounded-lg bg-secondary/30 border border-border overflow-hidden">
-            <div className="flex items-center gap-2 px-4 py-2 border-b border-border bg-secondary/20">
-              <span className="text-xs text-muted-foreground">Valor do secret</span>
-              <Badge className="bg-primary/20 text-primary text-xs">QA4_COMPANIES</Badge>
+      {/* ── Cypress Sheet ── */}
+      <Sheet open={openSheet === "cypress"} onOpenChange={(o) => !o && setOpenSheet(null)}>
+        <SheetContent
+          side="right"
+          className="w-full sm:max-w-xl flex flex-col gap-0 p-0 overflow-hidden"
+        >
+          {/* Sheet header */}
+          <div className="flex items-center gap-4 p-6 border-b border-border shrink-0">
+            <div className="h-12 w-12 rounded-xl bg-emerald-500/15 flex items-center justify-center text-2xl shrink-0">
+              🌲
             </div>
-            <pre className="p-4 text-xs font-mono text-muted-foreground overflow-x-auto leading-relaxed">
-              {companiesJson}
-            </pre>
-          </div>
-
-          <Button
-            className="w-full gap-2"
-            onClick={() => copyToClipboard(companiesJson, "companies-json")}
-          >
-            {copiedKey === "companies-json" ? (
-              <><Check className="h-4 w-4" />{t("settings.copiedSecret")}</>
-            ) : (
-              <><Copy className="h-4 w-4" />{t("settings.copySecret")}</>
-            )}
-          </Button>
-
-          {products.length > 0 && (
-            <div className="space-y-1">
-              <p className="text-xs font-medium text-muted-foreground">Mapeamento pasta → produto:</p>
-              {products.map((product) => {
-                const folder = product.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
-                const company = companies.find((c) => c.id === product.companyId);
-                return (
-                  <div key={product.id} className="flex items-center gap-2 text-xs text-muted-foreground">
-                    <Building2 className="h-3 w-3 shrink-0" />
-                    <code className="bg-secondary/50 px-1 rounded">cypress/e2e/{folder}/</code>
-                    <span>→</span>
-                    <span className="text-foreground font-medium">{product.name}</span>
-                    {company && <span className="text-muted-foreground/60">({company.name})</span>}
-                  </div>
-                );
-              })}
+            <div className="flex-1 min-w-0">
+              <SheetTitle className="text-lg">Cypress + GitHub Actions</SheetTitle>
+              <SheetDescription className="text-xs">
+                Sincronização automática de cenários BDD via CI/CD
+              </SheetDescription>
             </div>
-          )}
-
-          <p className="text-xs text-muted-foreground border-t border-border pt-3">
-            No GitHub: <span className="text-foreground">Settings → Secrets and variables → Actions → New repository secret</span> → nome: <code className="bg-secondary/50 px-1 rounded">QA4_COMPANIES</code>
-          </p>
-        </div>
-
-        {/* How it works */}
-        <div className="space-y-3 pt-2 border-t border-border">
-          <div className="flex items-center gap-2">
-            <Zap className="h-4 w-4 text-primary" />
-            <h4 className="font-semibold text-foreground text-sm">Como funciona</h4>
-          </div>
-          <div className="grid gap-2 md:grid-cols-4">
-            {[
-              { n: "1", color: "text-primary", bg: "bg-primary/10", title: "Cria cenário no 4QA", desc: "Título igual ao it() do teste." },
-              { n: "2", color: "text-accent", bg: "bg-accent/10", title: "CI roda sync", desc: "Gera o mapa título → ID." },
-              { n: "3", color: "text-emerald-400", bg: "bg-emerald-400/10", title: "Cypress executa", desc: "Reporta resultados + screenshots." },
-              { n: "4", color: "text-yellow-400", bg: "bg-yellow-400/10", title: "Dashboard atualiza", desc: "Sem IDs hardcoded." },
-            ].map((s) => (
-              <div key={s.n} className="rounded-lg bg-secondary/30 border border-border p-3 space-y-1.5">
-                <div className={`h-6 w-6 rounded-full ${s.bg} flex items-center justify-center`}>
-                  <span className={`text-xs font-bold ${s.color}`}>{s.n}</span>
-                </div>
-                <p className="text-xs font-medium text-foreground">{s.title}</p>
-                <p className="text-xs text-muted-foreground">{s.desc}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Endpoints */}
-        <div className="space-y-3 pt-2 border-t border-border">
-          <div className="flex items-center gap-2">
-            <Code2 className="h-4 w-4 text-accent" />
-            <h4 className="font-semibold text-foreground text-sm">Endpoints da API</h4>
-          </div>
-          <div className="space-y-2">
-            {[
-              { label: "GET — Sync cenários", key: "sync", url: `${syncEndpoint}?api_key=YOUR_API_KEY` },
-              { label: "POST — Resultados", key: "results", url: `${resultsEndpoint}?api_key=YOUR_API_KEY` },
-            ].map((ep) => (
-              <div key={ep.key} className="p-3 rounded-lg bg-secondary/30 border border-border">
-                <div className="flex items-center justify-between mb-1">
-                  <span className="text-xs font-medium text-muted-foreground">{ep.label}</span>
-                  <Button variant="ghost" size="sm" onClick={() => copyToClipboard(ep.url, ep.key)}>
-                    {copiedKey === ep.key ? <Check className="h-3 w-3 text-primary" /> : <Copy className="h-3 w-3" />}
-                  </Button>
-                </div>
-                <code className="text-xs text-foreground break-all">{ep.url}</code>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Step by step */}
-        <div className="space-y-3 pt-2 border-t border-border">
-          <h4 className="font-semibold text-foreground text-sm flex items-center gap-2">
-            <GitBranch className="h-4 w-4" />
-            {t("settings.stepByStep")}
-          </h4>
-
-          {/* Step 1 */}
-          <div className="space-y-2">
-            <div className="flex items-center gap-2">
-              <div className="h-6 w-6 rounded-full bg-accent/10 flex items-center justify-center shrink-0">
-                <span className="text-xs font-bold text-accent">1</span>
-              </div>
-              <p className="text-sm font-medium text-foreground">
-                CI sync — <code className="text-xs font-mono bg-secondary/50 px-1 rounded">.github/workflows/cypress.yml</code>
-              </p>
-            </div>
-            <CodeBlock code={ciSyncSnippet} copyKey="ci" copiedKey={copiedKey} onCopy={copyToClipboard} />
+            <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/20 shrink-0">
+              Ativo
+            </Badge>
           </div>
 
-          {/* Step 2 */}
-          <div className="space-y-2">
-            <div className="flex items-center gap-2">
-              <div className="h-6 w-6 rounded-full bg-yellow-400/10 flex items-center justify-center shrink-0">
-                <span className="text-xs font-bold text-yellow-400">2</span>
-              </div>
-              <p className="text-sm font-medium text-foreground">
-                <FileJson className="h-3.5 w-3.5 inline mr-1" />
-                <code className="text-xs font-mono bg-secondary/50 px-1 rounded">cypress.config.js</code>
-              </p>
-            </div>
-            <CodeBlock code={configSnippet} copyKey="config" copiedKey={copiedKey} onCopy={copyToClipboard} />
+          {/* Sheet body */}
+          <div className="flex-1 overflow-y-auto p-6">
+            <CypressSheetContent
+              companies={companies}
+              products={products}
+              copiedKey={copiedKey}
+              onCopy={copyToClipboard}
+            />
           </div>
-
-          {/* Step 3 */}
-          <div className="space-y-2">
-            <div className="flex items-center gap-2">
-              <div className="h-6 w-6 rounded-full bg-emerald-400/10 flex items-center justify-center shrink-0">
-                <span className="text-xs font-bold text-emerald-400">3</span>
-              </div>
-              <p className="text-sm font-medium text-foreground">
-                <FileJson className="h-3.5 w-3.5 inline mr-1" />
-                <code className="text-xs font-mono bg-secondary/50 px-1 rounded">cypress/support/qa4-reporter.js</code>
-              </p>
-            </div>
-            <CodeBlock code={reporterSnippet} copyKey="reporter" copiedKey={copiedKey} onCopy={copyToClipboard} />
-          </div>
-
-          {/* Step 4 */}
-          <div className="space-y-2">
-            <div className="flex items-center gap-2">
-              <div className="h-6 w-6 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                <span className="text-xs font-bold text-primary">4</span>
-              </div>
-              <p className="text-sm font-medium text-foreground">
-                Workflow completo — <code className="text-xs font-mono bg-secondary/50 px-1 rounded">.github/workflows/cypress.yml</code>
-              </p>
-            </div>
-            <CodeBlock code={fullWorkflowSnippet} copyKey="workflow" copiedKey={copiedKey} onCopy={copyToClipboard} />
-          </div>
-        </div>
-      </IntegrationCard>
-
-      {/* ── Playwright ── planned */}
-      <IntegrationCard
-        id="playwright"
-        icon={<Terminal className="h-5 w-5 text-violet-400" />}
-        title="Playwright"
-        description={t("integrations.playwrightDesc")}
-        badge={t("settings.statusPlanned")}
-        badgeColor="text-muted-foreground border-muted"
-      >
-        <p className="text-sm text-muted-foreground">{t("integrations.comingSoon")}</p>
-      </IntegrationCard>
-
-      {/* ── Jira ── planned */}
-      <IntegrationCard
-        id="jira"
-        icon={<Puzzle className="h-5 w-5 text-blue-400" />}
-        title="Jira"
-        description={t("integrations.jiraDesc")}
-        badge={t("settings.statusPlanned")}
-        badgeColor="text-muted-foreground border-muted"
-      >
-        <p className="text-sm text-muted-foreground">{t("integrations.comingSoon")}</p>
-      </IntegrationCard>
-
-      {/* ── Slack ── planned */}
-      <IntegrationCard
-        id="slack"
-        icon={<Puzzle className="h-5 w-5 text-amber-400" />}
-        title="Slack"
-        description={t("integrations.slackDesc")}
-        badge={t("settings.statusPlanned")}
-        badgeColor="text-muted-foreground border-muted"
-      >
-        <p className="text-sm text-muted-foreground">{t("integrations.comingSoon")}</p>
-      </IntegrationCard>
-    </div>
+        </SheetContent>
+      </Sheet>
+    </>
   );
 }
