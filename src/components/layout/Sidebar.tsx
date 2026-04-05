@@ -1,7 +1,7 @@
 import {
   Building2, LayoutDashboard, FlaskConical, Calendar, Settings,
   ChevronLeft, ChevronRight, ShieldCheck, LogOut, Bug, Users,
-  FileSpreadsheet, Globe, ChevronDown, FolderOpen, TestTube2, BarChart3,
+  FileSpreadsheet, Globe, ChevronDown, FolderOpen, TestTube2, BarChart3, Puzzle,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
@@ -69,9 +69,10 @@ const NAV_GROUPS: NavGroup[] = [
     id: "administration",
     icon: Settings,
     items: [
-      { id: "team",      icon: Users },
-      { id: "settings",  icon: Settings },
-      { id: "admin",     icon: ShieldCheck, adminOnly: true },
+      { id: "team",         icon: Users },
+      { id: "integrations", icon: Puzzle },
+      { id: "settings",     icon: Settings },
+      { id: "admin",        icon: ShieldCheck, adminOnly: true },
     ],
   },
 ];
