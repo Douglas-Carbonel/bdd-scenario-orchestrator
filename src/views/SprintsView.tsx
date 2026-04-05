@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Plus, Calendar, LayoutGrid, BarChart3 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -50,6 +51,7 @@ export function SprintsView({
   getSprintStats,
   getSprintComparison,
 }: SprintsViewProps) {
+  const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState<Tab>("sprints");
   const [filterCompanyId, setFilterCompanyId] = useState<string>("all");
   const [filterProductId, setFilterProductId] = useState<string>("all");
@@ -120,14 +122,12 @@ export function SprintsView({
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="space-y-1">
-          <h1 className="text-3xl font-bold text-foreground">Sprints</h1>
-          <p className="text-muted-foreground">
-            Organize seus testes por ciclos de desenvolvimento
-          </p>
+          <h1 className="text-3xl font-bold text-foreground">{t("sprints.title")}</h1>
+          <p className="text-muted-foreground">{t("sprints.subtitle")}</p>
         </div>
         <Button onClick={() => setIsDialogOpen(true)}>
           <Plus className="h-4 w-4 mr-2" />
-          Nova Sprint
+          {t("sprints.newSprint")}
         </Button>
       </div>
 
@@ -141,7 +141,7 @@ export function SprintsView({
                 <SelectValue placeholder="Empresa" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Todas as empresas</SelectItem>
+                <SelectItem value="all">{t("sprints.allCompanies")}</SelectItem>
                 {companies.map((c) => (
                   <SelectItem key={c.id} value={c.id}>
                     {c.name}
@@ -153,10 +153,10 @@ export function SprintsView({
           {filterProducts.length > 0 && (
             <Select value={filterProductId} onValueChange={setFilterProductId}>
               <SelectTrigger className="w-44 h-9 text-sm">
-                <SelectValue placeholder="Produto" />
+                <SelectValue placeholder={t("common.product")} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Todos os produtos</SelectItem>
+                <SelectItem value="all">{t("sprints.allProducts")}</SelectItem>
                 {filterProducts.map((p) => (
                   <SelectItem key={p.id} value={p.id}>
                     {p.name}
@@ -179,7 +179,7 @@ export function SprintsView({
             )}
           >
             <LayoutGrid className="h-3.5 w-3.5" />
-            Sprints
+            {t("sprints.tab_sprints")}
           </button>
           <button
             onClick={() => setActiveTab("comparativo")}
@@ -191,7 +191,7 @@ export function SprintsView({
             )}
           >
             <BarChart3 className="h-3.5 w-3.5" />
-            Comparativo
+            {t("sprints.tab_comparison")}
           </button>
         </div>
       </div>
@@ -204,7 +204,7 @@ export function SprintsView({
             <div>
               <h2 className="text-xl font-semibold text-foreground mb-4 flex items-center gap-2">
                 <div className="h-2 w-2 rounded-full bg-primary animate-pulse" />
-                Sprints Ativas
+                {t("sprintStatus.active")}
               </h2>
               <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                 {activeSprints.map((sprint) => (
@@ -227,7 +227,7 @@ export function SprintsView({
           {plannedSprints.length > 0 && (
             <div>
               <h2 className="text-xl font-semibold text-foreground mb-4">
-                Sprints Planejadas
+                {t("sprintStatus.planned")}
               </h2>
               <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                 {plannedSprints.map((sprint) => (
@@ -250,7 +250,7 @@ export function SprintsView({
           {completedSprints.length > 0 && (
             <div>
               <h2 className="text-xl font-semibold text-foreground mb-4">
-                Sprints Concluídas
+                {t("sprintStatus.completed")}
               </h2>
               <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                 {completedSprints.map((sprint) => (
@@ -276,16 +276,16 @@ export function SprintsView({
                 <Calendar className="h-8 w-8 text-primary" />
               </div>
               <h3 className="text-lg font-semibold text-foreground mb-2">
-                Nenhuma sprint encontrada
+                {t("sprints.noSprints")}
               </h3>
               <p className="text-muted-foreground mb-6">
                 {filterProductId !== "all" || filterCompanyId !== "all"
-                  ? "Ajuste os filtros ou crie uma nova sprint para este produto."
-                  : "Organize seus cenários de teste em sprints para melhor acompanhamento."}
+                  ? t("sprints.noSprintsFilter")
+                  : t("sprints.noSprintsHint")}
               </p>
               <Button onClick={() => setIsDialogOpen(true)}>
                 <Plus className="h-4 w-4 mr-2" />
-                Criar Sprint
+                {t("sprints.newSprint")}
               </Button>
             </div>
           )}
@@ -303,7 +303,7 @@ export function SprintsView({
 
       {activeTab === "comparativo" && !comparisonCompanyId && (
         <div className="glass-card rounded-xl p-12 text-center text-muted-foreground">
-          Selecione uma empresa no filtro para ver o comparativo.
+          {t("sprints.selectCompany")}
         </div>
       )}
 
@@ -311,22 +311,22 @@ export function SprintsView({
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Nova Sprint</DialogTitle>
+            <DialogTitle>{t("sprints.newSprint")}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
-              <Label>Nome da Sprint</Label>
+              <Label>{t("sprints.sprintName")}</Label>
               <Input
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                placeholder="Ex: Sprint 2024.01"
+                placeholder={t("sprints.sprintNamePlaceholder")}
               />
             </div>
             <div className="space-y-2">
-              <Label>Empresa</Label>
+              <Label>{t("common.company")}</Label>
               <Select value={dialogCompanyId} onValueChange={handleDialogCompanyChange}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Selecione a empresa" />
+                  <SelectValue placeholder={t("sprints.selectCompanyPlaceholder")} />
                 </SelectTrigger>
                 <SelectContent>
                   {companies.map((c) => (
@@ -339,10 +339,10 @@ export function SprintsView({
             </div>
             {dialogProducts.length > 0 && (
               <div className="space-y-2">
-                <Label>Produto <span className="text-muted-foreground text-xs">(opcional)</span></Label>
+                <Label>{t("common.product")} <span className="text-muted-foreground text-xs">({t("common.optional")})</span></Label>
                 <Select value={dialogProductId} onValueChange={setDialogProductId}>
                   <SelectTrigger>
-                    <SelectValue placeholder="Selecione o produto" />
+                    <SelectValue placeholder={t("sprints.selectProductPlaceholder")} />
                   </SelectTrigger>
                   <SelectContent>
                     {dialogProducts.map((p) => (
@@ -356,7 +356,7 @@ export function SprintsView({
             )}
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>Data Início</Label>
+                <Label>{t("sprints.startDate")}</Label>
                 <Input
                   type="date"
                   value={startDate}
@@ -364,7 +364,7 @@ export function SprintsView({
                 />
               </div>
               <div className="space-y-2">
-                <Label>Data Fim</Label>
+                <Label>{t("sprints.endDate")}</Label>
                 <Input
                   type="date"
                   value={endDate}
@@ -375,9 +375,9 @@ export function SprintsView({
           </div>
           <div className="flex justify-end gap-3">
             <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
-              Cancelar
+              {t("common.cancel")}
             </Button>
-            <Button onClick={handleSave}>Criar Sprint</Button>
+            <Button onClick={handleSave}>{t("sprints.newSprint")}</Button>
           </div>
         </DialogContent>
       </Dialog>

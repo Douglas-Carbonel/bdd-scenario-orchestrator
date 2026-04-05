@@ -1,4 +1,5 @@
 import { useState, useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import { Plus, Search, Filter, PanelLeftClose, PanelLeft, Bot, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -67,6 +68,7 @@ export function ScenariosView({
   onAddDefect,
   onUpdateDefect,
 }: ScenariosViewProps) {
+  const { t } = useTranslation();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingScenario, setEditingScenario] = useState<Scenario | null>(null);
   const [runningScenario, setRunningScenario] = useState<Scenario | null>(null);
@@ -198,13 +200,15 @@ export function ScenariosView({
                   {currentSuiteName}
                 </h1>
                 <p className="text-sm text-muted-foreground">
-                  {filteredScenarios.length} cenário{filteredScenarios.length !== 1 ? "s" : ""}
+                  {filteredScenarios.length !== 1
+                    ? t("scenarios.countPlural", { count: filteredScenarios.length })
+                    : t("scenarios.count",       { count: filteredScenarios.length })}
                 </p>
               </div>
             </div>
             <Button onClick={openCreateDialog} className="shrink-0">
               <Plus className="h-4 w-4 mr-2" />
-              Novo Cenário
+              {t("scenarios.newScenario")}
             </Button>
           </div>
 
@@ -213,7 +217,7 @@ export function ScenariosView({
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Buscar por título, feature ou tag..."
+                placeholder={t("scenarios.searchPlaceholder")}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-10"
@@ -221,10 +225,10 @@ export function ScenariosView({
             </div>
             <Select value={filterCompany} onValueChange={(v) => { setFilterCompany(v); setSelectedSuiteId(null); }}>
               <SelectTrigger className="w-full sm:w-48">
-                <SelectValue placeholder="Empresa" />
+                <SelectValue placeholder={t("common.company")} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Todas as empresas</SelectItem>
+                <SelectItem value="all">{t("scenarios.allCompanies")}</SelectItem>
                 {companies.map((company) => (
                   <SelectItem key={company.id} value={company.id}>
                     {company.name}
@@ -234,15 +238,15 @@ export function ScenariosView({
             </Select>
             <Select value={filterStatus} onValueChange={setFilterStatus}>
               <SelectTrigger className="w-full sm:w-36">
-                <SelectValue placeholder="Status" />
+                <SelectValue placeholder={t("common.status")} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Todos</SelectItem>
-                <SelectItem value="draft">Rascunho</SelectItem>
-                <SelectItem value="ready">Pronto</SelectItem>
-                <SelectItem value="running">Executando</SelectItem>
-                <SelectItem value="passed">Passou</SelectItem>
-                <SelectItem value="failed">Falhou</SelectItem>
+                <SelectItem value="all">{t("common.all")}</SelectItem>
+                <SelectItem value="draft">{t("scenarioStatus.draft")}</SelectItem>
+                <SelectItem value="ready">{t("scenarioStatus.ready")}</SelectItem>
+                <SelectItem value="running">{t("scenarioStatus.running")}</SelectItem>
+                <SelectItem value="passed">{t("scenarioStatus.passed")}</SelectItem>
+                <SelectItem value="failed">{t("scenarioStatus.failed")}</SelectItem>
               </SelectContent>
             </Select>
 
@@ -266,7 +270,7 @@ export function ScenariosView({
                   {type === "all" && <Filter className="h-3 w-3" />}
                   {type === "automated" && <Bot className="h-3 w-3" />}
                   {type === "manual" && <User className="h-3 w-3" />}
-                  {type === "all" ? "Todos" : type === "automated" ? "E2E" : "Manual"}
+                  {type === "all" ? t("common.all") : type === "automated" ? "E2E" : t("executionType.manual")}
                 </button>
               ))}
             </div>
@@ -280,17 +284,17 @@ export function ScenariosView({
               </div>
               <h3 className="text-lg font-semibold text-foreground mb-2">
                 {scenarios.length === 0
-                  ? "Nenhum cenário criado"
-                  : "Nenhum cenário nesta pasta"}
+                  ? t("scenarios.noScenarios")
+                  : t("scenarios.noScenariosFolder")}
               </h3>
               <p className="text-muted-foreground mb-6">
                 {scenarios.length === 0
-                  ? "Comece criando seu primeiro cenário BDD."
-                  : "Crie um novo cenário ou selecione outra pasta."}
+                  ? t("scenarios.noScenariosHint")
+                  : t("scenarios.noScenariosFolderHint")}
               </p>
               <Button onClick={openCreateDialog}>
                 <Plus className="h-4 w-4 mr-2" />
-                Criar Cenário
+                {t("scenarios.newScenario")}
               </Button>
             </div>
           ) : (
@@ -333,7 +337,7 @@ export function ScenariosView({
         <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
-              {editingScenario ? "Editar Cenário" : "Novo Cenário BDD"}
+              {editingScenario ? t("scenarios.editScenario") : t("scenarios.newScenarioBDD")}
             </DialogTitle>
           </DialogHeader>
           <ScenarioForm

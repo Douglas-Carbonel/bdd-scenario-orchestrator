@@ -1,6 +1,7 @@
-import { Building2, LayoutDashboard, FlaskConical, Calendar, Settings, ChevronLeft, ChevronRight, ShieldCheck, LogOut, Bug, Users, FileSpreadsheet } from "lucide-react";
+import { Building2, LayoutDashboard, FlaskConical, Calendar, Settings, ChevronLeft, ChevronRight, ShieldCheck, LogOut, Bug, Users, FileSpreadsheet, Globe } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { useUserRole } from "@/hooks/useUserRole";
@@ -17,19 +18,19 @@ interface UserProfile {
   email: string;
 }
 
-const menuItems = [
-  { id: "dashboard", label: "Dashboard",    icon: LayoutDashboard },
-  { id: "companies", label: "Empresas",     icon: Building2 },
-  { id: "scenarios", label: "Cenários",     icon: FlaskConical },
-  { id: "sprints",   label: "Sprints",      icon: Calendar },
-  { id: "bugs",      label: "Bugs",         icon: Bug },
-  { id: "team",      label: "Time",         icon: Users },
-  { id: "export",    label: "Exportar",     icon: FileSpreadsheet },
-  { id: "settings",  label: "Configurações",icon: Settings },
+const menuItemDefs = [
+  { id: "dashboard", icon: LayoutDashboard },
+  { id: "companies", icon: Building2 },
+  { id: "scenarios", icon: FlaskConical },
+  { id: "sprints",   icon: Calendar },
+  { id: "bugs",      icon: Bug },
+  { id: "team",      icon: Users },
+  { id: "export",    icon: FileSpreadsheet },
+  { id: "settings",  icon: Settings },
 ];
 
-const adminItems = [
-  { id: "admin", label: "Administração", icon: ShieldCheck },
+const adminItemDefs = [
+  { id: "admin", icon: ShieldCheck },
 ];
 
 export function Sidebar({ activeView, onViewChange }: SidebarProps) {
@@ -37,8 +38,9 @@ export function Sidebar({ activeView, onViewChange }: SidebarProps) {
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const { isAdmin } = useUserRole();
   const navigate = useNavigate();
+  const { t, i18n } = useTranslation();
 
-  const allItems = isAdmin ? [...menuItems, ...adminItems] : menuItems;
+  const allDefs = isAdmin ? [...menuItemDefs, ...adminItemDefs] : menuItemDefs;
 
   useEffect(() => {
     const fetchUserProfile = async () => {
@@ -49,19 +51,12 @@ export function Sidebar({ activeView, onViewChange }: SidebarProps) {
           .select("name, email")
           .eq("id", user.id)
           .single();
-        
-        if (profile) {
-          setUserProfile(profile);
-        }
+        if (profile) setUserProfile(profile);
       }
     };
 
     fetchUserProfile();
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(() => {
-      fetchUserProfile();
-    });
-
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(() => { fetchUserProfile(); });
     return () => subscription.unsubscribe();
   }, []);
 
@@ -70,10 +65,16 @@ export function Sidebar({ activeView, onViewChange }: SidebarProps) {
     if (error) {
       toast.error("Erro ao sair: " + error.message);
     } else {
-      toast.success("Sessão encerrada com sucesso");
       navigate("/auth");
     }
   };
+
+  const toggleLang = () => {
+    const next = i18n.language === "pt-BR" ? "en" : "pt-BR";
+    i18n.changeLanguage(next);
+  };
+
+  const currentLangLabel = i18n.language === "en" ? "EN" : "PT";
 
   return (
     <aside
@@ -85,7 +86,7 @@ export function Sidebar({ activeView, onViewChange }: SidebarProps) {
       <div className="flex h-full flex-col">
         {/* Logo */}
         <div className="flex h-16 items-center justify-between px-4 border-b border-sidebar-border">
-        {!collapsed && (
+          {!collapsed && (
             <div className="flex items-center gap-2">
               <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center">
                 <span className="font-bold text-sm text-primary-foreground">4</span>
@@ -107,10 +108,9 @@ export function Sidebar({ activeView, onViewChange }: SidebarProps) {
 
         {/* Navigation */}
         <nav className="flex-1 space-y-1 p-3">
-          {allItems.map((item) => {
+          {allDefs.map((item) => {
             const Icon = item.icon;
             const isActive = activeView === item.id;
-            
             return (
               <button
                 key={item.id}
@@ -121,20 +121,41 @@ export function Sidebar({ activeView, onViewChange }: SidebarProps) {
                     ? "bg-sidebar-primary text-sidebar-primary-foreground shadow-lg shadow-primary/20"
                     : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
                 )}
+                title={collapsed ? t(`sidebar.${item.id}`) : undefined}
               >
                 <Icon className="h-5 w-5 shrink-0" />
-                {!collapsed && <span>{item.label}</span>}
+                {!collapsed && <span>{t(`sidebar.${item.id}`)}</span>}
               </button>
             );
           })}
         </nav>
 
         {/* Footer */}
-        <div className="p-3 border-t border-sidebar-border space-y-3">
+        <div className="p-3 border-t border-sidebar-border space-y-2">
+          {/* Language toggle */}
+          <button
+            onClick={toggleLang}
+            className={cn(
+              "w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200",
+              "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+            )}
+            title={collapsed ? currentLangLabel : undefined}
+          >
+            <Globe className="h-5 w-5 shrink-0" />
+            {!collapsed && (
+              <span className="flex items-center gap-2">
+                {currentLangLabel}
+                <span className="text-xs text-muted-foreground/60">
+                  {i18n.language === "en" ? "English" : "Português"}
+                </span>
+              </span>
+            )}
+          </button>
+
           {/* User Info */}
           {userProfile && (
             <div className={cn(
-              "flex items-center gap-3 px-2",
+              "flex items-center gap-3 px-2 py-1",
               collapsed && "justify-center"
             )}>
               <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
@@ -144,27 +165,24 @@ export function Sidebar({ activeView, onViewChange }: SidebarProps) {
               </div>
               {!collapsed && (
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-sidebar-foreground truncate">
-                    {userProfile.name}
-                  </p>
-                  <p className="text-xs text-muted-foreground truncate">
-                    {userProfile.email}
-                  </p>
+                  <p className="text-sm font-medium text-sidebar-foreground truncate">{userProfile.name}</p>
+                  <p className="text-xs text-muted-foreground truncate">{userProfile.email}</p>
                 </div>
               )}
             </div>
           )}
-          
-          {/* Logout Button */}
+
+          {/* Logout */}
           <button
             onClick={handleLogout}
             className={cn(
               "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200",
               "text-sidebar-foreground hover:bg-red-500/10 hover:text-red-500"
             )}
+            title={collapsed ? t("sidebar.logout") : undefined}
           >
             <LogOut className="h-5 w-5 shrink-0" />
-            {!collapsed && <span>Sair</span>}
+            {!collapsed && <span>{t("sidebar.logout")}</span>}
           </button>
         </div>
       </div>

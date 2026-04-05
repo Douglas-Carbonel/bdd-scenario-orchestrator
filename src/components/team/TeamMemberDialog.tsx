@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { User, Mail, Briefcase } from "lucide-react";
 import { TeamMember, MemberRole } from "@/types/bdd";
 import { Button } from "@/components/ui/button";
@@ -20,17 +21,12 @@ interface TeamMemberDialogProps {
   onUpdate: (id: string, updates: Partial<TeamMember>) => void;
 }
 
-const roleConfig: Record<MemberRole, string> = {
-  qa:       "QA Engineer",
-  dev:      "Desenvolvedor",
-  po:       "Product Owner",
-  lead:     "Tech Lead",
-  analyst:  "Analista",
-};
+const roles: MemberRole[] = ["qa", "dev", "po", "lead", "analyst"];
 
 export function TeamMemberDialog({
   open, onOpenChange, companyId, member, onAdd, onUpdate,
 }: TeamMemberDialogProps) {
+  const { t } = useTranslation();
   const isEdit = !!member;
   const [name,  setName]  = useState(member?.name  ?? "");
   const [email, setEmail] = useState(member?.email ?? "");
@@ -38,11 +34,8 @@ export function TeamMemberDialog({
 
   const handleSubmit = () => {
     if (!name.trim() || !email.trim()) return;
-    if (isEdit) {
-      onUpdate(member.id, { name: name.trim(), email: email.trim(), role });
-    } else {
-      onAdd({ name: name.trim(), email: email.trim(), role, companyId });
-    }
+    if (isEdit) onUpdate(member.id, { name: name.trim(), email: email.trim(), role });
+    else onAdd({ name: name.trim(), email: email.trim(), role, companyId });
     onOpenChange(false);
   };
 
@@ -52,31 +45,29 @@ export function TeamMemberDialog({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <User className="h-5 w-5 text-primary" />
-            {isEdit ? "Editar Colaborador" : "Novo Colaborador"}
+            {isEdit ? t("team.editMember") : t("team.newMember")}
           </DialogTitle>
           <DialogDescription>
-            {isEdit ? "Atualize os dados do colaborador." : "Adicione um novo membro à equipe da empresa."}
+            {isEdit ? t("team.editMemberDesc") : t("team.addMemberDesc")}
           </DialogDescription>
         </DialogHeader>
-
         <div className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="member-name">Nome completo</Label>
+            <Label htmlFor="member-name">{t("team.memberName")}</Label>
             <div className="relative">
               <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
                 id="member-name"
                 value={name}
                 onChange={e => setName(e.target.value)}
-                placeholder="Ex: Maria da Silva"
+                placeholder={t("team.memberNamePlaceholder")}
                 className="pl-9"
                 autoFocus
               />
             </div>
           </div>
-
           <div className="space-y-2">
-            <Label htmlFor="member-email">E-mail</Label>
+            <Label htmlFor="member-email">{t("team.memberEmail")}</Label>
             <div className="relative">
               <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
@@ -84,31 +75,29 @@ export function TeamMemberDialog({
                 type="email"
                 value={email}
                 onChange={e => setEmail(e.target.value)}
-                placeholder="Ex: maria@empresa.com"
+                placeholder={t("team.memberEmailPlaceholder")}
                 className="pl-9"
               />
             </div>
           </div>
-
           <div className="space-y-2">
-            <Label>Função</Label>
+            <Label>{t("team.memberRole")}</Label>
             <Select value={role} onValueChange={v => setRole(v as MemberRole)}>
               <SelectTrigger>
                 <Briefcase className="h-4 w-4 mr-2 text-muted-foreground" />
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {(Object.entries(roleConfig) as [MemberRole, string][]).map(([k, v]) => (
-                  <SelectItem key={k} value={k}>{v}</SelectItem>
+                {roles.map(r => (
+                  <SelectItem key={r} value={r}>{t(`memberRole.${r}`)}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
           </div>
-
           <div className="flex justify-end gap-3 pt-2 border-t border-border">
-            <Button variant="outline" onClick={() => onOpenChange(false)}>Cancelar</Button>
+            <Button variant="outline" onClick={() => onOpenChange(false)}>{t("common.cancel")}</Button>
             <Button onClick={handleSubmit} disabled={!name.trim() || !email.trim()}>
-              {isEdit ? "Salvar alterações" : "Adicionar colaborador"}
+              {isEdit ? t("team.saveChanges") : t("team.addMember")}
             </Button>
           </div>
         </div>

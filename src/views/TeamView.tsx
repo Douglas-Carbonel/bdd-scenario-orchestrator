@@ -1,7 +1,8 @@
 import { useState, useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import {
   Users, User, Plus, Pencil, Trash2, FlaskConical,
-  CheckCircle2, XCircle, Briefcase, Mail, Package,
+  CheckCircle2, Briefcase, Mail, Package,
 } from "lucide-react";
 import { Company, Product, Scenario, TeamMember, Team, MemberRole, Defect } from "@/types/bdd";
 import { TeamMemberDialog } from "@/components/team/TeamMemberDialog";
@@ -35,12 +36,20 @@ interface TeamViewProps {
 
 type ActiveTab = "members" | "teams";
 
-const roleConfig: Record<MemberRole, { label: string; color: string; bg: string }> = {
-  qa:      { label: "QA",       color: "text-primary",       bg: "bg-primary/10 border-primary/30" },
-  dev:     { label: "Dev",      color: "text-emerald-400",   bg: "bg-emerald-500/10 border-emerald-500/30" },
-  po:      { label: "PO",       color: "text-warning",       bg: "bg-warning/10 border-warning/30" },
-  lead:    { label: "Lead",     color: "text-purple-400",    bg: "bg-purple-500/10 border-purple-500/30" },
-  analyst: { label: "Analista", color: "text-muted-foreground", bg: "bg-secondary/50 border-border" },
+const roleBg: Record<MemberRole, string> = {
+  qa:      "bg-primary/10 border-primary/30",
+  dev:     "bg-emerald-500/10 border-emerald-500/30",
+  po:      "bg-warning/10 border-warning/30",
+  lead:    "bg-purple-500/10 border-purple-500/30",
+  analyst: "bg-secondary/50 border-border",
+};
+
+const roleColor: Record<MemberRole, string> = {
+  qa:      "text-primary",
+  dev:     "text-emerald-400",
+  po:      "text-warning",
+  lead:    "text-purple-400",
+  analyst: "text-muted-foreground",
 };
 
 interface DeleteConfirm { type: "member" | "team"; id: string; name: string }
@@ -51,6 +60,7 @@ export function TeamView({
   onAddTeam, onUpdateTeam, onDeleteTeam,
   getCompanyTeamMembers, getCompanyTeams,
 }: TeamViewProps) {
+  const { t } = useTranslation();
   const [selectedCompanyId, setSelectedCompanyId] = useState(companies[0]?.id ?? "");
   const [activeTab,         setActiveTab]         = useState<ActiveTab>("members");
   const [memberDialog,      setMemberDialog]      = useState<{ open: boolean; member?: TeamMember }>({ open: false });
@@ -88,22 +98,18 @@ export function TeamView({
         <div>
           <h1 className="text-2xl font-display font-bold text-foreground flex items-center gap-2">
             <Users className="h-6 w-6 text-primary" />
-            Time & Equipes
+            {t("team.title")}
           </h1>
-          <p className="text-muted-foreground text-sm mt-1">
-            Colaboradores, funções e agrupamentos por equipe
-          </p>
+          <p className="text-muted-foreground text-sm mt-1">{t("team.subtitle")}</p>
         </div>
         <div className="flex items-center gap-3">
           {companies.length > 1 && (
             <Select value={selectedCompanyId} onValueChange={setSelectedCompanyId}>
               <SelectTrigger className="w-44">
-                <SelectValue placeholder="Empresa" />
+                <SelectValue placeholder={t("common.company")} />
               </SelectTrigger>
               <SelectContent>
-                {companies.map(c => (
-                  <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
-                ))}
+                {companies.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
               </SelectContent>
             </Select>
           )}
@@ -117,7 +123,7 @@ export function TeamView({
             disabled={!selectedCompanyId}
           >
             <Plus className="h-4 w-4" />
-            {activeTab === "members" ? "Novo Colaborador" : "Nova Equipe"}
+            {activeTab === "members" ? t("team.newMember") : t("team.newTeam")}
           </Button>
         </div>
       </div>
@@ -125,10 +131,11 @@ export function TeamView({
       {/* Tabs */}
       <div className="flex gap-1 p-1 bg-secondary/30 rounded-lg w-fit border border-border">
         {([
-          { id: "members", label: "Colaboradores", icon: User,  count: companyMembers.length },
-          { id: "teams",   label: "Equipes",        icon: Users, count: companyTeams.length },
+          { id: "members", icon: User,  countKey: companyMembers.length },
+          { id: "teams",   icon: Users, countKey: companyTeams.length },
         ] as const).map(tab => {
-          const Icon = tab.icon;
+          const Icon  = tab.icon;
+          const label = tab.id === "members" ? t("team.tabMembers") : t("team.tabTeams");
           return (
             <button
               key={tab.id}
@@ -141,44 +148,41 @@ export function TeamView({
               )}
             >
               <Icon className="h-4 w-4" />
-              {tab.label}
+              {label}
               <span className={cn(
                 "text-xs px-1.5 py-0.5 rounded-full font-mono",
                 activeTab === tab.id ? "bg-primary-foreground/20 text-primary-foreground" : "bg-secondary text-muted-foreground"
               )}>
-                {tab.count}
+                {tab.countKey}
               </span>
             </button>
           );
         })}
       </div>
 
-      {/* ── Colaboradores ────────────────────────────────────────────────────── */}
+      {/* Members tab */}
       {activeTab === "members" && (
         <>
           {companyMembers.length === 0 ? (
             <div className="glass-card rounded-xl flex flex-col items-center justify-center py-16 gap-3 text-muted-foreground">
               <User className="h-12 w-12 opacity-20" />
-              <p className="font-medium">Nenhum colaborador cadastrado</p>
-              <p className="text-xs opacity-60">Clique em "Novo Colaborador" para começar</p>
+              <p className="font-medium">{t("team.noMembers")}</p>
+              <p className="text-xs opacity-60">{t("team.noMembersHint")}</p>
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
               {companyMembers.map(member => {
-                const stats  = memberStats.get(member.id) ?? { assigned: 0, passed: 0, failed: 0 };
-                const rate   = stats.assigned > 0 ? Math.round((stats.passed / stats.assigned) * 100) : null;
-                const roleCfg = roleConfig[member.role ?? "qa"];
-                const memberTeam = companyTeams.find(t => t.memberIds.includes(member.id));
+                const stats     = memberStats.get(member.id) ?? { assigned: 0, passed: 0, failed: 0 };
+                const rate      = stats.assigned > 0 ? Math.round((stats.passed / stats.assigned) * 100) : null;
+                const memberTeam = companyTeams.find(tt => tt.memberIds.includes(member.id));
+                const role = member.role ?? "qa";
 
                 return (
                   <div key={member.id} className="glass-card rounded-xl p-5 space-y-4 group">
-                    {/* Avatar + Name */}
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex items-center gap-3">
                         <div className="h-12 w-12 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center shrink-0">
-                          <span className="text-lg font-bold text-primary">
-                            {member.name.charAt(0).toUpperCase()}
-                          </span>
+                          <span className="text-lg font-bold text-primary">{member.name.charAt(0).toUpperCase()}</span>
                         </div>
                         <div className="min-w-0">
                           <p className="font-semibold text-foreground truncate">{member.name}</p>
@@ -189,53 +193,44 @@ export function TeamView({
                         </div>
                       </div>
                       <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <button
-                          onClick={() => setMemberDialog({ open: true, member })}
-                          className="p-1.5 rounded-md hover:bg-secondary/60 text-muted-foreground hover:text-foreground transition-colors"
-                        >
+                        <button onClick={() => setMemberDialog({ open: true, member })} className="p-1.5 rounded-md hover:bg-secondary/60 text-muted-foreground hover:text-foreground transition-colors">
                           <Pencil className="h-3.5 w-3.5" />
                         </button>
-                        <button
-                          onClick={() => setDeleteConfirm({ type: "member", id: member.id, name: member.name })}
-                          className="p-1.5 rounded-md hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors"
-                        >
+                        <button onClick={() => setDeleteConfirm({ type: "member", id: member.id, name: member.name })} className="p-1.5 rounded-md hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors">
                           <Trash2 className="h-3.5 w-3.5" />
                         </button>
                       </div>
                     </div>
 
-                    {/* Role + Team */}
                     <div className="flex items-center gap-2 flex-wrap">
-                      <Badge variant="outline" className={cn("text-xs gap-1", roleCfg.bg, roleCfg.color)}>
+                      <Badge variant="outline" className={cn("text-xs gap-1", roleBg[role], roleColor[role])}>
                         <Briefcase className="h-3 w-3" />
-                        {roleCfg.label}
+                        {t(`memberRole.${role}`)}
                       </Badge>
                       {memberTeam && (
                         <Badge variant="outline" className="text-xs border-border text-muted-foreground">
-                          <Users className="h-3 w-3 mr-1" />
-                          {memberTeam.name}
+                          <Users className="h-3 w-3 mr-1" />{memberTeam.name}
                         </Badge>
                       )}
                     </div>
 
-                    {/* Stats */}
                     <div className="grid grid-cols-3 gap-2 pt-1 border-t border-border">
                       <div className="text-center">
                         <p className="text-lg font-bold text-foreground">{stats.assigned}</p>
-                        <p className="text-xs text-muted-foreground">Cenários</p>
+                        <p className="text-xs text-muted-foreground">{t("team.scenarios")}</p>
                       </div>
                       <div className="text-center">
                         <div className="flex items-center justify-center gap-1">
                           <CheckCircle2 className="h-3.5 w-3.5 text-success" />
                           <p className="text-lg font-bold text-success">{stats.passed}</p>
                         </div>
-                        <p className="text-xs text-muted-foreground">Passou</p>
+                        <p className="text-xs text-muted-foreground">{t("team.passed")}</p>
                       </div>
                       <div className="text-center">
                         <p className={cn("text-lg font-bold", rate === null ? "text-muted-foreground" : rate >= 80 ? "text-success" : rate >= 50 ? "text-yellow-400" : "text-destructive")}>
                           {rate !== null ? `${rate}%` : "—"}
                         </p>
-                        <p className="text-xs text-muted-foreground">Taxa</p>
+                        <p className="text-xs text-muted-foreground">{t("team.passRate")}</p>
                       </div>
                     </div>
                   </div>
@@ -246,79 +241,68 @@ export function TeamView({
         </>
       )}
 
-      {/* ── Equipes ──────────────────────────────────────────────────────────── */}
+      {/* Teams tab */}
       {activeTab === "teams" && (
         <>
           {companyTeams.length === 0 ? (
             <div className="glass-card rounded-xl flex flex-col items-center justify-center py-16 gap-3 text-muted-foreground">
               <Users className="h-12 w-12 opacity-20" />
-              <p className="font-medium">Nenhuma equipe criada</p>
-              <p className="text-xs opacity-60">Agrupe colaboradores em equipes por produto ou área</p>
+              <p className="font-medium">{t("team.noTeams")}</p>
+              <p className="text-xs opacity-60">{t("team.noTeamsHint")}</p>
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
               {companyTeams.map(team => {
-                const product = products.find(p => p.id === team.productId);
-                const members = companyMembers.filter(m => team.memberIds.includes(m.id));
+                const product  = products.find(p => p.id === team.productId);
+                const members  = companyMembers.filter(m => team.memberIds.includes(m.id));
                 const teamScenarios = scenarios.filter(s =>
                   s.companyId === selectedCompanyId &&
-                  (product ? s.productId === product.id : true) &&
                   members.some(m => s.assigneeId === m.id)
                 );
                 const passed = teamScenarios.filter(s => s.status === "passed").length;
 
                 return (
                   <div key={team.id} className="glass-card rounded-xl p-5 space-y-4 group">
-                    {/* Header */}
                     <div className="flex items-start justify-between gap-2">
                       <div className="min-w-0 flex-1">
                         <h3 className="font-semibold text-foreground truncate">{team.name}</h3>
-                        {team.description && (
-                          <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">{team.description}</p>
-                        )}
+                        {team.description && <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">{team.description}</p>}
                       </div>
                       <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
-                        <button
-                          onClick={() => setTeamDialog({ open: true, team })}
-                          className="p-1.5 rounded-md hover:bg-secondary/60 text-muted-foreground hover:text-foreground transition-colors"
-                        >
+                        <button onClick={() => setTeamDialog({ open: true, team })} className="p-1.5 rounded-md hover:bg-secondary/60 text-muted-foreground hover:text-foreground transition-colors">
                           <Pencil className="h-3.5 w-3.5" />
                         </button>
-                        <button
-                          onClick={() => setDeleteConfirm({ type: "team", id: team.id, name: team.name })}
-                          className="p-1.5 rounded-md hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors"
-                        >
+                        <button onClick={() => setDeleteConfirm({ type: "team", id: team.id, name: team.name })} className="p-1.5 rounded-md hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors">
                           <Trash2 className="h-3.5 w-3.5" />
                         </button>
                       </div>
                     </div>
 
-                    {/* Product badge */}
                     {product && (
                       <Badge variant="outline" className="text-xs border-primary/30 text-primary/70 gap-1">
-                        <Package className="h-3 w-3" />
-                        {product.name}
+                        <Package className="h-3 w-3" />{product.name}
                       </Badge>
                     )}
 
-                    {/* Members */}
                     <div className="space-y-1.5">
                       <p className="text-xs text-muted-foreground font-medium">
-                        {members.length} colaborador{members.length !== 1 ? "es" : ""}
+                        {members.length !== 1
+                          ? t("team.memberCountPlural", { count: members.length })
+                          : t("team.memberCount",       { count: members.length })}
                       </p>
                       {members.length === 0 ? (
-                        <p className="text-xs text-muted-foreground/50 italic">Nenhum membro adicionado</p>
+                        <p className="text-xs text-muted-foreground/50 italic">{t("team.noMemberTeam")}</p>
                       ) : (
                         <div className="flex flex-wrap gap-1.5">
                           {members.map(m => {
-                            const rc = roleConfig[m.role ?? "qa"];
+                            const role = m.role ?? "qa";
                             return (
                               <div key={m.id} className="flex items-center gap-1.5 px-2 py-1 rounded-full bg-secondary/50 border border-border text-xs">
                                 <div className="h-4 w-4 rounded-full bg-primary/10 flex items-center justify-center">
                                   <span className="text-[10px] font-bold text-primary">{m.name.charAt(0)}</span>
                                 </div>
                                 <span className="text-foreground/80">{m.name.split(" ")[0]}</span>
-                                <span className={cn("text-[10px]", rc.color)}>{rc.label}</span>
+                                <span className={cn("text-[10px]", roleColor[role])}>{t(`memberRole.${role}`)}</span>
                               </div>
                             );
                           })}
@@ -326,15 +310,14 @@ export function TeamView({
                       )}
                     </div>
 
-                    {/* Stats */}
                     <div className="grid grid-cols-2 gap-2 pt-2 border-t border-border">
                       <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
                         <FlaskConical className="h-3.5 w-3.5" />
-                        <span>{teamScenarios.length} cenários</span>
+                        <span>{t("dashboard.scenariosCount", { count: teamScenarios.length })}</span>
                       </div>
                       <div className="flex items-center gap-1.5 text-xs">
                         <CheckCircle2 className="h-3.5 w-3.5 text-success" />
-                        <span className="text-success font-medium">{passed} passou</span>
+                        <span className="text-success font-medium">{passed} {t("team.passed")}</span>
                       </div>
                     </div>
                   </div>
@@ -345,7 +328,6 @@ export function TeamView({
         </>
       )}
 
-      {/* Dialogs */}
       <TeamMemberDialog
         open={memberDialog.open}
         onOpenChange={open => setMemberDialog(s => ({ ...s, open }))}
@@ -369,18 +351,18 @@ export function TeamView({
       <Dialog open={!!deleteConfirm} onOpenChange={() => setDeleteConfirm(null)}>
         <DialogContent className="sm:max-w-sm">
           <DialogHeader>
-            <DialogTitle>Confirmar exclusão</DialogTitle>
+            <DialogTitle>{t("common.confirm")}</DialogTitle>
             <DialogDescription>
               {deleteConfirm?.type === "member"
-                ? `Remover o colaborador "${deleteConfirm.name}"? Esta ação é permanente.`
-                : `Excluir a equipe "${deleteConfirm?.name}"? Os colaboradores não serão removidos.`
+                ? t("team.deleteMemberConfirm", { name: deleteConfirm.name })
+                : t("team.deleteTeamConfirm",   { name: deleteConfirm?.name ?? "" })
               }
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDeleteConfirm(null)}>Cancelar</Button>
+            <Button variant="outline" onClick={() => setDeleteConfirm(null)}>{t("common.cancel")}</Button>
             <Button variant="destructive" onClick={handleDeleteConfirm}>
-              <Trash2 className="h-4 w-4 mr-1" />Excluir
+              <Trash2 className="h-4 w-4 mr-1" />{t("common.deleteAction")}
             </Button>
           </DialogFooter>
         </DialogContent>

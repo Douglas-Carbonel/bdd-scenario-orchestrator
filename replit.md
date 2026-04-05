@@ -36,6 +36,9 @@ API keys live on **Products**, not Companies. One company can have many products
 - `src/views/ExportView.tsx` — Spreadsheet export to .xlsx/.csv (G4)
 - `src/utils/spreadsheetExport.ts` — SheetJS-based export helpers for scenarios, runs, defects, team
 - `src/components/team/` — TeamMemberDialog, TeamDialog components
+- `src/i18n/index.ts` — i18n config (i18next, pt-BR default, localStorage key `4qa_lang`) (G5)
+- `src/i18n/locales/pt-BR.json` — Portuguese translations (G5)
+- `src/i18n/locales/en.json` — English translations (G5)
 - `src/integrations/supabase/types.ts` — Auto-generated Supabase DB types (includes products table)
 - `supabase/migrations/` — Database migration SQL files for Supabase
 - `supabase/functions/cypress-sync/` — Edge function for CI sync (looks up product by api_key)
