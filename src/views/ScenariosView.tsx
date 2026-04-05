@@ -149,10 +149,10 @@ export function ScenariosView({
 
   // Get current suite name for header
   const currentSuiteName = useMemo(() => {
-    if (selectedSuiteId === null) return "Sem Pasta";
+    if (selectedSuiteId === null) return t("scenarios.noFolder");
     const suite = suites.find((s) => s.id === selectedSuiteId);
-    return suite?.name || "Todos";
-  }, [selectedSuiteId, suites]);
+    return suite?.name || t("common.all");
+  }, [selectedSuiteId, suites, t]);
 
   return (
     <div className="flex h-[calc(100vh-4rem)] -m-8">

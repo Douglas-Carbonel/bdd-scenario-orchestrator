@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -6,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { Check, X, Clock, Building2, Mail, User, Loader2 } from "lucide-react";
 import { format } from "date-fns";
-import { ptBR } from "date-fns/locale";
+import { ptBR, enUS } from "date-fns/locale";
 
 interface PendingUser {
   id: string;
@@ -19,10 +20,14 @@ interface PendingUser {
 }
 
 export function AdminView() {
+  const { t, i18n } = useTranslation();
   const [pendingUsers, setPendingUsers] = useState<PendingUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState<string | null>(null);
   const { toast } = useToast();
+
+  const dateLocale = i18n.language === "en" ? enUS : ptBR;
+  const dateFormat = i18n.language === "en" ? "MM/dd/yyyy 'at' hh:mm a" : "dd/MM/yyyy 'às' HH:mm";
 
   useEffect(() => {
     fetchPendingUsers();
@@ -32,39 +37,23 @@ export function AdminView() {
     try {
       const { data: profiles, error } = await supabase
         .from("profiles")
-        .select(`
-          id,
-          name,
-          email,
-          company_id,
-          approval_status,
-          created_at
-        `)
+        .select(`id, name, email, company_id, approval_status, created_at`)
         .order("created_at", { ascending: false });
 
       if (error) throw error;
 
-      // Fetch company details for each profile
       const usersWithCompanies = await Promise.all(
         (profiles || []).map(async (profile) => {
           let company_name = null;
-
           if (profile.company_id) {
             const { data: company } = await supabase
               .from("companies")
               .select("name")
               .eq("id", profile.company_id)
               .single();
-
-            if (company) {
-              company_name = company.name;
-            }
+            if (company) company_name = company.name;
           }
-
-          return {
-            ...profile,
-            company_name,
-          };
+          return { ...profile, company_name };
         })
       );
 
@@ -72,8 +61,8 @@ export function AdminView() {
     } catch (error) {
       console.error("Error fetching users:", error);
       toast({
-        title: "Erro ao carregar usuários",
-        description: "Não foi possível carregar a lista de usuários.",
+        title: t("admin.errorLoadTitle"),
+        description: t("admin.errorLoadDesc"),
         variant: "destructive",
       });
     } finally {
@@ -83,10 +72,8 @@ export function AdminView() {
 
   const handleApproval = async (userId: string, approve: boolean) => {
     setProcessing(userId);
-
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      
       const { error } = await supabase
         .from("profiles")
         .update({
@@ -99,18 +86,16 @@ export function AdminView() {
       if (error) throw error;
 
       toast({
-        title: approve ? "Usuário aprovado" : "Usuário rejeitado",
-        description: approve
-          ? "O usuário agora tem acesso ao sistema."
-          : "O acesso do usuário foi negado.",
+        title: approve ? t("admin.approvedTitle") : t("admin.rejectedTitle"),
+        description: approve ? t("admin.approvedDesc") : t("admin.rejectedDesc"),
       });
 
       fetchPendingUsers();
     } catch (error) {
       console.error("Error updating user:", error);
       toast({
-        title: "Erro ao processar",
-        description: "Não foi possível atualizar o status do usuário.",
+        title: t("admin.errorProcessTitle"),
+        description: t("admin.errorProcessDesc"),
         variant: "destructive",
       });
     } finally {
@@ -124,21 +109,21 @@ export function AdminView() {
         return (
           <Badge variant="outline" className="bg-yellow-500/10 text-yellow-500 border-yellow-500/20">
             <Clock className="h-3 w-3 mr-1" />
-            Pendente
+            {t("admin.statusPending")}
           </Badge>
         );
       case "approved":
         return (
           <Badge variant="outline" className="bg-green-500/10 text-green-500 border-green-500/20">
             <Check className="h-3 w-3 mr-1" />
-            Aprovado
+            {t("admin.statusApproved")}
           </Badge>
         );
       case "rejected":
         return (
           <Badge variant="outline" className="bg-red-500/10 text-red-500 border-red-500/20">
             <X className="h-3 w-3 mr-1" />
-            Rejeitado
+            {t("admin.statusRejected")}
           </Badge>
         );
       default:
@@ -159,10 +144,8 @@ export function AdminView() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-foreground">Administração</h1>
-        <p className="text-muted-foreground">
-          Gerencie aprovações de usuários e acesso ao sistema
-        </p>
+        <h1 className="text-2xl font-bold text-foreground">{t("admin.title")}</h1>
+        <p className="text-muted-foreground">{t("admin.subtitle")}</p>
       </div>
 
       {/* Stats */}
@@ -170,7 +153,7 @@ export function AdminView() {
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">
-              Pendentes
+              {t("admin.statPending")}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -180,7 +163,7 @@ export function AdminView() {
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">
-              Aprovados
+              {t("admin.statApproved")}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -192,7 +175,7 @@ export function AdminView() {
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">
-              Rejeitados
+              {t("admin.statRejected")}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -206,15 +189,13 @@ export function AdminView() {
       {/* User List */}
       <Card>
         <CardHeader>
-          <CardTitle>Usuários</CardTitle>
-          <CardDescription>
-            Lista de todos os usuários cadastrados no sistema
-          </CardDescription>
+          <CardTitle>{t("admin.usersTitle")}</CardTitle>
+          <CardDescription>{t("admin.usersDesc")}</CardDescription>
         </CardHeader>
         <CardContent>
           {pendingUsers.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
-              Nenhum usuário cadastrado ainda.
+              {t("admin.noUsers")}
             </div>
           ) : (
             <div className="space-y-4">
@@ -229,7 +210,7 @@ export function AdminView() {
                         <User className="h-5 w-5 text-primary" />
                       </div>
                       <div>
-                        <p className="font-medium text-foreground">{user.name || "Sem nome"}</p>
+                        <p className="font-medium text-foreground">{user.name || t("admin.noName")}</p>
                         <div className="flex items-center gap-1 text-sm text-muted-foreground">
                           <Mail className="h-3 w-3" />
                           {user.email}
@@ -246,10 +227,8 @@ export function AdminView() {
                         </div>
                       )}
                       <span>
-                        Cadastrado em{" "}
-                        {format(new Date(user.created_at), "dd/MM/yyyy 'às' HH:mm", {
-                          locale: ptBR,
-                        })}
+                        {t("admin.registeredAt")}{" "}
+                        {format(new Date(user.created_at), dateFormat, { locale: dateLocale })}
                       </span>
                     </div>
                   </div>
@@ -268,7 +247,7 @@ export function AdminView() {
                         ) : (
                           <X className="h-4 w-4" />
                         )}
-                        <span className="ml-1">Rejeitar</span>
+                        <span className="ml-1">{t("admin.reject")}</span>
                       </Button>
                       <Button
                         size="sm"
@@ -281,7 +260,7 @@ export function AdminView() {
                         ) : (
                           <Check className="h-4 w-4" />
                         )}
-                        <span className="ml-1">Aprovar</span>
+                        <span className="ml-1">{t("admin.approve")}</span>
                       </Button>
                     </div>
                   )}

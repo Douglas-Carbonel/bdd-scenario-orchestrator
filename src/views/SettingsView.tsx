@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Settings, Code2, GitBranch, Database, Zap, Copy, Check, Terminal, Puzzle, FileJson, FlaskConical, Key, Building2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -48,6 +49,7 @@ function CodeBlock({
 }
 
 export function SettingsView({ companies, products, sprints, scenarios }: SettingsViewProps) {
+  const { t } = useTranslation();
   const [exportDialogOpen, setExportDialogOpen] = useState(false);
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
 
@@ -353,8 +355,8 @@ jobs:
   return (
     <div className="space-y-8">
       <div className="space-y-2">
-        <h1 className="text-3xl font-bold text-foreground">Configurações</h1>
-        <p className="text-muted-foreground">Gerencie as configurações e integrações do 4QA</p>
+        <h1 className="text-3xl font-bold text-foreground">{t("settings.title")}</h1>
+        <p className="text-muted-foreground">{t("settings.subtitle")}</p>
       </div>
 
       {/* API Keys dos Produtos */}
@@ -391,12 +393,12 @@ jobs:
           {copiedKey === "companies-json" ? (
             <>
               <Check className="h-4 w-4" />
-              Copiado! Cole no GitHub Secrets como QA4_COMPANIES
+              {t("settings.copiedSecret")}
             </>
           ) : (
             <>
               <Copy className="h-4 w-4" />
-              Copiar valor do secret QA4_COMPANIES
+              {t("settings.copySecret")}
             </>
           )}
         </Button>
@@ -484,7 +486,7 @@ jobs:
               <p className="text-sm text-muted-foreground">Use a API Key do produto (seção Empresas → Produtos)</p>
             </div>
           </div>
-          <Badge className="bg-primary/20 text-primary">Ativo</Badge>
+          <Badge className="bg-primary/20 text-primary">{t("settings.statusActive")}</Badge>
         </div>
 
         <div className="space-y-3">
@@ -511,7 +513,7 @@ jobs:
 
       {/* Step-by-step setup */}
       <div className="space-y-4">
-        <h2 className="text-xl font-semibold text-foreground">Configuração passo a passo</h2>
+        <h2 className="text-xl font-semibold text-foreground">{t("settings.stepByStep")}</h2>
 
         {/* Step 1 - CI sync */}
         <div className="glass-card rounded-xl p-6 space-y-3">
@@ -594,11 +596,11 @@ jobs:
             <div className="h-12 w-12 rounded-xl bg-muted flex items-center justify-center">
               <GitBranch className="h-6 w-6 text-muted-foreground" />
             </div>
-            <Badge variant="outline" className="text-muted-foreground border-muted">Planejado</Badge>
+            <Badge variant="outline" className="text-muted-foreground border-muted">{t("settings.statusPlanned")}</Badge>
           </div>
-          <h3 className="text-lg font-semibold text-foreground mb-2">Integração Git</h3>
-          <p className="text-sm text-muted-foreground mb-4">Versione seus cenários BDD diretamente no repositório do projeto.</p>
-          <Button variant="outline" disabled className="w-full">Em desenvolvimento</Button>
+          <h3 className="text-lg font-semibold text-foreground mb-2">{t("settings.gitTitle")}</h3>
+          <p className="text-sm text-muted-foreground mb-4">{t("settings.gitDesc")}</p>
+          <Button variant="outline" disabled className="w-full">{t("settings.inDev")}</Button>
         </div>
 
         <div className="glass-card rounded-xl p-6">
@@ -606,11 +608,11 @@ jobs:
             <div className="h-12 w-12 rounded-xl bg-muted flex items-center justify-center">
               <Database className="h-6 w-6 text-muted-foreground" />
             </div>
-            <Badge variant="outline" className="text-muted-foreground border-muted">Planejado</Badge>
+            <Badge variant="outline" className="text-muted-foreground border-muted">{t("settings.statusPlanned")}</Badge>
           </div>
-          <h3 className="text-lg font-semibold text-foreground mb-2">Notificações</h3>
-          <p className="text-sm text-muted-foreground mb-4">Receba alertas no Slack ou e-mail quando cenários críticos falharem.</p>
-          <Button variant="outline" disabled className="w-full">Em desenvolvimento</Button>
+          <h3 className="text-lg font-semibold text-foreground mb-2">{t("settings.notifTitle")}</h3>
+          <p className="text-sm text-muted-foreground mb-4">{t("settings.notifDesc")}</p>
+          <Button variant="outline" disabled className="w-full">{t("settings.inDev")}</Button>
         </div>
 
         <div className="glass-card rounded-xl p-6">
@@ -618,12 +620,12 @@ jobs:
             <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center">
               <Settings className="h-6 w-6 text-primary" />
             </div>
-            <Badge className="bg-primary/20 text-primary">Disponível</Badge>
+            <Badge className="bg-primary/20 text-primary">{t("settings.statusAvailable")}</Badge>
           </div>
-          <h3 className="text-lg font-semibold text-foreground mb-2">Exportar Cenários</h3>
-          <p className="text-sm text-muted-foreground mb-4">Exporte em .feature (Gherkin) ou baixe tudo como ZIP com estrutura Cypress.</p>
+          <h3 className="text-lg font-semibold text-foreground mb-2">{t("settings.exportTitle")}</h3>
+          <p className="text-sm text-muted-foreground mb-4">{t("settings.exportDesc")}</p>
           <Button variant="default" className="w-full" onClick={() => setExportDialogOpen(true)}>
-            Exportar como .feature / ZIP
+            {t("settings.exportButton")}
           </Button>
         </div>
       </div>

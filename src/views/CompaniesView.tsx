@@ -1,10 +1,10 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Plus, Key, Copy, Check, Package, Trash2, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Badge } from "@/components/ui/badge";
 import { CompanyCard } from "@/components/companies/CompanyCard";
 import { Company, Product, Scenario, Sprint } from "@/types/bdd";
 import { toast } from "sonner";
@@ -40,6 +40,8 @@ export function CompaniesView({
   onEditProduct,
   onDeleteProduct,
 }: CompaniesViewProps) {
+  const { t } = useTranslation();
+
   const [isCompanyDialogOpen, setIsCompanyDialogOpen] = useState(false);
   const [editingCompany, setEditingCompany] = useState<Company | null>(null);
   const [companyName, setCompanyName] = useState("");
@@ -58,7 +60,7 @@ export function CompaniesView({
   const handleCopyKey = (key: string, id: string) => {
     navigator.clipboard.writeText(key);
     setCopiedKey(id);
-    toast.success("API Key copiada!");
+    toast.success(t("common.copied"));
     setTimeout(() => setCopiedKey(null), 2000);
   };
 
@@ -137,12 +139,12 @@ export function CompaniesView({
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="space-y-2">
-          <h1 className="text-3xl font-bold text-foreground">Empresas</h1>
-          <p className="text-muted-foreground">Gerencie as empresas e seus produtos de teste</p>
+          <h1 className="text-3xl font-bold text-foreground">{t("companies.title")}</h1>
+          <p className="text-muted-foreground">{t("companies.subtitle")}</p>
         </div>
         <Button onClick={openCreateCompanyDialog}>
           <Plus className="h-4 w-4 mr-2" />
-          Nova Empresa
+          {t("companies.newCompany")}
         </Button>
       </div>
 
@@ -153,14 +155,14 @@ export function CompaniesView({
             <Plus className="h-8 w-8 text-primary" />
           </div>
           <h3 className="text-lg font-semibold text-foreground mb-2">
-            Nenhuma empresa cadastrada
+            {t("companies.noCompanies")}
           </h3>
           <p className="text-muted-foreground mb-6">
-            Comece adicionando sua primeira empresa para organizar os cenários de teste.
+            {t("companies.noCompaniesHint")}
           </p>
           <Button onClick={openCreateCompanyDialog}>
             <Plus className="h-4 w-4 mr-2" />
-            Criar Primeira Empresa
+            {t("companies.addCompany")}
           </Button>
         </div>
       ) : (
@@ -193,36 +195,38 @@ export function CompaniesView({
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>
-              {editingCompany ? "Editar Empresa" : "Nova Empresa"}
+              {editingCompany ? t("companies.editCompany") : t("companies.newCompany")}
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
-              <Label htmlFor="company-name">Nome da Empresa</Label>
+              <Label htmlFor="company-name">{t("companies.companyName")}</Label>
               <Input
                 id="company-name"
                 value={companyName}
                 onChange={(e) => setCompanyName(e.target.value)}
-                placeholder="Ex: TechCorp Brasil"
+                placeholder={t("companies.companyPlaceholder")}
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="company-description">Descrição (opcional)</Label>
+              <Label htmlFor="company-description">
+                {t("common.description")} <span className="text-muted-foreground text-xs">({t("common.optional")})</span>
+              </Label>
               <Textarea
                 id="company-description"
                 value={companyDescription}
                 onChange={(e) => setCompanyDescription(e.target.value)}
-                placeholder="Breve descrição da empresa"
+                placeholder={t("companies.companyDesc")}
                 rows={3}
               />
             </div>
           </div>
           <div className="flex justify-end gap-3">
             <Button variant="outline" onClick={() => setIsCompanyDialogOpen(false)}>
-              Cancelar
+              {t("common.cancel")}
             </Button>
             <Button onClick={handleSaveCompany}>
-              {editingCompany ? "Salvar" : "Criar Empresa"}
+              {editingCompany ? t("companies.saveCompany") : t("companies.addCompany")}
             </Button>
           </div>
         </DialogContent>
@@ -234,7 +238,7 @@ export function CompaniesView({
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Package className="h-5 w-5 text-primary" />
-              Produtos — {selectedCompany?.name}
+              {t("companies.products")} — {selectedCompany?.name}
             </DialogTitle>
           </DialogHeader>
 
@@ -242,7 +246,7 @@ export function CompaniesView({
             {/* Product list */}
             {companyProducts.length === 0 && !isProductFormOpen ? (
               <div className="text-center py-6 text-muted-foreground text-sm">
-                Nenhum produto cadastrado ainda.
+                {t("companies.noProducts")}
               </div>
             ) : (
               <div className="space-y-2">
@@ -305,37 +309,39 @@ export function CompaniesView({
             {isProductFormOpen && (
               <div className="space-y-3 p-3 rounded-lg border border-primary/30 bg-primary/5">
                 <p className="text-sm font-medium text-foreground">
-                  {editingProduct ? "Editar Produto" : "Novo Produto"}
+                  {editingProduct ? t("companies.editProduct") : t("companies.newProduct")}
                 </p>
                 <div className="space-y-2">
-                  <Label htmlFor="product-name">Nome do Produto</Label>
+                  <Label htmlFor="product-name">{t("companies.productName")}</Label>
                   <Input
                     id="product-name"
                     value={productName}
                     onChange={(e) => setProductName(e.target.value)}
-                    placeholder="Ex: Saucedemo, CarHub..."
+                    placeholder={t("companies.productPlaceholder")}
                     autoFocus
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="product-description">Descrição (opcional)</Label>
+                  <Label htmlFor="product-description">
+                    {t("common.description")} <span className="text-muted-foreground text-xs">({t("common.optional")})</span>
+                  </Label>
                   <Input
                     id="product-description"
                     value={productDescription}
                     onChange={(e) => setProductDescription(e.target.value)}
-                    placeholder="Descrição breve"
+                    placeholder={t("companies.productDesc")}
                   />
                 </div>
                 <div className="flex gap-2">
                   <Button size="sm" onClick={handleSaveProduct}>
-                    {editingProduct ? "Salvar" : "Criar"}
+                    {editingProduct ? t("common.save") : t("common.create")}
                   </Button>
                   <Button
                     size="sm"
                     variant="outline"
                     onClick={() => { setIsProductFormOpen(false); setEditingProduct(null); }}
                   >
-                    Cancelar
+                    {t("common.cancel")}
                   </Button>
                 </div>
               </div>
@@ -350,10 +356,10 @@ export function CompaniesView({
               disabled={isProductFormOpen && !editingProduct}
             >
               <Plus className="h-4 w-4 mr-1" />
-              Novo Produto
+              {t("companies.newProduct")}
             </Button>
             <Button variant="ghost" onClick={() => setIsProductsDialogOpen(false)}>
-              Fechar
+              {t("common.close")}
             </Button>
           </div>
         </DialogContent>
