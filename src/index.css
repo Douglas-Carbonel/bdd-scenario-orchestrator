@@ -5,6 +5,48 @@
 @tailwind utilities;
 
 @layer base {
+  /* ── Light theme ───────────────────────────────────────── */
+  .light {
+    --background: 210 20% 97%;
+    --foreground: 222 47% 11%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 222 47% 11%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 47% 11%;
+
+    --secondary: 210 20% 93%;
+    --secondary-foreground: 222 47% 15%;
+
+    --muted: 210 20% 91%;
+    --muted-foreground: 215 20% 48%;
+
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 84% 55%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 214 20% 83%;
+    --input: 214 20% 83%;
+
+    --sidebar-background: 210 20% 94%;
+    --sidebar-foreground: 222 47% 11%;
+    --sidebar-accent: 210 20% 89%;
+    --sidebar-accent-foreground: 222 47% 11%;
+    --sidebar-border: 214 20% 83%;
+
+    --gradient-card: linear-gradient(180deg, hsl(0 0% 100%) 0%, hsl(210 20% 97%) 100%);
+    --shadow-card: 0 4px 24px hsl(0 0% 0% / 0.07);
+    --shadow-glow: 0 0 40px hsl(var(--primary) / 0.12);
+  }
+
+  .light .glass-card {
+    @apply bg-card/90 border-border/70 shadow-sm;
+    backdrop-filter: none;
+  }
+
+  /* ── Dark theme (default) ──────────────────────────────── */
   :root {
     --background: 222 47% 11%;
     --foreground: 210 40% 98%;
