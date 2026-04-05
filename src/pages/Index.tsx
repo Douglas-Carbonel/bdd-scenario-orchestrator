@@ -6,6 +6,7 @@ import { ScenariosView } from "@/views/ScenariosView";
 import { SprintsView } from "@/views/SprintsView";
 import { BugsView } from "@/views/BugsView";
 import { TeamView } from "@/views/TeamView";
+import { ExportView } from "@/views/ExportView";
 import { SettingsView } from "@/views/SettingsView";
 import { AdminView } from "@/views/AdminView";
 import { useBddStore } from "@/hooks/useBddStore";
@@ -158,6 +159,19 @@ const Index = () => {
             onAddDefect={addDefect}
             onUpdateDefect={updateDefect}
             getCompanyDefects={getCompanyDefects}
+          />
+        );
+      case "export":
+        return (
+          <ExportView
+            companies={companies}
+            products={products}
+            sprints={sprints}
+            scenarios={scenarios}
+            testRuns={testRuns}
+            defects={defects}
+            teamMembers={teamMembers}
+            teams={teams}
           />
         );
       case "settings":

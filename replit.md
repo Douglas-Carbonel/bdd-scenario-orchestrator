@@ -30,7 +30,12 @@ API keys live on **Products**, not Companies. One company can have many products
 - `src/hooks/useUserRole.ts` — Checks if current user is admin via Supabase user_roles table
 - `src/integrations/supabase/client.ts` — Supabase client (uses VITE_SUPABASE_URL + VITE_SUPABASE_PUBLISHABLE_KEY)
 - `src/types/bdd.ts` — TypeScript types: Company, Product, Sprint, TestSuite, Scenario, etc.
-- `src/views/` — Feature views: Dashboard, Companies (with product management), Scenarios, Sprints, Settings, Admin
+- `src/views/` — Feature views: Dashboard, Companies, Scenarios, Sprints, Bugs, Team, Export, Settings, Admin
+- `src/views/BugsView.tsx` — Defect management (G1)
+- `src/views/TeamView.tsx` — Team members & teams management (G3)
+- `src/views/ExportView.tsx` — Spreadsheet export to .xlsx/.csv (G4)
+- `src/utils/spreadsheetExport.ts` — SheetJS-based export helpers for scenarios, runs, defects, team
+- `src/components/team/` — TeamMemberDialog, TeamDialog components
 - `src/integrations/supabase/types.ts` — Auto-generated Supabase DB types (includes products table)
 - `supabase/migrations/` — Database migration SQL files for Supabase
 - `supabase/functions/cypress-sync/` — Edge function for CI sync (looks up product by api_key)
