@@ -96,8 +96,12 @@
     "team": "Time",
     "export": "Exportar",
     "settings": "Configurações",
-    "admin": "Administração",
-    "logout": "Sair"
+    "admin": "Admin",
+    "logout": "Sair",
+    "group_projects": "Projetos",
+    "group_tests": "Testes",
+    "group_reports": "Relatórios",
+    "group_administration": "Administração"
   },
   "dashboard": {
     "title": "Dashboard",

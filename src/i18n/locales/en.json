@@ -96,8 +96,12 @@
     "team": "Team",
     "export": "Export",
     "settings": "Settings",
-    "admin": "Administration",
-    "logout": "Sign out"
+    "admin": "Admin",
+    "logout": "Sign out",
+    "group_projects": "Projects",
+    "group_tests": "Testing",
+    "group_reports": "Reports",
+    "group_administration": "Administration"
   },
   "dashboard": {
     "title": "Dashboard",
