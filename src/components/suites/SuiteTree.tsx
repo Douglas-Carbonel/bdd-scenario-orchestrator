@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   DndContext,
   DragEndEvent,
@@ -50,6 +51,7 @@ export function SuiteTree({
   onMoveSuite,
   unsortedCount,
 }: SuiteTreeProps) {
+  const { t } = useTranslation();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingSuite, setEditingSuite] = useState<SuiteTreeNode | null>(null);
   const [parentIdForNew, setParentIdForNew] = useState<string | null>(null);
@@ -155,7 +157,7 @@ export function SuiteTree({
           onClick={() => onSelect(null)}
         >
           <Inbox className="h-4 w-4" />
-          <span className="flex-1 text-sm font-medium text-left">Sem Pasta</span>
+          <span className="flex-1 text-sm font-medium text-left">{t("scenarios.noFolder")}</span>
           {unsortedCount > 0 && (
             <span className="text-xs text-muted-foreground bg-secondary px-1.5 py-0.5 rounded">
               {unsortedCount}
