@@ -4,6 +4,7 @@ import { DashboardView } from "@/views/DashboardView";
 import { CompaniesView } from "@/views/CompaniesView";
 import { ScenariosView } from "@/views/ScenariosView";
 import { SprintsView } from "@/views/SprintsView";
+import { BugsView } from "@/views/BugsView";
 import { SettingsView } from "@/views/SettingsView";
 import { AdminView } from "@/views/AdminView";
 import { useBddStore } from "@/hooks/useBddStore";
@@ -46,6 +47,8 @@ const Index = () => {
     addDefect,
     updateDefect,
     getScenarioDefects,
+    defects,
+    getCompanyDefects,
   } = useBddStore();
 
   const renderView = () => {
@@ -113,6 +116,19 @@ const Index = () => {
             onUpdateSprint={updateSprint}
             getSprintStats={getSprintStats}
             getSprintComparison={getSprintComparison}
+          />
+        );
+      case "bugs":
+        return (
+          <BugsView
+            companies={companies}
+            products={products}
+            sprints={sprints}
+            scenarios={scenarios}
+            defects={defects}
+            onAddDefect={addDefect}
+            onUpdateDefect={updateDefect}
+            getCompanyDefects={getCompanyDefects}
           />
         );
       case "settings":

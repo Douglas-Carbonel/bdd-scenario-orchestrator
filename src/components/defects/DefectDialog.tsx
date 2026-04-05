@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Bug, AlertTriangle, CheckCircle2, RotateCcw, Wrench } from "lucide-react";
-import { Defect, DefectSeverity, DefectStatus } from "@/types/bdd";
+import { Defect, DefectSeverity, DefectStatus, Sprint } from "@/types/bdd";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -29,7 +29,9 @@ interface DefectDialogProps {
   scenarioTitle?: string;
   testRunId?: string;
   prefilledTitle?: string;
+  prefilledSprintId?: string;
   defect?: Defect;
+  sprints?: Sprint[];
   onAdd: (defect: Omit<Defect, "id" | "createdAt" | "updatedAt">) => void;
   onUpdate: (id: string, updates: Partial<Defect>) => void;
 }
@@ -42,10 +44,10 @@ const severityConfig: Record<DefectSeverity, { label: string; className: string 
 };
 
 const statusConfig: Record<DefectStatus, { label: string; className: string; icon: typeof Bug }> = {
-  open:     { label: "Aberto",    className: "border-destructive/40 text-destructive bg-destructive/10",   icon: Bug },
-  reopened: { label: "Reaberto",  className: "border-orange-500/40 text-orange-400 bg-orange-500/10",      icon: RotateCcw },
-  fixed:    { label: "Corrigido", className: "border-primary/40 text-primary bg-primary/10",               icon: Wrench },
-  verified: { label: "Verificado",className: "border-success/40 text-success bg-success/10",               icon: CheckCircle2 },
+  open:     { label: "Aberto",     className: "border-destructive/40 text-destructive bg-destructive/10",  icon: Bug },
+  reopened: { label: "Reaberto",   className: "border-orange-500/40 text-orange-400 bg-orange-500/10",     icon: RotateCcw },
+  fixed:    { label: "Corrigido",  className: "border-primary/40 text-primary bg-primary/10",              icon: Wrench },
+  verified: { label: "Verificado", className: "border-success/40 text-success bg-success/10",              icon: CheckCircle2 },
 };
 
 export function DefectDialog({
@@ -55,23 +57,27 @@ export function DefectDialog({
   scenarioTitle,
   testRunId,
   prefilledTitle = "",
+  prefilledSprintId,
   defect,
+  sprints = [],
   onAdd,
   onUpdate,
 }: DefectDialogProps) {
   const isUpdate = !!defect;
 
-  const [title, setTitle]             = useState(defect?.title ?? prefilledTitle);
-  const [severity, setSeverity]       = useState<DefectSeverity>(defect?.severity ?? "medium");
-  const [reportedBy, setReportedBy]   = useState(defect?.reportedBy ?? "");
+  const [title,       setTitle]       = useState(defect?.title ?? prefilledTitle);
+  const [severity,    setSeverity]    = useState<DefectSeverity>(defect?.severity ?? "medium");
+  const [reportedBy,  setReportedBy]  = useState(defect?.reportedBy ?? "");
   const [description, setDescription] = useState(defect?.description ?? "");
-  const [fixNote, setFixNote]         = useState(defect?.fixNote ?? "");
+  const [sprintId,    setSprintId]    = useState<string | undefined>(defect?.sprintId ?? prefilledSprintId);
+  const [fixNote,     setFixNote]     = useState(defect?.fixNote ?? "");
   const [showFixNote, setShowFixNote] = useState(false);
 
   const handleCreate = () => {
     if (!title.trim() || !reportedBy.trim()) return;
     onAdd({
       scenarioId,
+      sprintId: sprintId || undefined,
       testRunId,
       title: title.trim(),
       description: description.trim() || undefined,
@@ -90,6 +96,28 @@ export function DefectDialog({
     });
     onOpenChange(false);
   };
+
+  const SprintSelect = ({ value, onChange }: { value?: string; onChange: (v?: string) => void }) => (
+    sprints.length > 0 ? (
+      <div className="space-y-2">
+        <Label>Sprint</Label>
+        <Select
+          value={value ?? "none"}
+          onValueChange={(v) => onChange(v === "none" ? undefined : v)}
+        >
+          <SelectTrigger>
+            <SelectValue placeholder="Sem sprint" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="none">Sem sprint</SelectItem>
+            {sprints.map((s) => (
+              <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+    ) : null
+  );
 
   if (!isUpdate) {
     return (
@@ -146,6 +174,8 @@ export function DefectDialog({
               </div>
             </div>
 
+            <SprintSelect value={sprintId} onChange={setSprintId} />
+
             <div className="space-y-2">
               <Label htmlFor="defect-desc">Descrição / Passos para reproduzir</Label>
               <Textarea
@@ -196,6 +226,11 @@ export function DefectDialog({
                 Reportado por <span className="font-medium">{defect.reportedBy}</span> em{" "}
                 {defect.createdAt.toLocaleDateString("pt-BR")}
               </p>
+              {defect.sprintId && sprints.length > 0 && (
+                <p className="text-xs text-primary/70">
+                  Sprint: {sprints.find(s => s.id === defect.sprintId)?.name ?? defect.sprintId}
+                </p>
+              )}
             </div>
             <div className="flex items-center gap-2 shrink-0">
               <Badge variant="outline" className={cn("text-xs", sv.className)}>

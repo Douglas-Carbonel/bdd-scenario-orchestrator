@@ -73,6 +73,7 @@ export type DefectSeverity = 'critical' | 'high' | 'medium' | 'low';
 export interface Defect {
   id: string;
   scenarioId: string;
+  sprintId?: string;
   testRunId?: string;
   title: string;
   description?: string;

@@ -117,6 +117,7 @@ function mapDefect(row: DbDefect): Defect {
   return {
     id: row.id,
     scenarioId: row.scenario_id,
+    sprintId: (row as any).sprint_id ?? undefined,
     testRunId: row.test_run_id ?? undefined,
     title: row.title,
     description: row.description ?? undefined,
@@ -576,6 +577,7 @@ export function useBddStore() {
         .from("defects")
         .insert({
           scenario_id: defect.scenarioId,
+          sprint_id: (defect as any).sprintId ?? null,
           test_run_id: defect.testRunId ?? null,
           title: defect.title,
           description: defect.description ?? null,
@@ -600,6 +602,7 @@ export function useBddStore() {
       if (updates.title !== undefined) dbUpdates.title = updates.title;
       if (updates.description !== undefined) dbUpdates.description = updates.description ?? null;
       if (updates.fixNote !== undefined) dbUpdates.fix_note = updates.fixNote ?? null;
+      if ("sprintId" in updates) dbUpdates.sprint_id = (updates as any).sprintId ?? null;
       const { error } = await supabase.from("defects").update(dbUpdates).eq("id", id);
       if (error) throw error;
     },
@@ -864,6 +867,14 @@ export function useBddStore() {
     (scenarioId: string) => defects.filter((d) => d.scenarioId === scenarioId),
     [defects],
   );
+
+  const getCompanyDefects = useCallback(
+    (companyId: string) => {
+      const ids = new Set(scenarios.filter((s) => s.companyId === companyId).map((s) => s.id));
+      return defects.filter((d) => ids.has(d.scenarioId));
+    },
+    [defects, scenarios],
+  );
   const activateSprint = useCallback(
     (sprintId: string, companyId: string) => activateSprintMutation.mutate({ sprintId, companyId }),
     [activateSprintMutation],
@@ -905,9 +916,11 @@ export function useBddStore() {
     clearScenarioRuns,
     addTestRun,
     getScenarioRuns,
+    defects,
     addDefect,
     updateDefect,
     getScenarioDefects,
+    getCompanyDefects,
     getCompanyStats,
     getSprintStats,
     getSprintComparison,
