@@ -36,13 +36,25 @@ export interface TestSuite {
 
 export type Priority = 'critical' | 'high' | 'medium' | 'low';
 export type ExecutionType = 'manual' | 'automated';
+export type MemberRole = 'qa' | 'dev' | 'po' | 'lead' | 'analyst';
 
 export interface TeamMember {
   id: string;
   name: string;
   email: string;
+  role?: MemberRole;
   avatar?: string;
   companyId: string;
+}
+
+export interface Team {
+  id: string;
+  name: string;
+  description?: string;
+  companyId: string;
+  productId?: string;
+  memberIds: string[];
+  createdAt: Date;
 }
 
 export interface Scenario {

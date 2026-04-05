@@ -4,7 +4,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import {
   Company, Product, Sprint, Scenario, TestSuite, SuiteTreeNode,
-  TeamMember, TestRun, DailyStats, Defect, DefectStatus, DefectSeverity,
+  TeamMember, Team, MemberRole, TestRun, DailyStats, Defect, DefectStatus, DefectSeverity,
 } from "@/types/bdd";
 import { Database } from "@/integrations/supabase/types";
 
@@ -92,8 +92,21 @@ function mapTeamMember(row: DbTeamMember): TeamMember {
     id: row.id,
     name: row.name,
     email: row.email,
+    role: ((row as any).role ?? undefined) as MemberRole | undefined,
     avatar: row.avatar ?? undefined,
     companyId: row.company_id,
+  };
+}
+
+function mapTeam(row: any): Team {
+  return {
+    id: row.id,
+    name: row.name,
+    description: row.description ?? undefined,
+    companyId: row.company_id,
+    productId: row.product_id ?? undefined,
+    memberIds: (row.member_ids as string[]) ?? [],
+    createdAt: new Date(row.created_at),
   };
 }
 
@@ -186,6 +199,15 @@ export function useBddStore() {
       const { data, error } = await supabase.from("team_members").select("*").order("created_at");
       if (error) throw error;
       return data.map(mapTeamMember);
+    },
+  });
+
+  const { data: teams = [] } = useQuery({
+    queryKey: ["teams"],
+    queryFn: async () => {
+      const { data, error } = await (supabase as any).from("teams").select("*").order("created_at");
+      if (error) throw error;
+      return (data as any[]).map(mapTeam);
     },
   });
 
@@ -609,6 +631,112 @@ export function useBddStore() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["defects"] }),
   });
 
+  // ── TeamMember mutations ─────────────────────────────────────────────────────
+  const addTeamMemberMutation = useMutation({
+    mutationFn: async (member: Omit<TeamMember, "id">) => {
+      const { data, error } = await supabase
+        .from("team_members")
+        .insert({
+          name: member.name,
+          email: member.email,
+          avatar: member.avatar ?? null,
+          company_id: member.companyId,
+          ...(member.role ? { role: member.role } : {}),
+        } as any)
+        .select()
+        .single();
+      if (error) throw error;
+      return mapTeamMember(data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["team_members"] });
+      toast.success("Colaborador adicionado!");
+    },
+    onError: (e: Error) => toast.error(`Erro: ${e.message}`),
+  });
+
+  const updateTeamMemberMutation = useMutation({
+    mutationFn: async ({ id, updates }: { id: string; updates: Partial<TeamMember> }) => {
+      const db: Record<string, unknown> = {};
+      if (updates.name  !== undefined) db.name  = updates.name;
+      if (updates.email !== undefined) db.email = updates.email;
+      if (updates.avatar !== undefined) db.avatar = updates.avatar ?? null;
+      if (updates.role  !== undefined) db.role  = updates.role ?? null;
+      const { error } = await supabase.from("team_members").update(db as any).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["team_members"] });
+      toast.success("Colaborador atualizado!");
+    },
+    onError: (e: Error) => toast.error(`Erro: ${e.message}`),
+  });
+
+  const deleteTeamMemberMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("team_members").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["team_members"] });
+      toast.success("Colaborador removido");
+    },
+    onError: (e: Error) => toast.error(`Erro: ${e.message}`),
+  });
+
+  // ── Team mutations ───────────────────────────────────────────────────────────
+  const addTeamMutation = useMutation({
+    mutationFn: async (team: Omit<Team, "id" | "createdAt">) => {
+      const { data, error } = await (supabase as any)
+        .from("teams")
+        .insert({
+          name: team.name,
+          description: team.description ?? null,
+          company_id: team.companyId,
+          product_id: team.productId ?? null,
+          member_ids: team.memberIds,
+        })
+        .select()
+        .single();
+      if (error) throw error;
+      return mapTeam(data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["teams"] });
+      toast.success("Equipe criada!");
+    },
+    onError: (e: Error) => toast.error(`Erro: ${e.message}`),
+  });
+
+  const updateTeamMutation = useMutation({
+    mutationFn: async ({ id, updates }: { id: string; updates: Partial<Team> }) => {
+      const db: Record<string, unknown> = {};
+      if (updates.name        !== undefined) db.name        = updates.name;
+      if (updates.description !== undefined) db.description = updates.description ?? null;
+      if (updates.productId   !== undefined) db.product_id  = updates.productId ?? null;
+      if (updates.memberIds   !== undefined) db.member_ids  = updates.memberIds;
+      const { error } = await (supabase as any).from("teams").update(db).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["teams"] });
+      toast.success("Equipe atualizada!");
+    },
+    onError: (e: Error) => toast.error(`Erro: ${e.message}`),
+  });
+
+  const deleteTeamMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await (supabase as any).from("teams").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["teams"] });
+      toast.success("Equipe removida");
+    },
+    onError: (e: Error) => toast.error(`Erro: ${e.message}`),
+  });
+
   // ── Computed functions (same interface as before) ────────────────────────────
   const getSuiteTree = useCallback(
     (companyId: string): SuiteTreeNode[] => {
@@ -780,6 +908,11 @@ export function useBddStore() {
     [teamMembers],
   );
 
+  const getCompanyTeams = useCallback(
+    (companyId: string) => teams.filter((t) => t.companyId === companyId),
+    [teams],
+  );
+
   // ── Public interface ─────────────────────────────────────────────────────────
   const addCompany = useCallback(
     (company: Omit<Company, "id" | "createdAt">) => addCompanyMutation.mutate(company),
@@ -863,6 +996,30 @@ export function useBddStore() {
     (id: string, updates: Partial<Defect>) => updateDefectMutation.mutate({ id, updates }),
     [updateDefectMutation],
   );
+  const addTeamMember = useCallback(
+    (member: Omit<TeamMember, "id">) => addTeamMemberMutation.mutate(member),
+    [addTeamMemberMutation],
+  );
+  const updateTeamMember = useCallback(
+    (id: string, updates: Partial<TeamMember>) => updateTeamMemberMutation.mutate({ id, updates }),
+    [updateTeamMemberMutation],
+  );
+  const deleteTeamMember = useCallback(
+    (id: string) => deleteTeamMemberMutation.mutate(id),
+    [deleteTeamMemberMutation],
+  );
+  const addTeam = useCallback(
+    (team: Omit<Team, "id" | "createdAt">) => addTeamMutation.mutate(team),
+    [addTeamMutation],
+  );
+  const updateTeam = useCallback(
+    (id: string, updates: Partial<Team>) => updateTeamMutation.mutate({ id, updates }),
+    [updateTeamMutation],
+  );
+  const deleteTeam = useCallback(
+    (id: string) => deleteTeamMutation.mutate(id),
+    [deleteTeamMutation],
+  );
   const getScenarioDefects = useCallback(
     (scenarioId: string) => defects.filter((d) => d.scenarioId === scenarioId),
     [defects],
@@ -921,11 +1078,20 @@ export function useBddStore() {
     updateDefect,
     getScenarioDefects,
     getCompanyDefects,
+    teams,
+    teamMembers,
+    addTeamMember,
+    updateTeamMember,
+    deleteTeamMember,
+    addTeam,
+    updateTeam,
+    deleteTeam,
+    getCompanyTeams,
+    getCompanyTeamMembers,
     getCompanyStats,
     getSprintStats,
     getSprintComparison,
     getDailyStats,
     getTeamMember,
-    getCompanyTeamMembers,
   };
 }

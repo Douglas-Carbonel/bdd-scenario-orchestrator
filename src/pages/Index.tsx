@@ -5,6 +5,7 @@ import { CompaniesView } from "@/views/CompaniesView";
 import { ScenariosView } from "@/views/ScenariosView";
 import { SprintsView } from "@/views/SprintsView";
 import { BugsView } from "@/views/BugsView";
+import { TeamView } from "@/views/TeamView";
 import { SettingsView } from "@/views/SettingsView";
 import { AdminView } from "@/views/AdminView";
 import { useBddStore } from "@/hooks/useBddStore";
@@ -49,6 +50,15 @@ const Index = () => {
     getScenarioDefects,
     defects,
     getCompanyDefects,
+    teams,
+    addTeamMember,
+    updateTeamMember,
+    deleteTeamMember,
+    addTeam,
+    updateTeam,
+    deleteTeam,
+    getCompanyTeams,
+    getCompanyTeamMembers,
   } = useBddStore();
 
   const renderView = () => {
@@ -116,6 +126,25 @@ const Index = () => {
             onUpdateSprint={updateSprint}
             getSprintStats={getSprintStats}
             getSprintComparison={getSprintComparison}
+          />
+        );
+      case "team":
+        return (
+          <TeamView
+            companies={companies}
+            products={products}
+            scenarios={scenarios}
+            defects={defects}
+            teamMembers={teamMembers}
+            teams={teams}
+            onAddTeamMember={addTeamMember}
+            onUpdateTeamMember={updateTeamMember}
+            onDeleteTeamMember={deleteTeamMember}
+            onAddTeam={addTeam}
+            onUpdateTeam={updateTeam}
+            onDeleteTeam={deleteTeam}
+            getCompanyTeamMembers={getCompanyTeamMembers}
+            getCompanyTeams={getCompanyTeams}
           />
         );
       case "bugs":

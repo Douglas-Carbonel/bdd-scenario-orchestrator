@@ -1,4 +1,4 @@
-import { Building2, LayoutDashboard, FlaskConical, Calendar, Settings, ChevronLeft, ChevronRight, ShieldCheck, LogOut, Bug } from "lucide-react";
+import { Building2, LayoutDashboard, FlaskConical, Calendar, Settings, ChevronLeft, ChevronRight, ShieldCheck, LogOut, Bug, Users } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
@@ -23,6 +23,7 @@ const menuItems = [
   { id: "scenarios", label: "Cenários",     icon: FlaskConical },
   { id: "sprints",   label: "Sprints",      icon: Calendar },
   { id: "bugs",      label: "Bugs",         icon: Bug },
+  { id: "team",      label: "Time",         icon: Users },
   { id: "settings",  label: "Configurações",icon: Settings },
 ];
 
