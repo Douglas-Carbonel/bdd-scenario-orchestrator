@@ -319,97 +319,78 @@ export function ScenarioForm({
               Configurações
               <div className="h-px flex-1 bg-border/60" />
             </h4>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
 
-            {/* Tipo de execução */}
-            <div className="space-y-1.5">
-              <Label className="text-sm">Tipo de Execução</Label>
-              <div className="flex gap-2">
-                <button
-                  type="button"
-                  onClick={() => setExecutionType("automated")}
-                  className={cn(
-                    "flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg border text-sm font-medium transition-all",
-                    executionType === "automated"
-                      ? "border-primary bg-primary/10 text-primary"
-                      : "border-border text-muted-foreground hover:border-primary/30 hover:bg-secondary/30"
-                  )}
-                >
-                  <Bot className="h-4 w-4" />
-                  E2E / Automatizado
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setExecutionType("manual")}
-                  className={cn(
-                    "flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg border text-sm font-medium transition-all",
-                    executionType === "manual"
-                      ? "border-emerald-500 bg-emerald-500/10 text-emerald-400"
-                      : "border-border text-muted-foreground hover:border-emerald-500/30 hover:bg-secondary/30"
-                  )}
-                >
-                  <User className="h-4 w-4" />
-                  Manual
-                </button>
-              </div>
-              <p className="text-xs text-muted-foreground">
-                {executionType === "automated"
-                  ? "Executado via Cypress CI — resultados chegam automaticamente."
-                  : "Executado manualmente pelo time de QA."}
-              </p>
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              {/* Prioridade */}
+              {/* Tipo de execução */}
               <div className="space-y-1.5">
-                <Label className="text-sm">Prioridade</Label>
-                <div className="grid grid-cols-2 gap-1.5">
-                  {PRIORITY_OPTIONS.map(opt => (
+                <Label className="text-sm">Execução</Label>
+                <div className="flex rounded-md border border-border overflow-hidden h-9">
+                  {(["automated", "manual"] as ExecutionType[]).map(type => (
                     <button
-                      key={opt.value}
+                      key={type}
                       type="button"
-                      onClick={() => setPriority(opt.value)}
+                      onClick={() => setExecutionType(type)}
                       className={cn(
-                        "flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border text-xs font-medium transition-all",
-                        priority === opt.value
-                          ? cn("border-current/40 bg-current/10", opt.text)
-                          : "border-border text-muted-foreground hover:border-border/80 hover:bg-secondary/30"
+                        "flex-1 flex items-center justify-center gap-1 text-xs font-medium transition-colors border-r border-border last:border-r-0",
+                        executionType === type
+                          ? type === "manual"
+                            ? "bg-emerald-500/15 text-emerald-400"
+                            : "bg-primary/15 text-primary"
+                          : "text-muted-foreground hover:bg-secondary/50"
                       )}
                     >
-                      <span className={cn("h-1.5 w-1.5 rounded-full shrink-0", opt.dot)} />
-                      {opt.label}
+                      {type === "automated" ? <Bot className="h-3 w-3" /> : <User className="h-3 w-3" />}
+                      {type === "automated" ? "E2E" : "Manual"}
                     </button>
                   ))}
                 </div>
               </div>
 
-              {/* Responsável + Duração */}
-              <div className="space-y-3">
-                <div className="space-y-1.5">
-                  <Label className="text-sm">Responsável</Label>
-                  <Select
-                    value={assigneeId || "none"}
-                    onValueChange={v => setAssigneeId(v === "none" ? "" : v)}
-                  >
-                    <SelectTrigger className="h-9"><SelectValue placeholder="Não atribuído" /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="none">Não atribuído</SelectItem>
-                      {filteredTeamMembers.map(m => (
-                        <SelectItem key={m.id} value={m.id}>{m.name}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-1.5">
-                  <Label htmlFor="duration" className="text-sm">Duração estimada (min)</Label>
-                  <Input
-                    id="duration"
-                    type="number"
-                    value={estimatedDuration}
-                    onChange={e => setDuration(Number(e.target.value))}
-                    min={1}
-                    className="h-9"
-                  />
-                </div>
+              {/* Prioridade */}
+              <div className="space-y-1.5">
+                <Label className="text-sm">Prioridade</Label>
+                <Select value={priority} onValueChange={v => setPriority(v as Priority)}>
+                  <SelectTrigger className="h-9">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {PRIORITY_OPTIONS.map(opt => (
+                      <SelectItem key={opt.value} value={opt.value}>
+                        <div className="flex items-center gap-2">
+                          <span className={cn("h-2 w-2 rounded-full", opt.dot)} />
+                          <span className={opt.text}>{opt.label}</span>
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Responsável */}
+              <div className="space-y-1.5">
+                <Label className="text-sm">Responsável</Label>
+                <Select value={assigneeId || "none"} onValueChange={v => setAssigneeId(v === "none" ? "" : v)}>
+                  <SelectTrigger className="h-9"><SelectValue placeholder="Não atribuído" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">Não atribuído</SelectItem>
+                    {filteredTeamMembers.map(m => (
+                      <SelectItem key={m.id} value={m.id}>{m.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Duração */}
+              <div className="space-y-1.5">
+                <Label htmlFor="duration" className="text-sm">Duração (min)</Label>
+                <Input
+                  id="duration"
+                  type="number"
+                  value={estimatedDuration}
+                  onChange={e => setDuration(Number(e.target.value))}
+                  min={1}
+                  className="h-9"
+                />
               </div>
             </div>
           </section>
