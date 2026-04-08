@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useTranslation } from "react-i18next";
 import {
   Camera, Save, Mail, Lock, User, Building2, ShieldCheck,
   Eye, EyeOff, CheckCircle2, AlertTriangle, Loader2,
@@ -41,8 +42,8 @@ function AvatarCircle({
   size?: "sm" | "lg";
   onClick?: () => void;
 }) {
-  const dim = size === "lg" ? "h-24 w-24" : "h-10 w-10";
-  const text = size === "lg" ? "text-3xl" : "text-sm";
+  const dim  = size === "lg" ? "h-24 w-24" : "h-10 w-10";
+  const text = size === "lg" ? "text-3xl"  : "text-sm";
   const initials = name
     .split(" ")
     .filter(Boolean)
@@ -107,7 +108,9 @@ function PasswordInput({
   const [show, setShow] = useState(false);
   return (
     <div className="space-y-1.5">
-      <Label htmlFor={id} className="text-sm">{label}{required && <span className="text-destructive ml-1">*</span>}</Label>
+      <Label htmlFor={id} className="text-sm">
+        {label}{required && <span className="text-destructive ml-1">*</span>}
+      </Label>
       <div className="relative">
         <Input
           id={id}
@@ -141,29 +144,26 @@ interface ProfileData {
 }
 
 export function ProfileView() {
+  const { t } = useTranslation();
   const fileRef = useRef<HTMLInputElement>(null);
 
-  const [profile,    setProfile]    = useState<ProfileData | null>(null);
-  const [loading,    setLoading]    = useState(true);
-  const [authEmail,  setAuthEmail]  = useState("");
+  const [profile,         setProfile]         = useState<ProfileData | null>(null);
+  const [loading,         setLoading]         = useState(true);
+  const [authEmail,       setAuthEmail]       = useState("");
 
-  /* Personal info form */
-  const [name,       setName]       = useState("");
-  const [avatarUrl,  setAvatarUrl]  = useState<string | null>(null);
-  const [savingInfo, setSavingInfo] = useState(false);
+  const [name,            setName]            = useState("");
+  const [avatarUrl,       setAvatarUrl]       = useState<string | null>(null);
+  const [savingInfo,      setSavingInfo]      = useState(false);
   const [avatarUploading, setAvatarUploading] = useState(false);
 
-  /* Email change */
-  const [newEmail,      setNewEmail]      = useState("");
-  const [changingEmail, setChangingEmail] = useState(false);
-  const [emailSent,     setEmailSent]     = useState(false);
+  const [newEmail,        setNewEmail]        = useState("");
+  const [changingEmail,   setChangingEmail]   = useState(false);
+  const [emailSent,       setEmailSent]       = useState(false);
 
-  /* Password change */
-  const [newPass,      setNewPass]      = useState("");
-  const [confirmPass,  setConfirmPass]  = useState("");
-  const [changingPass, setChangingPass] = useState(false);
+  const [newPass,         setNewPass]         = useState("");
+  const [confirmPass,     setConfirmPass]     = useState("");
+  const [changingPass,    setChangingPass]    = useState(false);
 
-  /* Load profile */
   useEffect(() => {
     (async () => {
       setLoading(true);
@@ -192,7 +192,7 @@ export function ProfileView() {
     const file = e.target.files?.[0];
     if (!file) return;
     if (file.size > 5 * 1024 * 1024) {
-      toast.error("Imagem muito grande — máximo 5 MB.");
+      toast.error(t("profile.toastImageTooLarge"));
       return;
     }
     setAvatarUploading(true);
@@ -200,7 +200,7 @@ export function ProfileView() {
       const dataUrl = await resizeImage(file, 256);
       setAvatarUrl(dataUrl);
     } catch {
-      toast.error("Erro ao processar imagem.");
+      toast.error(t("profile.toastImageError"));
     } finally {
       setAvatarUploading(false);
       e.target.value = "";
@@ -216,9 +216,9 @@ export function ProfileView() {
       .eq("id", profile.id);
 
     if (error) {
-      toast.error("Erro ao salvar: " + error.message);
+      toast.error(t("profile.toastSaveError") + error.message);
     } else {
-      toast.success("Perfil atualizado!");
+      toast.success(t("profile.toastSaved"));
       setProfile(p => p ? { ...p, name: name.trim(), avatar_url: avatarUrl } : p);
       window.dispatchEvent(new CustomEvent("profile-updated"));
     }
@@ -230,10 +230,10 @@ export function ProfileView() {
     setChangingEmail(true);
     const { error } = await supabase.auth.updateUser({ email: newEmail.trim() });
     if (error) {
-      toast.error("Erro ao alterar e-mail: " + error.message);
+      toast.error(t("profile.toastEmailError") + error.message);
     } else {
       setEmailSent(true);
-      toast.success("Confirmação enviada para o novo e-mail!");
+      toast.success(t("profile.toastEmailSent"));
     }
     setChangingEmail(false);
   };
@@ -241,31 +241,27 @@ export function ProfileView() {
   const handlePasswordChange = async () => {
     if (!newPass) return;
     if (newPass !== confirmPass) {
-      toast.error("As senhas não coincidem.");
+      toast.error(t("profile.toastPasswordMismatch"));
       return;
     }
     if (newPass.length < 6) {
-      toast.error("A senha deve ter pelo menos 6 caracteres.");
+      toast.error(t("profile.toastPasswordTooShort"));
       return;
     }
     setChangingPass(true);
     const { error } = await supabase.auth.updateUser({ password: newPass });
     if (error) {
-      toast.error("Erro ao alterar senha: " + error.message);
+      toast.error(t("profile.toastPasswordError") + error.message);
     } else {
-      toast.success("Senha alterada com sucesso!");
+      toast.success(t("profile.toastPasswordChanged"));
       setNewPass(""); setConfirmPass("");
     }
     setChangingPass(false);
   };
 
-  /* ── Derived ── */
-
   const infoChanged = profile
     ? (name.trim() !== profile.name || avatarUrl !== profile.avatar_url)
     : false;
-
-  /* ── Render ── */
 
   if (loading) {
     return (
@@ -278,7 +274,7 @@ export function ProfileView() {
   if (!profile) {
     return (
       <div className="glass-card rounded-xl p-12 text-center text-muted-foreground">
-        Perfil não encontrado.
+        {t("profile.notFound")}
       </div>
     );
   }
@@ -288,10 +284,8 @@ export function ProfileView() {
 
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-display font-bold text-foreground">Meu Perfil</h1>
-        <p className="text-muted-foreground text-sm mt-1">
-          Gerencie seus dados pessoais, acesso e segurança.
-        </p>
+        <h1 className="text-2xl font-display font-bold text-foreground">{t("profile.title")}</h1>
+        <p className="text-muted-foreground text-sm mt-1">{t("profile.subtitle")}</p>
       </div>
 
       {/* Identity hero card */}
@@ -328,8 +322,8 @@ export function ProfileView() {
                   : "bg-warning/10 text-warning"
               )}>
                 {profile.approval_status === "approved"
-                  ? <><CheckCircle2 className="h-3 w-3" /> Conta aprovada</>
-                  : <><AlertTriangle className="h-3 w-3" /> Pendente de aprovação</>}
+                  ? <><CheckCircle2 className="h-3 w-3" />{t("profile.statusApproved")}</>
+                  : <><AlertTriangle className="h-3 w-3" />{t("profile.statusPending")}</>}
               </span>
             </div>
           </div>
@@ -339,7 +333,7 @@ export function ProfileView() {
             className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground border border-border rounded-lg px-3 py-2 transition-colors hover:bg-secondary/50 shrink-0"
           >
             <Camera className="h-4 w-4" />
-            Trocar foto
+            {t("profile.changePhoto")}
           </button>
         </div>
       </div>
@@ -347,23 +341,21 @@ export function ProfileView() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
         {/* Personal info */}
-        <Section title="Informações Pessoais" icon={User}>
+        <Section title={t("profile.personalInfo")} icon={User}>
           <div className="space-y-3">
             <div className="space-y-1.5">
-              <Label htmlFor="prof-name" className="text-sm">Nome completo</Label>
+              <Label htmlFor="prof-name" className="text-sm">{t("profile.fullName")}</Label>
               <Input
                 id="prof-name"
                 value={name}
                 onChange={e => setName(e.target.value)}
-                placeholder="Seu nome"
+                placeholder={t("profile.namePlaceholder")}
               />
             </div>
             <div className="space-y-1.5">
-              <Label className="text-sm text-muted-foreground">E-mail atual</Label>
+              <Label className="text-sm text-muted-foreground">{t("profile.currentEmail")}</Label>
               <Input value={authEmail} disabled className="bg-muted/30 cursor-not-allowed" />
-              <p className="text-xs text-muted-foreground">
-                Para alterar o e-mail, use a seção "Conta" ao lado.
-              </p>
+              <p className="text-xs text-muted-foreground">{t("profile.emailHint")}</p>
             </div>
           </div>
           <Button
@@ -372,19 +364,19 @@ export function ProfileView() {
             className="w-full"
           >
             {savingInfo
-              ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Salvando…</>
-              : <><Save className="h-4 w-4 mr-2" /> Salvar Alterações</>
+              ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />{t("profile.saving")}</>
+              : <><Save className="h-4 w-4 mr-2" />{t("profile.saveChanges")}</>
             }
           </Button>
         </Section>
 
         {/* Account info */}
-        <Section title="Conta" icon={Building2}>
+        <Section title={t("profile.account")} icon={Building2}>
           <div className="space-y-3 text-sm text-muted-foreground">
             <div className="flex items-center justify-between py-2 border-b border-border/40">
               <span className="flex items-center gap-2">
                 <ShieldCheck className="h-4 w-4" />
-                Status
+                {t("profile.status")}
               </span>
               <span className={cn(
                 "font-medium text-xs px-2 py-0.5 rounded-full",
@@ -392,16 +384,18 @@ export function ProfileView() {
                   ? "bg-success/10 text-success"
                   : "bg-warning/10 text-warning"
               )}>
-                {profile.approval_status === "approved" ? "Aprovado" : "Pendente"}
+                {profile.approval_status === "approved"
+                  ? t("profile.approvedStatus")
+                  : t("profile.pendingStatus")}
               </span>
             </div>
             <div className="flex items-center justify-between py-2">
               <span className="flex items-center gap-2">
                 <Building2 className="h-4 w-4" />
-                Empresa vinculada
+                {t("profile.linkedCompany")}
               </span>
               <span className="text-foreground font-medium text-xs">
-                {profile.company_id ? "Vinculada" : "Sem empresa"}
+                {profile.company_id ? t("profile.linked") : t("profile.noCompany")}
               </span>
             </div>
           </div>
@@ -409,12 +403,12 @@ export function ProfileView() {
           {/* Email change */}
           <div className="pt-2 border-t border-border/60 space-y-3">
             <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
-              <Mail className="h-3.5 w-3.5" /> Alterar E-mail
+              <Mail className="h-3.5 w-3.5" />{t("profile.changeEmail")}
             </p>
             {emailSent ? (
               <div className="flex items-center gap-2 rounded-lg bg-success/10 border border-success/20 px-3 py-2.5 text-xs text-success">
                 <CheckCircle2 className="h-4 w-4 shrink-0" />
-                Confirmação enviada para <strong className="ml-1">{newEmail}</strong>. Verifique sua caixa de entrada.
+                {t("profile.confirmationSent")} <strong className="ml-1">{newEmail}</strong>. {t("profile.checkInbox")}
               </div>
             ) : (
               <div className="flex gap-2">
@@ -422,7 +416,7 @@ export function ProfileView() {
                   type="email"
                   value={newEmail}
                   onChange={e => setNewEmail(e.target.value)}
-                  placeholder="novo@email.com"
+                  placeholder={t("profile.newEmailPlaceholder")}
                   className="h-9"
                 />
                 <Button
@@ -434,7 +428,7 @@ export function ProfileView() {
                 >
                   {changingEmail
                     ? <Loader2 className="h-4 w-4 animate-spin" />
-                    : "Alterar"
+                    : t("profile.change")
                   }
                 </Button>
               </div>
@@ -443,31 +437,31 @@ export function ProfileView() {
         </Section>
 
         {/* Security */}
-        <Section title="Segurança" icon={Lock}>
+        <Section title={t("profile.security")} icon={Lock}>
           <div className="space-y-3">
             <PasswordInput
               id="new-pass"
-              label="Nova senha"
+              label={t("profile.newPassword")}
               value={newPass}
               onChange={setNewPass}
-              placeholder="Mínimo 6 caracteres"
+              placeholder={t("profile.minChars")}
               required
             />
             <PasswordInput
               id="confirm-pass"
-              label="Confirmar nova senha"
+              label={t("profile.confirmPassword")}
               value={confirmPass}
               onChange={setConfirmPass}
-              placeholder="Repita a senha"
+              placeholder={t("profile.repeatPassword")}
             />
             {confirmPass && newPass !== confirmPass && (
               <p className="text-xs text-destructive flex items-center gap-1.5">
-                <AlertTriangle className="h-3.5 w-3.5" /> As senhas não coincidem.
+                <AlertTriangle className="h-3.5 w-3.5" />{t("profile.passwordMismatch")}
               </p>
             )}
             {confirmPass && newPass === confirmPass && newPass.length >= 6 && (
               <p className="text-xs text-success flex items-center gap-1.5">
-                <CheckCircle2 className="h-3.5 w-3.5" /> Senhas conferem!
+                <CheckCircle2 className="h-3.5 w-3.5" />{t("profile.passwordMatch")}
               </p>
             )}
           </div>
@@ -478,8 +472,8 @@ export function ProfileView() {
             variant="outline"
           >
             {changingPass
-              ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Alterando…</>
-              : <><Lock className="h-4 w-4 mr-2" /> Alterar Senha</>
+              ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />{t("profile.changing")}</>
+              : <><Lock className="h-4 w-4 mr-2" />{t("profile.changePassword")}</>
             }
           </Button>
         </Section>
