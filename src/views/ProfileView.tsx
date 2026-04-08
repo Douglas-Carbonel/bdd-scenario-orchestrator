@@ -220,6 +220,7 @@ export function ProfileView() {
     } else {
       toast.success("Perfil atualizado!");
       setProfile(p => p ? { ...p, name: name.trim(), avatar_url: avatarUrl } : p);
+      window.dispatchEvent(new CustomEvent("profile-updated"));
     }
     setSavingInfo(false);
   };

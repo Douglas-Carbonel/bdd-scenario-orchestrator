@@ -107,7 +107,11 @@ export function Sidebar({ activeView, onViewChange }: SidebarProps) {
     };
     fetchUserProfile();
     const { data: { subscription } } = supabase.auth.onAuthStateChange(() => { fetchUserProfile(); });
-    return () => subscription.unsubscribe();
+    window.addEventListener("profile-updated", fetchUserProfile);
+    return () => {
+      subscription.unsubscribe();
+      window.removeEventListener("profile-updated", fetchUserProfile);
+    };
   }, []);
 
   const handleLogout = async () => {
