@@ -2,6 +2,7 @@ import {
   Building2, LayoutDashboard, FlaskConical, Calendar, Settings,
   ChevronLeft, ChevronRight, ShieldCheck, LogOut, Bug, Users,
   FileSpreadsheet, Globe, ChevronDown, FolderOpen, TestTube2, BarChart3, Puzzle,
+  UserCircle,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
@@ -20,6 +21,7 @@ interface SidebarProps {
 interface UserProfile {
   name: string;
   email: string;
+  avatar_url?: string | null;
 }
 
 interface NavItem {
@@ -69,6 +71,7 @@ const NAV_GROUPS: NavGroup[] = [
     id: "administration",
     icon: Settings,
     items: [
+      { id: "profile",      icon: UserCircle },
       { id: "team",         icon: Users },
       { id: "integrations", icon: Puzzle },
       { id: "settings",     icon: Settings },
@@ -96,7 +99,7 @@ export function Sidebar({ activeView, onViewChange }: SidebarProps) {
       if (user) {
         const { data: profile } = await supabase
           .from("profiles")
-          .select("name, email")
+          .select("name, email, avatar_url")
           .eq("id", user.id)
           .single();
         if (profile) setUserProfile(profile);
@@ -301,22 +304,32 @@ export function Sidebar({ activeView, onViewChange }: SidebarProps) {
 
           {/* User Info */}
           {userProfile && (
-            <div className={cn(
-              "flex items-center gap-3 px-2 py-1",
-              collapsed && "justify-center"
-            )}>
-              <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                <span className="text-xs font-semibold text-primary">
-                  {userProfile.name.charAt(0).toUpperCase()}
-                </span>
+            <button
+              type="button"
+              onClick={() => onViewChange("profile")}
+              className={cn(
+                "w-full flex items-center gap-3 px-2 py-1.5 rounded-lg transition-colors hover:bg-sidebar-accent",
+                collapsed && "justify-center",
+                activeView === "profile" && "bg-sidebar-accent"
+              )}
+              title={collapsed ? userProfile.name : undefined}
+            >
+              <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0 overflow-hidden ring-1 ring-primary/20">
+                {userProfile.avatar_url ? (
+                  <img src={userProfile.avatar_url} alt={userProfile.name} className="h-full w-full object-cover" />
+                ) : (
+                  <span className="text-xs font-semibold text-primary">
+                    {userProfile.name.charAt(0).toUpperCase()}
+                  </span>
+                )}
               </div>
               {!collapsed && (
-                <div className="flex-1 min-w-0">
+                <div className="flex-1 min-w-0 text-left">
                   <p className="text-sm font-medium text-sidebar-foreground truncate">{userProfile.name}</p>
                   <p className="text-xs text-muted-foreground truncate">{userProfile.email}</p>
                 </div>
               )}
-            </div>
+            </button>
           )}
 
           {/* Logout */}

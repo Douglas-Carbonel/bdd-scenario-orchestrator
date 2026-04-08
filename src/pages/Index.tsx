@@ -10,6 +10,7 @@ import { ExportView } from "@/views/ExportView";
 import { SettingsView } from "@/views/SettingsView";
 import { AdminView } from "@/views/AdminView";
 import { IntegrationsView } from "@/views/IntegrationsView";
+import { ProfileView } from "@/views/ProfileView";
 import { useBddStore } from "@/hooks/useBddStore";
 import { cn } from "@/lib/utils";
 
@@ -175,6 +176,8 @@ const Index = () => {
             teams={teams}
           />
         );
+      case "profile":
+        return <ProfileView />;
       case "settings":
         return <SettingsView />;
       case "integrations":

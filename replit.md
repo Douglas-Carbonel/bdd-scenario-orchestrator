@@ -24,6 +24,7 @@ API keys live on **Products**, not Companies. One company can have many products
 ## Key Files
 - `src/App.tsx` — Root with React Query, router, and providers
 - `src/pages/Index.tsx` — Main app shell with sidebar navigation
+- `src/views/ProfileView.tsx` — User profile page (avatar, name, email change, password change)
 - `src/pages/Auth.tsx` — Login/signup/forgot password (Supabase auth)
 - `src/components/auth/ProtectedRoute.tsx` — Auth guard with admin approval check
 - `src/hooks/useBddStore.ts` — All app data state via Supabase (React Query); includes products CRUD
