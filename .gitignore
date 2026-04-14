@@ -3,6 +3,9 @@
 .env.local
 .env.*.local
 
+# 4QA CI — generated at runtime, may contain API keys
+qa4-scenarios.json
+
 # Logs
 logs
 *.log

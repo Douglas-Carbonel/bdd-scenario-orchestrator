@@ -210,10 +210,10 @@ export function ProfileView() {
   const savePersonalInfo = async () => {
     if (!profile) return;
     setSavingInfo(true);
-    const { error } = await supabase
-      .from("profiles")
-      .update({ name: name.trim(), avatar_url: avatarUrl })
-      .eq("id", profile.id);
+    const { error } = await supabase.rpc("update_own_profile", {
+      p_name: name.trim(),
+      p_avatar_url: avatarUrl,
+    });
 
     if (error) {
       toast.error(t("profile.toastSaveError") + error.message);
